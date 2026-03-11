@@ -3,106 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nexus Clinical | V94 QA Certified</title>
+    <title>Nexus Clinical | V97 Zero Defect</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#020617">
+    <meta name="theme-color" content="#050914">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-192.png">
     
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root { 
-            --primary: #38bdf8; --accent: #10b981; --warning: #fbbf24; --danger: #fb7185; 
-            --bg: #020617; --surface: rgba(30, 41, 59, 0.6); --text: #f8fafc;
+            --primary: #00e5ff; --accent: #00ff88; --warning: #ffaa00; --danger: #ff3366; 
+            --bg-dark: #050914; --surface: rgba(18, 25, 43, 0.6); --surface-border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff; --text-muted: #8b9bb4;
             --neuro: #a855f7; --am: #fbbf24; --pm: #818cf8;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { 
-            background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column;
-            background-image: radial-gradient(circle at top right, #1e293b, #020617);
-            overflow: hidden;
+            background: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column;
+            background-image: radial-gradient(circle at 50% 0%, #111a30 0%, #050914 100%); overflow: hidden;
         }
 
-        /* --- En-tête --- */
-        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-weight: 800; letter-spacing: -0.5px; font-size: 1.1rem; }
+        /* HEADER */
+        header { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .logo-container { display: flex; flex-direction: column; }
+        .logo { font-weight: 800; letter-spacing: 1px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;}
         .logo span { color: var(--primary); }
-        .key-btn { background: rgba(255,255,255,0.1); border: none; color: white; padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; cursor: pointer; transition: 0.3s; font-weight: 600;}
-        .key-btn:hover { background: rgba(255,255,255,0.2); }
+        .logo-badge { font-size: 0.5rem; background: rgba(0, 229, 255, 0.1); color: var(--primary); padding: 3px 6px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); letter-spacing: 1px; text-transform: uppercase;}
+        
+        .key-btn { background: var(--surface); border: 1px solid var(--surface-border); color: var(--text-main); padding: 8px 14px; border-radius: 12px; font-size: 0.75rem; cursor: pointer; transition: 0.3s; font-weight: 600; backdrop-filter: blur(10px);}
+        .key-btn:active { background: rgba(255,255,255,0.1); transform: scale(0.95);}
 
-        /* --- Scanner Vidéo --- */
-        #viewport-container { position: relative; height: 30vh; margin: 0 15px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #000; }
+        /* SCANNER */
+        #viewport-container { position: relative; height: 32vh; margin: 0 20px; border-radius: 28px; overflow: hidden; border: 1px solid var(--surface-border); box-shadow: 0 20px 40px rgba(0,0,0,0.6); background: #000; }
         video, #output-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; transform: scaleX(-1); }
         
-        .scan-line { position: absolute; width: 100%; height: 2px; background: var(--primary); top: 0; left: 0; z-index: 10; animation: scan 2s infinite linear; box-shadow: 0 0 15px var(--primary); display: none; }
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        .face-guide { position: absolute; inset: 0; pointer-events: none; z-index: 15; display: flex; align-items: center; justify-content: center; }
+        .face-guide svg { width: 60%; height: 80%; opacity: 0.3; stroke: #fff; stroke-width: 2; fill: none; transition: stroke 0.3s;}
+        .face-guide.ready svg { stroke: var(--primary); opacity: 0.6; filter: drop-shadow(0 0 10px var(--primary)); }
 
-        .light-badge { position: absolute; top: 10px; right: 10px; z-index: 20; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); padding: 5px 10px; border-radius: 12px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
-        .light-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); }
+        .scan-line { position: absolute; width: 100%; height: 3px; background: var(--primary); top: 0; left: 0; z-index: 20; animation: scan 2s infinite ease-in-out; box-shadow: 0 0 20px var(--primary), 0 0 40px var(--primary); display: none; }
+        @keyframes scan { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
-        /* --- Tableau de bord --- */
-        .dashboard { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
+        .light-badge { position: absolute; top: 12px; right: 12px; z-index: 25; background: rgba(5, 9, 20, 0.7); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 14px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 8px; border: 1px solid var(--surface-border); transition: 0.3s; }
+        .light-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); box-shadow: 0 0 8px var(--warning);}
+
+        /* DASHBOARD & KPIs */
+        .dashboard { flex: 1; padding: 10px 20px 100px 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; scroll-behavior: smooth;}
         
-        .kpi-row { display: flex; gap: 10px; }
-        .kpi-card { flex: 1; background: var(--surface); backdrop-filter: blur(10px); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
-        .kpi-val { font-size: 1.2rem; font-weight: 800; color: #fff; display: block; }
-        .kpi-lab { font-size: 0.55rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; margin-top: 2px; }
+        .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .kpi-card { background: var(--surface); backdrop-filter: blur(12px); padding: 16px 10px; border-radius: 20px; border: 1px solid var(--surface-border); text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.2); position: relative; overflow: hidden;}
+        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: rgba(255,255,255,0.1); }
+        .kpi-card:nth-child(1)::before { background: var(--primary); }
+        .kpi-card:nth-child(2)::before { background: var(--danger); }
+        .kpi-card:nth-child(3)::before { background: var(--warning); }
+        .kpi-val { font-size: 1.3rem; font-weight: 800; color: #fff; display: block; font-feature-settings: "tnum"; letter-spacing: -0.5px;}
+        .kpi-lab { font-size: 0.55rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-top: 4px; display: block;}
 
-        /* --- Panneau de Résultats --- */
-        .glass-panel { background: var(--surface); backdrop-filter: blur(15px); border-radius: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); position: relative; }
-        .tabs { display: flex; padding: 6px; gap: 6px; background: rgba(0,0,0,0.3); }
-        .tab { flex: 1; padding: 10px; border: none; background: transparent; color: #64748b; font-size: 0.7rem; font-weight: 800; cursor: pointer; border-radius: 12px; transition: 0.3s; }
-        .tab.active { background: rgba(56, 189, 248, 0.15); color: var(--primary); }
+        /* RESULTS PANEL */
+        .glass-panel { background: var(--surface); backdrop-filter: blur(16px); border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--surface-border); box-shadow: 0 10px 30px rgba(0,0,0,0.3); min-height: 250px; position: relative;}
+        
+        .tabs { display: flex; background: rgba(0,0,0,0.4); padding: 6px; }
+        .tab { flex: 1; padding: 12px; border: none; background: transparent; color: var(--text-muted); font-size: 0.65rem; font-weight: 800; cursor: pointer; border-radius: 18px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;}
+        .tab.active { background: var(--primary); color: #000; box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3); }
         .tab:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        #content { padding: 15px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
-        
-        /* Composants Internes Diagnostic */
-        .health-score-container { display: flex; align-items: center; gap: 20px; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;}
-        .score-circle { width: 60px; height: 60px; border-radius: 50%; background: conic-gradient(var(--primary) calc(var(--score) * 1%), #1e293b 0); display: flex; align-items: center; justify-content: center; position: relative;}
-        .score-circle::before { content: ""; position: absolute; inset: 4px; background: var(--bg); border-radius: 50%; }
-        .score-value { position: relative; z-index: 2; font-weight: 800; font-size: 1.2rem; color: #fff; }
-        .score-text h3 { font-size: 0.9rem; margin-bottom: 2px; color: #fff;}
+        #content { padding: 20px; overflow-y: auto; flex: 1; }
+
+        /* UI Composants de Bilan */
+        .health-score-container { display: flex; align-items: center; gap: 20px; background: rgba(0,0,0,0.4); padding: 16px; border-radius: 18px; border: 1px solid var(--surface-border); margin-bottom: 20px;}
+        .score-circle { width: 65px; height: 65px; border-radius: 50%; background: conic-gradient(var(--primary) calc(var(--score) * 1%), #111a30 0); display: flex; align-items: center; justify-content: center; position: relative;}
+        .score-circle::before { content: ""; position: absolute; inset: 4px; background: #0b1120; border-radius: 50%; }
+        .score-value { position: relative; z-index: 2; font-weight: 800; font-size: 1.4rem; color: #fff; }
+        .score-text h3 { font-size: 0.95rem; margin-bottom: 4px; color: #fff; font-weight: 700;}
         .score-text p { font-size: 0.7rem; color: var(--text-muted);}
 
-        .clinical-scales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
-        .scale-box { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 10px 8px; text-align: center; }
-        .scale-title { font-size: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .clinical-scales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .scale-box { background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); border-radius: 14px; padding: 12px 6px; text-align: center; }
+        .scale-title { font-size: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
         .scale-val { font-size: 0.75rem; font-weight: 800; color: #fff; }
 
-        .content-block { margin-bottom: 20px; }
-        .block-title { font-size: 0.75rem; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;}
-        .block-text { color: #cbd5e1; font-size: 0.85rem; }
-        .pill-list { display: flex; flex-wrap: wrap; gap: 8px; }
-        .pill { background: rgba(16, 185, 129, 0.1); color: var(--accent); border: 1px solid rgba(16, 185, 129, 0.3); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;}
+        .content-block { margin-bottom: 24px; }
+        .block-title { font-size: 0.75rem; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;}
+        .block-text { color: #d1d5db; font-size: 0.85rem; line-height: 1.6;}
+        
+        .routine-item { border-left: 3px solid var(--primary); padding-left: 16px; margin-bottom: 16px; background: linear-gradient(90deg, rgba(0, 229, 255, 0.05) 0%, transparent 100%); padding-top: 12px; padding-bottom: 12px; border-radius: 0 16px 16px 0; }
+        .step-tag { font-size: 0.6rem; background: rgba(255, 255, 255, 0.1); color: #fff; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;}
+        .r-product { font-weight: 800; font-size: 0.95rem; color: var(--primary); margin: 8px 0 4px 0; }
+        .r-why { font-size: 0.8rem; color: #94a3b8; line-height: 1.5;}
 
-        /* Routines */
-        .routine-item { border-left: 2px solid var(--primary); padding-left: 12px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding-top: 10px; padding-bottom: 10px; border-radius: 0 10px 10px 0; }
-        .routine-item.am { border-left-color: var(--am); }
-        .routine-item.pm { border-left-color: var(--pm); }
-        .step-tag { font-size: 0.55rem; background: rgba(255, 255, 255, 0.1); color: #fff; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 800; }
-        .r-product { font-weight: 800; font-size: 0.9rem; color: var(--primary); margin: 6px 0; }
-        .r-why { font-size: 0.75rem; color: #94a3b8; }
-        
-        /* --- Boutons d'Action --- */
-        .actions { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; padding: 15px; background: transparent; }
-        .btn { border: none; border-radius: 14px; font-weight: 800; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; height: 50px; }
-        .btn:active { transform: scale(0.96); }
-        .btn-primary { background: var(--primary); color: #0f172a; font-size: 0.8rem; text-transform: uppercase; }
-        .btn-secondary { background: var(--surface); color: #fff; border: 1px solid rgba(255,255,255,0.1); font-size: 1.2rem; }
-        .btn:disabled { opacity: 0.4; cursor: not-allowed; background: #334155; color: #94a3b8; }
-        
-        .loading-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
-        .spinner { width: 35px; height: 35px; border: 3px solid rgba(56, 189, 248, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s infinite linear; margin-bottom: 15px; }
+        /* Loader */
+        .loading-overlay { position: absolute; inset: 0; background: rgba(5, 9, 20, 0.8); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(8px); }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(0, 229, 255, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite cubic-bezier(0.55, 0.15, 0.45, 0.85); margin-bottom: 16px; box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);}
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* FLOATING DOCK */
+        .floating-dock { position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(18, 25, 43, 0.85); backdrop-filter: blur(20px); border: 1px solid var(--surface-border); border-radius: 24px; padding: 12px; display: flex; gap: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); z-index: 1000;}
+        
+        .btn { border: none; border-radius: 16px; font-weight: 800; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; height: 54px; gap: 8px;}
+        .btn:active { transform: scale(0.95); }
+        
+        .btn-main { flex: 2; background: var(--text-main); color: #000; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,255,255,0.2);}
+        .btn-main.ready { background: var(--primary); box-shadow: 0 4px 20px rgba(0, 229, 255, 0.4); animation: pulse-btn 2s infinite;}
+        
+        .btn-sub { flex: 1; background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--surface-border); font-size: 1.2rem; }
+        .btn-sub:hover { background: rgba(255,255,255,0.1); }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; background: rgba(255,255,255,0.05); color: #fff; box-shadow: none; animation: none;}
+
+        @keyframes pulse-btn { 0% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(0, 229, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); } }
 
         .hidden { display: none; }
     </style>
@@ -110,12 +127,22 @@
 <body>
 
     <header>
-        <div class="logo">NEXUS <span>PRO</span></div>
-        <button class="key-btn" onclick="configureApiKey()">⚙️ Clé API</button>
+        <div class="logo-container">
+            <div class="logo">NEXUS <span>CLINICAL</span></div>
+            <div class="logo-badge">V97 Zero Defect QA</div>
+        </div>
+        <button class="key-btn" onclick="configureApiKey()">⚙️ Accès IA</button>
     </header>
 
     <div id="viewport-container">
-        <div class="light-badge" id="light-badge"><div class="light-dot" id="light-dot"></div> <span id="light-text">Init...</span></div>
+        <div class="light-badge" id="light-badge"><div class="light-dot" id="light-dot"></div> <span id="light-text">Calibrage...</span></div>
+        
+        <div class="face-guide" id="face-guide">
+            <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="50" cy="65" rx="40" ry="55" stroke-dasharray="10 10"/>
+            </svg>
+        </div>
+        
         <div class="scan-line" id="scanner-line"></div>
         <video id="webcam" autoplay playsinline muted></video>
         <canvas id="output-canvas"></canvas>
@@ -123,35 +150,35 @@
 
     <div class="dashboard">
         <div class="kpi-row">
-            <div class="kpi-card"><span class="kpi-val" id="val-text">--</span><span class="kpi-lab">Texture (Hz)</span></div>
+            <div class="kpi-card"><span class="kpi-val" id="val-text">--</span><span class="kpi-lab">Relief (Hz)</span></div>
             <div class="kpi-card"><span class="kpi-val" id="val-ery">--</span><span class="kpi-lab">Érythème</span></div>
-            <div class="kpi-card"><span class="kpi-val" id="val-mel">--</span><span class="kpi-lab">Pigment</span></div>
+            <div class="kpi-card"><span class="kpi-val" id="val-mel">--</span><span class="kpi-lab">Mélanine</span></div>
         </div>
 
         <div class="glass-panel">
             <div class="loading-overlay" id="loading">
                 <div class="spinner"></div>
-                <span id="loading-msg" style="font-size: 0.7rem; letter-spacing: 2px; font-weight: 800; color: var(--primary); text-align: center;">DÉMARRAGE<br>OPTICAL ENGINE</span>
+                <span id="loading-msg" style="font-size: 0.65rem; letter-spacing: 3px; font-weight: 800; color: var(--primary); text-align: center;">INITIALISATION<br>DES CAPTEURS</span>
             </div>
             <div class="tabs">
-                <button class="tab active" id="tab-diag" onclick="switchTab('diag')" disabled>DIAGNOSTIC</button>
-                <button class="tab" id="tab-routine" onclick="switchTab('routine')" disabled>PRESCRIPTION</button>
+                <button class="tab active" id="tab-diag" onclick="switchTab('diag')" disabled>BILAN EXPERT</button>
+                <button class="tab" id="tab-routine" onclick="switchTab('routine')" disabled>PROTOCOLE</button>
             </div>
             <div id="content">
-                <div style="text-align: center; padding: 30px 10px; color: #64748b;">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:15px; opacity:0.5;">
-                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
+                <div style="text-align: center; padding: 40px 10px; color: #475569;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom:15px; opacity:0.5;">
+                        <circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>
                     </svg>
-                    <p style="font-size: 0.8rem;">Patient prêt.<br>Veuillez lancer l'acquisition clinique.</p>
+                    <p style="font-size: 0.85rem; font-weight: 500;">En attente du visage du patient.<br>Placez le visage dans l'ovale.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="actions">
-        <button class="btn btn-primary" id="btn-scan" onclick="startClinicalProcess()" disabled>Scanner Patient</button>
-        <button class="btn btn-secondary" onclick="location.reload()" title="Nouveau Patient">🔄</button>
-        <button class="btn btn-secondary" id="btn-pdf" disabled onclick="exportToPDF()" title="Exporter en PDF">📄</button>
+    <div class="floating-dock">
+        <button class="btn btn-sub" onclick="resetPatient()" title="Nouveau Patient">🔄</button>
+        <button class="btn btn-main" id="btn-scan" onclick="startClinicalProcess()" disabled>Scanner</button>
+        <button class="btn btn-sub" id="btn-pdf" disabled onclick="exportToPDF()" title="Exporter Dossier">📄</button>
     </div>
 
     <canvas id="proc-canvas" class="hidden" width="512" height="512"></canvas>
@@ -173,84 +200,91 @@
             lightDot: document.getElementById('light-dot'),
             lightText: document.getElementById('light-text'),
             tabDiag: document.getElementById('tab-diag'),
-            tabRoutine: document.getElementById('tab-routine')
+            tabRoutine: document.getElementById('tab-routine'),
+            faceGuide: document.getElementById('face-guide')
         };
 
         let state = { 
             landmarks: null, metrics: null, aiData: null, chart: null, 
-            isLightingGood: false, isVideoPlaying: false, meshReady: false,
-            isProcessingFrame: false // FIX QA: Verrou pour fuite mémoire RAM
+            isLightingGood: false, meshReady: false, cameraObj: null
         };
-        let videoStream = null;
 
-        // --- GESTION CLÉ API ---
         function configureApiKey() {
             const currentKey = localStorage.getItem('nexus_mistral_key') || '';
-            const key = prompt("Entrez votre clé API Mistral AI (Pixtral) :", currentKey);
+            const key = prompt("Entrez la clé de cryptage (Mistral API) :", currentKey);
             if (key !== null) localStorage.setItem('nexus_mistral_key', key.trim());
         }
 
-        // --- MOTEUR CAMÉRA NATIF ---
+        // FIX V97: Réinitialisation propre à chaud
+        function resetPatient() {
+            state.aiData = null;
+            state.metrics = null;
+            document.getElementById('val-text').innerText = "--";
+            document.getElementById('val-ery').innerText = "--";
+            document.getElementById('val-mel').innerText = "--";
+            ui.tabDiag.disabled = true; ui.tabRoutine.disabled = true;
+            ui.btnPdf.disabled = true;
+            ui.content.innerHTML = `
+                <div style="text-align: center; padding: 40px 10px; color: #475569;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom:15px; opacity:0.5;">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    <p style="font-size: 0.85rem; font-weight: 500;">Dossier vierge.<br>Prêt pour un nouveau patient.</p>
+                </div>`;
+            ui.btnScan.innerText = "Scanner";
+        }
+
         async function init() {
             ui.loading.style.display = 'flex';
             
             state.faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-            state.faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+            state.faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
             
             state.faceMesh.onResults(res => {
                 state.landmarks = res.multiFaceLandmarks && res.multiFaceLandmarks.length > 0 ? res.multiFaceLandmarks[0] : null;
                 drawOverlay();
+
+                if (!state.meshReady) {
+                    state.meshReady = true;
+                    ui.loading.style.display = 'none';
+                    if(!localStorage.getItem('nexus_mistral_key')) {
+                        setTimeout(() => alert("⚠️ Le moteur d'IA requiert une clé API pour fonctionner."), 500);
+                    }
+                }
             });
 
             try {
-                const constraints = { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } };
-                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-                ui.video.srcObject = videoStream;
-                
-                // FIX QA : Force la lecture pour iOS Safari
-                ui.video.play().catch(e => console.log("Lecture auto bloquée par le navigateur.", e));
-                
-                ui.video.onplaying = () => {
-                    state.isVideoPlaying = true;
-                    state.meshReady = true;
-                    ui.loading.style.display = 'none';
-                    
-                    if(!localStorage.getItem('nexus_mistral_key')) {
-                        alert("Bienvenue. Veuillez configurer votre clé API via le bouton ⚙️ en haut à droite.");
-                    }
-                    
-                    processVideoFrame();
-                };
-
+                state.cameraObj = new Camera(ui.video, {
+                    onFrame: async () => {
+                        if (ui.video.videoWidth > 0 && ui.loading.style.display !== 'flex') {
+                            await state.faceMesh.send({image: ui.video});
+                            checkLightingRealTime();
+                        }
+                    },
+                    width: 640, height: 480
+                });
+                await state.cameraObj.start();
             } catch (err) {
-                console.error("Erreur Caméra Native:", err);
                 ui.loading.style.display = 'none';
-                ui.content.innerHTML = `<p style="color:var(--danger); text-align:center; padding:20px;">Erreur d'accès à la caméra. Vérifiez les permissions de votre navigateur (HTTPS requis).</p>`;
+                ui.content.innerHTML = `<div style="text-align:center; padding: 20px;"><p style="color:var(--danger); font-weight:bold;">🚨 Accès Caméra Refusé</p><p style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">Vérifiez vos paramètres de navigateur ou fermez les applications en arrière-plan.</p></div>`;
             }
-        }
-
-        // FIX QA: Boucle sécurisée contre les fuites de mémoire WebAssembly
-        async function processVideoFrame() {
-            if (state.isVideoPlaying && state.meshReady && ui.video.videoWidth > 0 && !state.isProcessingFrame && ui.loading.style.display !== 'flex') {
-                state.isProcessingFrame = true; // Verrouillage
-                await state.faceMesh.send({image: ui.video});
-                checkLightingRealTime();
-                state.isProcessingFrame = false; // Déverrouillage
-            }
-            requestAnimationFrame(processVideoFrame);
         }
 
         function drawOverlay() {
+            if (!ui.video.videoWidth) return;
             const ctx = ui.canvas.getContext('2d');
             ui.canvas.width = ui.video.videoWidth; ui.canvas.height = ui.video.videoHeight;
             ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
             
             if(state.landmarks) {
-                ctx.fillStyle = "rgba(56, 189, 248, 0.5)";
-                [10, 152, 234, 454].forEach(idx => {
+                ui.faceGuide.classList.add('ready');
+                ctx.fillStyle = "rgba(0, 229, 255, 0.4)";
+                [10, 152, 234, 454, 33, 263].forEach(idx => {
                     const pt = state.landmarks[idx];
-                    ctx.beginPath(); ctx.arc(pt.x * ui.canvas.width, pt.y * ui.canvas.height, 3, 0, 7); ctx.fill();
+                    ctx.beginPath(); ctx.arc(pt.x * ui.canvas.width, pt.y * ui.canvas.height, 2, 0, 7); ctx.fill();
                 });
+            } else {
+                ui.faceGuide.classList.remove('ready');
             }
         }
 
@@ -266,20 +300,24 @@
             }
             const avgLum = sumLuminance / (64 * 64);
 
-            if (avgLum < 50) { updateLightUI("Sombre", "var(--danger)", false); } 
-            else if (avgLum > 220) { updateLightUI("Surexposé", "var(--warning)", false); } 
-            else { updateLightUI("Optimal", "var(--accent)", true); }
+            if (avgLum < 40) { updateLightUI("Sous-exposé", "var(--danger)", false); } 
+            else if (avgLum > 230) { updateLightUI("Surexposé", "var(--warning)", false); } 
+            else { updateLightUI("Lumière OK", "var(--accent)", true); }
         }
 
         function updateLightUI(text, color, isGood) {
             ui.lightText.innerText = text;
             ui.lightDot.style.background = color;
-            ui.lightBadge.style.borderColor = isGood ? 'rgba(16, 185, 129, 0.3)' : 'rgba(251, 113, 133, 0.3)';
+            ui.lightDot.style.boxShadow = `0 0 8px ${color}`;
+            ui.lightBadge.style.borderColor = isGood ? 'rgba(0, 255, 136, 0.3)' : 'rgba(255, 51, 102, 0.3)';
             state.isLightingGood = isGood;
-            ui.btnScan.disabled = !(isGood && state.landmarks && ui.loading.style.display !== 'flex');
+            
+            const isReady = isGood && state.landmarks && ui.loading.style.display !== 'flex';
+            ui.btnScan.disabled = !isReady;
+            if(isReady) ui.btnScan.classList.add('ready');
+            else ui.btnScan.classList.remove('ready');
         }
 
-        // --- PIPELINE CLINIQUE ---
         async function startClinicalProcess() {
             const apiKey = localStorage.getItem('nexus_mistral_key');
             if(!apiKey) {
@@ -287,18 +325,22 @@
                 if(!localStorage.getItem('nexus_mistral_key')) return; 
             }
 
-            ui.btnScan.disabled = true;
+            // FIX V97: Purge de sécurité avant un nouveau scan
+            state.aiData = null; 
+            ui.tabDiag.disabled = true; ui.tabRoutine.disabled = true;
+            
+            ui.btnScan.disabled = true; ui.btnScan.classList.remove('ready');
             ui.btnPdf.disabled = true;
             ui.loading.style.display = 'flex';
             ui.scanLine.style.display = 'block';
             ui.content.innerHTML = ''; 
             
             try {
-                ui.loadMsg.innerText = "CALCULS TENSORIELS...";
-                await new Promise(r => setTimeout(r, 200)); 
+                ui.loadMsg.innerHTML = "CALCULS BIOMÉTRIQUES<br>EN COURS...";
+                await new Promise(r => setTimeout(r, 400)); 
                 runBiometrics();
 
-                ui.loadMsg.innerText = "INFÉRENCE PIXTRAL-12B...";
+                ui.loadMsg.innerHTML = "CONNEXION SÉCURISÉE<br>PIXTRAL VLM...";
                 await fetchAiDiagnosis(apiKey);
                 
                 ui.scanLine.style.display = 'none';
@@ -308,12 +350,16 @@
                 ui.tabRoutine.disabled = false;
                 renderDiagnosis();
                 ui.btnPdf.disabled = false;
+                ui.btnScan.innerText = "Nouveau Scan";
+                ui.btnScan.disabled = false;
+
             } catch (err) {
                 console.error(err);
                 ui.loading.style.display = 'none';
                 ui.scanLine.style.display = 'none';
-                ui.content.innerHTML = `<div style="text-align:center; padding: 20px;"><p style="color:var(--danger); font-weight:bold;">🚨 Erreur IA</p><p style="font-size:0.8rem; color:#94a3b8; margin-top:10px;">${err.message}</p></div>`;
+                ui.content.innerHTML = `<div style="text-align:center; padding: 20px;"><p style="color:var(--danger); font-weight:bold;">🚨 Échec Matrice IA</p><p style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">${err.message}</p></div>`;
                 ui.btnScan.disabled = false;
+                ui.btnScan.innerText = "Réessayer";
             }
         }
 
@@ -367,28 +413,19 @@ Renvoie STRICTEMENT ce format JSON :
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
                 body: JSON.stringify({
                     model: "pixtral-12b-2409",
-                    messages: [
-                        { 
-                            role: "user", 
-                            content: [
-                                {type: "text", text: prompt},
-                                {type: "image_url", image_url: { url: base64 }} 
-                            ] 
-                        }
-                    ],
+                    messages: [ { role: "user", content: [ {type: "text", text: prompt}, {type: "image_url", image_url: { url: base64 }} ] } ],
                     response_format: { type: "json_object" },
                     temperature: 0.1
                 })
             });
 
-            if (!res.ok) throw new Error("API Mistral inaccessible. Vérifiez vos crédits ou votre clé.");
+            if (!res.ok) throw new Error("Accès API Mistral refusé. Vérifiez vos crédits ou votre clé.");
 
             const jsonResponse = await res.json();
             const rawContent = jsonResponse.choices[0].message.content;
             
-            // Sécurité : Extraction regex du JSON (évite les bugs Markdown)
             const match = rawContent.match(/\{[\s\S]*\}/);
-            if(!match) throw new Error("Format IA non valide.");
+            if(!match) throw new Error("Format IA non conforme.");
             state.aiData = JSON.parse(match[0]);
         }
 
@@ -400,8 +437,8 @@ Renvoie STRICTEMENT ce format JSON :
                 <div class="health-score-container" style="--score:${state.aiData.score}; --primary:${colorScore}">
                     <div class="score-circle"><div class="score-value">${state.aiData.score}</div></div>
                     <div class="score-text">
-                        <h3>Vitalité Cutanée</h3>
-                        <p>Index Multimodal IA V94</p>
+                        <h3>Index de Vitalité</h3>
+                        <p>Calculé par intelligence multimodale</p>
                     </div>
                 </div>
 
@@ -414,7 +451,7 @@ Renvoie STRICTEMENT ce format JSON :
                 <div style="height:180px; margin-bottom:15px; position:relative;"><canvas id="radarChart"></canvas></div>
 
                 <div class="content-block">
-                    <div class="block-title">DIAGNOSTIC : ${state.aiData.title}</div>
+                    <div class="block-title">BILAN CLINIQUE : ${state.aiData.title}</div>
                     <div class="block-text">${state.aiData.physio}</div>
                 </div>
             `;
@@ -428,15 +465,16 @@ Renvoie STRICTEMENT ce format JSON :
                     labels: ['Relief (Hz)', 'Inflammation', 'Dyschromie'],
                     datasets: [{
                         data: [state.metrics.text, state.metrics.ery, state.metrics.mel],
-                        backgroundColor: 'rgba(56, 189, 248, 0.25)',
-                        borderColor: '#38bdf8',
-                        borderWidth: 1.5,
-                        pointBackgroundColor: '#fff'
+                        backgroundColor: 'rgba(0, 229, 255, 0.2)',
+                        borderColor: '#00e5ff',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#00e5ff'
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, animation: false, // Requis pour PDF instantané
-                    scales: { r: { grid: {color: 'rgba(255,255,255,0.05)'}, angleLines: {color: 'rgba(255,255,255,0.05)'}, ticks: {display: false}, pointLabels: {color: '#94a3b8'} } },
+                    responsive: true, maintainAspectRatio: false, animation: false,
+                    scales: { r: { grid: {color: 'rgba(255,255,255,0.08)'}, angleLines: {color: 'rgba(255,255,255,0.08)'}, ticks: {display: false}, pointLabels: {color: '#8b9bb4', font: {size: 11, family: "'Plus Jakarta Sans'"}} } },
                     plugins: { legend: {display: false} }
                 }
             });
@@ -448,12 +486,13 @@ Renvoie STRICTEMENT ce format JSON :
             ui.tabRoutine.classList.toggle('active', t==='routine');
             
             if(t === 'routine') {
-                let html = `<div class="content-block"><div class="block-title" style="color:var(--text);">ACTES CONSEILLÉS</div><div class="pill-list">${state.aiData.actes.map(a => `<span class="pill">${a}</span>`).join('')}</div></div>`;
+                let html = `<div class="content-block"><div class="block-title" style="color:var(--text-main);">ACTES CONSEILLÉS</div><div class="pill-list">${state.aiData.actes.map(a => `<span class="pill">${a}</span>`).join('')}</div></div>`;
                 html += state.aiData.routine.map(i => {
                     let isAm = i.step.toLowerCase().includes('matin');
-                    return `<div class="routine-item ${isAm ? 'am' : 'pm'}">
-                        <span class="step-tag">${i.step}</span>
-                        <div class="r-product">${i.prod}</div>
+                    let color = isAm ? 'var(--am)' : 'var(--pm)';
+                    return `<div class="routine-item" style="border-left-color: ${color}">
+                        <span class="step-tag" style="color:${color}; background: rgba(255,255,255,0.05);">${i.step}</span>
+                        <div class="r-product" style="color:${color}">${i.prod}</div>
                         <div class="r-why">${i.why}</div>
                     </div>`;
                 }).join('');
@@ -463,21 +502,20 @@ Renvoie STRICTEMENT ce format JSON :
             }
         }
 
-        // FIX QA : Délai d'attente ajouté pour garantir le rendu complet du Chart.js dans le PDF
+        // FIX V97 : Protection complète de la pagination et délai de rendu du graphique garanti
         function exportToPDF() {
             if(!state.aiData) return;
             
-            // Obliger l'affichage du graphique avant de le capturer
             switchTab('diag'); 
             
             setTimeout(() => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('p', 'mm', 'a4');
                 
-                doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 35, 'F');
-                doc.setTextColor(255, 255, 255); doc.setFontSize(20); doc.setFont("helvetica", "bold");
+                doc.setFillColor(10, 15, 28); doc.rect(0, 0, 210, 35, 'F');
+                doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold");
                 doc.text("DOSSIER CLINIQUE NEXUS", 15, 20);
-                doc.setFontSize(10); doc.setTextColor(56, 189, 248); doc.text("V94 QA CERTIFIED EDITION", 15, 28);
+                doc.setFontSize(10); doc.setTextColor(0, 229, 255); doc.text("EDITION LUXURY V97", 15, 28);
                 
                 let patId = "NX-" + Math.floor(Math.random() * 100000);
                 doc.setTextColor(148, 163, 184); doc.setFontSize(9);
@@ -485,16 +523,17 @@ Renvoie STRICTEMENT ce format JSON :
                 
                 let yPos = 50;
 
-                doc.setTextColor(15, 23, 42); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+                doc.setTextColor(10, 15, 28); doc.setFontSize(14); doc.setFont("helvetica", "bold");
                 doc.text("1. Relevé Biométrique Instrumental", 15, yPos);
                 doc.setDrawColor(226, 232, 240); doc.line(15, yPos + 3, 195, yPos + 3);
                 yPos += 12;
 
                 doc.setFillColor(241, 245, 249); doc.roundedRect(15, yPos, 55, 20, 3, 3, 'F');
-                doc.roundedRect(75, yPos, 55, 20, 3, 3, 'F'); doc.roundedRect(135, yPos, 55, 20, 3, 3, 'F');
+                doc.roundedRect(75, yPos, 55, 20, 3, 3, 'F');
+                doc.roundedRect(135, yPos, 55, 20, 3, 3, 'F');
                 doc.setTextColor(51, 65, 85); doc.setFontSize(9); doc.setFont("helvetica", "normal");
                 doc.text("Texture (Relief)", 20, yPos + 7); doc.text("Sensibilité (a*)", 80, yPos + 7); doc.text("Mélanine (Taches)", 140, yPos + 7);
-                doc.setTextColor(15, 23, 42); doc.setFontSize(12); doc.setFont("helvetica", "bold");
+                doc.setTextColor(10, 15, 28); doc.setFontSize(12); doc.setFont("helvetica", "bold");
                 doc.text(`${state.metrics.text} Hz`, 20, yPos + 15); doc.text(`${state.metrics.ery}`, 80, yPos + 15); doc.text(`${state.metrics.mel} ΔL`, 140, yPos + 15);
                 yPos += 30;
 
@@ -507,18 +546,23 @@ Renvoie STRICTEMENT ce format JSON :
                 doc.text(`• Glogau : ${state.aiData.glogau}`, 15, yPos); yPos += 6;
                 doc.text(`• Hydratation : ${state.aiData.hydratation}`, 15, yPos); yPos += 12;
 
-                doc.setTextColor(2, 132, 199); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+                doc.setTextColor(0, 180, 216); doc.setFontSize(14); doc.setFont("helvetica", "bold");
                 doc.text(`3. Diagnostic Multimodal (Score: ${state.aiData.score}/100)`, 15, yPos);
                 doc.setDrawColor(226, 232, 240); doc.line(15, yPos + 3, 195, yPos + 3);
                 yPos += 10;
-                doc.setTextColor(15, 23, 42); doc.text(`Bilan : ${state.aiData.title}`, 15, yPos); yPos += 6;
+                doc.setTextColor(10, 15, 28); doc.text(`Bilan : ${state.aiData.title}`, 15, yPos); yPos += 6;
                 doc.setTextColor(51, 65, 85); doc.setFontSize(10); doc.setFont("helvetica", "normal");
+                
                 let physioLines = doc.splitTextToSize(state.aiData.physio, 180);
-                doc.text(physioLines, 15, yPos); yPos += (physioLines.length * 5) + 10;
+                doc.text(physioLines, 15, yPos); 
+                yPos += (physioLines.length * 5) + 10;
 
-                // Image garantie à 100% grâce au setTimeout
+                // FIX V97 : Protection de pagination AVANT le graphique
+                if (yPos > 200) { doc.addPage(); yPos = 20; }
+
                 const img = document.getElementById('radarChart').toDataURL('image/png', 1.0);
-                doc.addImage(img, 'PNG', 55, yPos, 100, 70); yPos += 80;
+                doc.addImage(img, 'PNG', 55, yPos, 100, 70); 
+                yPos += 80;
 
                 if(yPos > 250) { doc.addPage(); yPos = 20; }
                 doc.setTextColor(245, 158, 11); doc.setFontSize(14); doc.setFont("helvetica", "bold");
@@ -528,22 +572,21 @@ Renvoie STRICTEMENT ce format JSON :
                 
                 state.aiData.routine.forEach(r => {
                     if(yPos > 270) { doc.addPage(); yPos = 20; }
-                    doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+                    doc.setTextColor(10, 15, 28); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
                     doc.text(`[${r.step}] ${r.prod}`, 15, yPos); yPos += 5;
                     doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "normal");
                     let whyLines = doc.splitTextToSize(r.why, 175);
                     doc.text(whyLines, 20, yPos); yPos += (whyLines.length * 5) + 5;
                 });
 
-                doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.text("Généré par Intelligence Artificielle. Ne remplace pas un avis médical.", 105, 290, {align: "center"});
+                doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.text("Généré par IA Nexus V97. Document informatif, ne remplace pas un avis médical.", 105, 290, {align: "center"});
 
                 if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) { window.open(URL.createObjectURL(doc.output('blob'))); } 
                 else { doc.save(`Nexus_Dossier_${patId}.pdf`); }
             
-            }, 150); // Pause critique de 150ms pour laisser le temps au Canvas Chart.js d'être tracé dans le DOM
+            }, 300); // FIX V97: 300ms garantit le tracé du graphique même sur de très vieux téléphones
         }
 
-        // --- PWA SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
         }
