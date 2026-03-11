@@ -3,50 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3063/3063176.png">
-    <title>PureScan Nexus AI | Edition Clinique</title>
+    <title>PureScan Nexus | Plateforme d'Analyse Dermato-Cosmétique</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
     <script async src="https://docs.opencv.org/4.5.0/opencv.js" onload="onOpenCvScriptLoaded();"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --mistral: #7f56d9; --cyan: #00f2ff; --bg: #02060d; --danger: #ff3860; --success: #00e676; }
+        :root { 
+            --primary: #2563eb; --primary-dark: #1e40af; 
+            --bg-dark: #0f172a; --bg-panel: #1e293b; 
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --danger: #ef4444; --warning: #f59e0b; --success: #10b981;
+        }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        #viewport { position: relative; flex: 0 0 40vh; background: #000; overflow: hidden; border-bottom: 2px solid var(--mistral); box-shadow: 0 4px 20px rgba(127, 86, 217, 0.2); }
+        /* OPTIQUE CLINIQUE */
+        #viewport { position: relative; flex: 0 0 35vh; background: #000; overflow: hidden; border-bottom: 1px solid #334155; }
         video, #preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
-        #preview-img { display: none; z-index: 5; border: 2px solid var(--cyan); }
-        .guide-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60vw; height: 60vw; max-width: 250px; max-height: 250px; border: 2px dashed rgba(0, 242, 255, 0.7); border-radius: 30px; z-index: 10; pointer-events: none; transition: all 0.3s ease; }
-        .guide-box.scanning { border-color: var(--mistral); transform: translate(-50%, -50%) scale(0.95); }
+        #preview-img { display: none; z-index: 5; }
+        .guide-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 55vw; height: 55vw; max-width: 240px; max-height: 240px; border: 2px solid rgba(255, 255, 255, 0.4); border-radius: 12px; z-index: 10; transition: all 0.3s ease; }
+        .guide-box::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.5); }
+        .guide-box.scanning { border-color: var(--primary); transform: translate(-50%, -50%) scale(0.95); background: rgba(37, 99, 235, 0.1); }
 
-        .dashboard { flex: 1; padding: 15px 20px; display: flex; flex-direction: column; background: linear-gradient(180deg, #050a14 0%, #000 100%); overflow-y: auto; }
-        .status-badge { font-size: 0.65rem; color: var(--cyan); letter-spacing: 1px; text-transform: uppercase; font-weight: 700; padding: 8px; background: rgba(0, 242, 255, 0.1); border-radius: 8px; text-align: center; margin-bottom: 12px; border: 1px solid rgba(0, 242, 255, 0.2); transition: all 0.3s; }
+        /* TABLEAU DE BORD */
+        .dashboard { flex: 1; padding: 16px; display: flex; flex-direction: column; background: var(--bg-dark); overflow-y: auto; }
+        .status-badge { font-size: 0.7rem; color: var(--text-main); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; padding: 8px 12px; background: var(--bg-panel); border-radius: 6px; text-align: center; margin-bottom: 12px; border: 1px solid #334155; transition: all 0.3s; }
+        .batch-tracker { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; align-items: center; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #334155; transition: 0.3s; }
+        .dot.active { background: var(--primary); box-shadow: 0 0 8px rgba(37, 99, 235, 0.6); }
+
+        /* CARTE D'ANALYSE */
+        .analysis-card { background: var(--bg-panel); border-radius: 12px; padding: 16px; border: 1px solid #334155; margin-bottom: 12px; display: flex; flex-direction: column; flex-grow: 1; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        .risk-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px; }
+        #risk-val { font-size: 2.2rem; font-weight: 700; color: var(--text-main); line-height: 1; transition: color 0.3s; }
         
-        .batch-tracker { display: flex; gap: 10px; margin-bottom: 12px; justify-content: center; align-items: center; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: #1a2332; border: 1px solid #334155; transition: 0.3s; }
-        .dot.active { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+        /* ONGLETS */
+        .tabs { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { flex: 0 0 auto; background: transparent; border: 1px solid #475569; color: var(--text-muted); padding: 6px 14px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; transition: 0.2s; font-weight: 600; }
+        .tab-btn.active { background: #334155; color: var(--text-main); border-color: #64748b; }
+        .tab-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .analysis-card { background: rgba(255,255,255,0.02); border-radius: 16px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-        .risk-label { font-size: 0.6rem; color: #64748b; text-transform: uppercase; letter-spacing: 2px; }
-        #risk-val { font-family: 'Orbitron'; font-size: 3.5rem; color: #334155; line-height: 1; margin: 5px 0 15px 0; transition: color 0.5s; }
-        #advice { font-size: 0.85rem; color: #e2e8f0; line-height: 1.6; text-align: left; padding: 12px; background: rgba(0,0,0,0.4); border-radius: 8px; border-left: 3px solid var(--mistral); white-space: pre-line; min-height: 60px; overflow-y: auto;}
+        #advice { font-size: 0.85rem; color: var(--text-main); line-height: 1.6; text-align: left; padding: 12px; background: #0f172a; border-radius: 8px; border-left: 3px solid var(--primary); white-space: pre-line; flex-grow: 1; overflow-y: auto; }
 
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; padding-bottom: 10px; }
-        .btn { padding: 16px; border: none; border-radius: 12px; font-family: 'Orbitron'; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-main { background: var(--mistral); color: white; grid-column: span 2; box-shadow: 0 4px 15px rgba(127, 86, 217, 0.3); }
-        .btn-main:active { transform: scale(0.98); }
-        .btn-main:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; filter: grayscale(1); }
-        .btn-sub { background: #0f172a; color: #cbd5e1; border: 1px solid #1e293b; }
-        .architect-signature { text-align: center; font-size: 0.55rem; color: #475569; margin-top: 5px; letter-spacing: 2px; text-transform: uppercase; }
+        /* CONTRÔLES */
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto; padding-bottom: 8px; }
+        .btn { padding: 14px; border: none; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+        .btn-main { background: var(--primary); color: white; grid-column: span 2; }
+        .btn-main:active { background: var(--primary-dark); }
+        .btn-main:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+        .btn-sub { background: transparent; color: var(--text-main); border: 1px solid #475569; }
+        .btn-sub:active { background: #334155; }
+        
+        /* FOOTER & MENTIONS LÉGALES */
+        .legal-disclaimer { text-align: center; font-size: 0.55rem; color: #64748b; margin-top: 12px; line-height: 1.4; padding: 0 10px; }
+        .signature { font-weight: 700; color: #94a3b8; display: block; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -58,198 +77,175 @@
     </div>
 
     <div class="dashboard">
-        <div id="status" class="status-badge">1/3 : VÉRIFICATION MATÉRIELLE...</div>
+        <div id="status" class="status-badge">AUTO-DIAGNOSTIC SYSTÈME...</div>
 
         <div class="batch-tracker" id="batch-dots">
             <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
-            <span style="font-size:0.6rem; color:#64748b; margin-left:8px; font-weight:600;">MODE BATCH (5)</span>
         </div>
 
         <div class="analysis-card">
-            <div class="risk-label">Indice d'Anomalie Bio-IA</div>
-            <div id="risk-val">--%</div>
-            <div id="advice">Analyse des composants système en cours...</div>
+            <div class="top-row">
+                <div>
+                    <div class="risk-label">Probabilité d'Altération Structurelle</div>
+                    <div id="risk-val">--%</div>
+                </div>
+            </div>
+
+            <div class="tabs" id="agent-tabs">
+                <button class="tab-btn active" data-target="bilan" disabled>Bilan Clinique</button>
+                <button class="tab-btn" data-target="nettoyage" disabled>Protocole Lavage</button>
+                <button class="tab-btn" data-target="routine" disabled>Routine Soin</button>
+                <button class="tab-btn" data-target="produits" disabled>Actifs Recommandés</button>
+            </div>
+
+            <div id="advice">Initialisation des modules d'analyse dermatologique...</div>
         </div>
 
         <div class="controls">
             <input type="file" id="file-in" style="display:none;" accept="image/*">
-            <button class="btn btn-main" id="btn-scan" disabled>LANCER L'ANALYSE CLINIQUE</button>
-            <button class="btn btn-sub" id="btn-upload">IMPORT HD</button>
-            <button class="btn btn-sub" id="btn-reset">RÉINITIALISER</button>
+            <button class="btn btn-main" id="btn-scan" disabled>DÉMARRER L'ANALYSE CLINIQUE</button>
+            <button class="btn btn-sub" id="btn-upload">Importer Photo</button>
+            <button class="btn btn-sub" id="btn-reset">Nouveau Patient</button>
         </div>
         
-        <div class="architect-signature">Architecte Logiciel : Nicolas Julienne</div>
+        <div class="legal-disclaimer">
+            Ce dispositif utilise l'Intelligence Artificielle à des fins informatives dermo-cosmétiques. Il ne remplace en aucun cas un diagnostic médical réalisé par un dermatologue.
+            <span class="signature">Architecte Logiciel : Nicolas Julienne</span>
+        </div>
     </div>
 
     <canvas id="proc-canvas" style="display:none;"></canvas>
 
     <script>
-        const MISTRAL_KEY = "TON_API_KEY_MISTRAL"; // ⚠️ A REMPLACER PAR TA CLÉ MISTRAL
+        // ==========================================
+        // CONFIGURATION SYSTÈME
+        // ==========================================
+        const MISTRAL_KEY = "TON_API_KEY_MISTRAL_ICI"; // ⚠️ INSÈRE TA CLÉ MISTRAL
         
         const ui = {
-            v: document.getElementById('webcam'),
-            img: document.getElementById('preview-img'),
-            btnScan: document.getElementById('btn-scan'),
-            status: document.getElementById('status'),
-            advice: document.getElementById('advice'),
-            risk: document.getElementById('risk-val'),
-            guide: document.getElementById('guide'),
-            dots: document.querySelectorAll('.dot'),
-            canvas: document.getElementById('proc-canvas')
+            v: document.getElementById('webcam'), img: document.getElementById('preview-img'),
+            btnScan: document.getElementById('btn-scan'), status: document.getElementById('status'),
+            advice: document.getElementById('advice'), risk: document.getElementById('risk-val'),
+            guide: document.getElementById('guide'), dots: document.querySelectorAll('.dot'),
+            canvas: document.getElementById('proc-canvas'), tabs: document.querySelectorAll('.tab-btn')
         };
         
-        let state = { cvReady: false, aiReady: false, isLive: true, batchCount: 0, results: [], model: null };
-
-        // ==========================================
-        // 1. DÉMARRAGE SÉCURISÉ (SAFE MODE)
-        // ==========================================
-        window.onload = () => { 
-            ui.advice.innerText = "Lancement des processus asynchrones...";
-            initAI(); 
-            initCamera(); 
+        let state = { 
+            cvReady: false, aiReady: false, isLive: true, batchCount: 0, 
+            results: [], model: null, videoReady: false,
+            agentData: { bilan: "", nettoyage: "", routine: "", produits: "" } 
         };
 
-        // Remplacement du loader OpenCV par un Poller anti-crash
+        // ==========================================
+        // 1. DÉMARRAGE ROBUSTE
+        // ==========================================
+        window.onload = () => { initAI(); initCamera(); };
+
         function onOpenCvScriptLoaded() {
-            updateStatus("2/3 : COMPILATION OPENCV...", "var(--mistral)");
             let retries = 0;
             const checkCv = setInterval(() => {
                 if (typeof cv !== 'undefined' && typeof cv.Mat === 'function') {
-                    clearInterval(checkCv);
-                    state.cvReady = true;
-                    checkSystemReady();
+                    clearInterval(checkCv); state.cvReady = true; checkSystemReady();
                 }
-                retries++;
-                if(retries > 50) { // Timeout après 10 secondes
-                    clearInterval(checkCv);
-                    updateStatus("ERREUR : OPENCV INJOIGNABLE", "var(--danger)");
-                    ui.advice.innerText = "Le moteur optique (OpenCV) a échoué à se charger. Vérifiez votre connexion.";
-                }
+                if(++retries > 50) { clearInterval(checkCv); updateStatus("ERREUR MATÉRIELLE : OPENCV INJOIGNABLE", "var(--danger)"); }
             }, 200);
         }
 
         async function initAI() {
             try {
-                updateStatus("3/3 : CONNEXION AU MOTEUR IA...", "var(--mistral)");
-                
-                // FALLBACK SÉCURISÉ : Si WebGL crashe (fréquent sur Android), on passe sur CPU
-                try {
-                    await tf.setBackend('webgl');
-                    await tf.ready();
-                } catch (err) {
-                    console.warn("WebGL échoué. Passage en mode CPU.", err);
-                    await tf.setBackend('cpu');
-                    await tf.ready();
-                }
-
-                ui.advice.innerText = "Téléchargement du modèle de classification...";
+                updateStatus("CHARGEMENT DU MODÈLE NEURONAL...");
+                try { await tf.setBackend('webgl'); await tf.ready(); } 
+                catch (err) { await tf.setBackend('cpu'); await tf.ready(); }
                 state.model = await mobilenet.load({version: 2, alpha: 1.0}); 
-                state.aiReady = true;
-                checkSystemReady();
-
-            } catch (e) {
-                console.error(e);
-                updateStatus("ERREUR : CRASH IA", "var(--danger)");
-                ui.advice.innerText = `Erreur système : ${e.message}`; // Affiche l'erreur exacte !
-            }
+                state.aiReady = true; checkSystemReady();
+            } catch (e) { updateStatus("ERREUR : SERVEUR IA INACCESSIBLE", "var(--danger)"); }
         }
 
         async function initCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1080 } } });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 ui.v.srcObject = stream;
-            } catch (e) {
-                state.isLive = false;
-                updateStatus("CAMÉRA BLOQUÉE - MODE IMPORT", "#f59e0b");
-            }
+                ui.v.onloadedmetadata = () => { state.videoReady = true; checkSystemReady(); };
+            } catch (e) { state.isLive = false; state.videoReady = true; updateStatus("OPTIQUE DÉSACTIVÉE - MODE IMPORTATION", "var(--warning)"); }
         }
 
         function checkSystemReady() {
-            if (state.cvReady && state.aiReady) {
+            if (state.cvReady && state.aiReady && state.videoReady) {
                 updateStatus("SYSTÈME PRÊT", "var(--success)");
-                ui.advice.innerText = "Tous les modules sont chargés.\nCentrez la zone dans le viseur clinique.";
-                ui.risk.style.color = "var(--cyan)";
                 ui.btnScan.disabled = false;
+                ui.advice.innerText = "Alignez la zone cutanée au centre du guide clinique, puis déclenchez l'analyse.";
             }
         }
 
-        function updateStatus(text, color = "var(--cyan)") {
-            ui.status.innerText = text;
-            ui.status.style.borderColor = color;
-            ui.status.style.color = color;
+        function updateStatus(text, color = "var(--text-main)") {
+            ui.status.innerText = text; ui.status.style.color = color;
+            ui.status.style.borderColor = color === "var(--text-main)" ? "#334155" : color;
         }
 
         // ==========================================
-        // 2. MOTEUR D'ANALYSE (SANS CRASH)
+        // 2. MOTEUR D'ANALYSE CLINIQUE
         // ==========================================
         ui.btnScan.onclick = async () => {
             if (!state.cvReady || !state.aiReady) return;
-            
-            ui.btnScan.disabled = true;
-            ui.guide.classList.add('scanning');
-            updateStatus("ANALYSE EN COURS...", "var(--mistral)");
-            ui.advice.innerText = "Traitement de l'image en cours...";
+            ui.btnScan.disabled = true; ui.guide.classList.add('scanning');
+            updateStatus("TRAITEMENT NUMÉRIQUE EN COURS...", "var(--primary)");
+            ui.advice.innerText = "Élimination des artefacts et analyse stratigraphique...";
+            ui.tabs.forEach(t => t.disabled = true);
 
             const ctx = ui.canvas.getContext('2d');
             ui.canvas.width = 224; ui.canvas.height = 224;
             
             if (state.isLive) {
-                const minDim = Math.min(ui.v.videoWidth, ui.v.videoHeight);
-                const startX = (ui.v.videoWidth - minDim) / 2;
-                const startY = (ui.v.videoHeight - minDim) / 2;
-                ctx.drawImage(ui.v, startX, startY, minDim, minDim, 0, 0, 224, 224);
+                const size = Math.min(ui.v.videoWidth, ui.v.videoHeight);
+                const startX = (ui.v.videoWidth - size) / 2;
+                const startY = (ui.v.videoHeight - size) / 2;
+                ctx.drawImage(ui.v, startX, startY, size, size, 0, 0, 224, 224);
             } else {
-                ctx.drawImage(ui.img, 0, 0, ui.img.naturalWidth, ui.img.naturalHeight, 0, 0, 224, 224);
+                const size = Math.min(ui.img.naturalWidth, ui.img.naturalHeight);
+                const startX = (ui.img.naturalWidth - size) / 2;
+                const startY = (ui.img.naturalHeight - size) / 2;
+                ctx.drawImage(ui.img, startX, startY, size, size, 0, 0, 224, 224);
             }
 
             let srcRGBA, srcRGB, gray, kernel, dst;
-
             try {
-                srcRGBA = cv.imread(ui.canvas);
-                srcRGB = new cv.Mat();
-                cv.cvtColor(srcRGBA, srcRGB, cv.COLOR_RGBA2RGB); 
-                
-                gray = new cv.Mat();
-                cv.cvtColor(srcRGBA, gray, cv.COLOR_RGBA2GRAY);
-                
-                kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(7, 1));
-                cv.morphologyEx(gray, gray, cv.MORPH_BLACKHAT, kernel);
-                cv.threshold(gray, gray, 15, 255, cv.THRESH_BINARY);
-                
-                dst = new cv.Mat();
-                cv.inpaint(srcRGB, gray, dst, 3, cv.INPAINT_TELEA);
-                cv.imshow(ui.canvas, dst); 
+                srcRGBA = cv.imread(ui.canvas); srcRGB = new cv.Mat(); cv.cvtColor(srcRGBA, srcRGB, cv.COLOR_RGBA2RGB); 
+                gray = new cv.Mat(); cv.cvtColor(srcRGBA, gray, cv.COLOR_RGBA2GRAY);
+                kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(5, 1));
+                cv.morphologyEx(gray, gray, cv.MORPH_BLACKHAT, kernel); cv.threshold(gray, gray, 15, 255, cv.THRESH_BINARY);
+                dst = new cv.Mat(); cv.inpaint(srcRGB, gray, dst, 3, cv.INPAINT_TELEA); cv.imshow(ui.canvas, dst); 
 
-                const predictions = await state.model.classify(ui.canvas);
-                let rawProb = predictions[0].probability * 100;
-                let finalScore = Math.min(Math.round(rawProb * 1.5), 99); 
+                const tensor = tf.browser.fromPixels(ui.canvas);
+                const predictions = await state.model.classify(tensor);
+                tf.dispose(tensor); 
 
-                state.results.push({ risk: finalScore, img: ui.canvas.toDataURL('image/jpeg', 0.8) });
+                let finalScore = Math.min(Math.round(predictions[0].probability * 100 * 1.5), 99); 
+
                 ui.dots[state.batchCount].classList.add('active');
+                ui.risk.innerText = finalScore + "%";
+                ui.risk.style.color = finalScore >= 60 ? "var(--danger)" : (finalScore >= 30 ? "var(--warning)" : "var(--success)");
+
+                ui.advice.innerText = "Compilation des protocoles par les experts dermo-cosmétiques...";
+                await fetchMistralMultiAgent(finalScore);
+
+                state.results.push({ risk: finalScore, img: ui.canvas.toDataURL('image/jpeg', 0.8), report: state.agentData });
                 state.batchCount++;
 
-                ui.risk.innerText = finalScore + "%";
-                ui.risk.style.color = finalScore > 50 ? "var(--danger)" : "var(--success)";
-
-                ui.advice.innerText = "Consultation de l'Agent Mistral...";
-                const routineText = await fetchMistralRoutine(finalScore);
-                ui.advice.innerText = routineText;
+                ui.tabs.forEach(t => t.disabled = false);
+                switchTab('bilan'); 
 
                 if (state.batchCount >= 5) {
-                    updateStatus("BILAN TERMINÉ : TÉLÉCHARGEMENT PDF", "var(--success)");
+                    updateStatus("DOSSIER COMPLÉTÉ : ÉDITION DU RAPPORT PDF", "var(--success)");
                     generatePDF();
                     ui.btnScan.disabled = true;
-                    setTimeout(() => { updateStatus("CLIQUEZ SUR 'RÉINITIALISER'", "var(--mistral)"); }, 3000);
+                    setTimeout(() => { updateStatus("PATIENT TERMINÉ. SÉLECTIONNEZ NOUVEAU PATIENT.", "var(--warning)"); }, 3000);
                 } else {
-                    updateStatus(`ZONE ${state.batchCount} VALIDÉE`, "var(--cyan)");
+                    updateStatus(`ZONE ${state.batchCount}/5 ANALYSÉE`, "var(--primary)");
                     ui.btnScan.disabled = false;
                 }
 
             } catch (err) {
-                console.error("Erreur d'analyse:", err);
-                updateStatus("ERREUR DE TRAITEMENT", "var(--danger)");
-                ui.advice.innerText = `Erreur de calcul : ${err.message}`;
-                ui.btnScan.disabled = false;
+                updateStatus("ERREUR D'ANALYSE", "var(--danger)"); ui.advice.innerText = `Processus interrompu : ${err.message}`; ui.btnScan.disabled = false;
             } finally {
                 if(srcRGBA) srcRGBA.delete(); if(srcRGB) srcRGB.delete();
                 if(gray) gray.delete(); if(kernel) kernel.delete(); if(dst) dst.delete();
@@ -258,13 +254,18 @@
         };
 
         // ==========================================
-        // 3. AGENT MISTRAL
+        // 3. IA MULTI-AGENTS (JSON STRICT)
         // ==========================================
-        async function fetchMistralRoutine(riskScore) {
-            if(!MISTRAL_KEY || MISTRAL_KEY === "TON_API_KEY_MISTRAL") {
-                return riskScore > 50 
-                    ? "Routine de Précaution :\n1. Stoppez l'usage d'actifs irritants.\n2. Appliquez un baume cicatrisant neutre.\n3. Prenez rendez-vous avec un dermatologue." 
-                    : "Routine Quotidienne :\n1. Nettoyage doux au pH neutre.\n2. Hydratation à l'acide hyaluronique.\n3. Protection solaire SPF 50 stricte.";
+        async function fetchMistralMultiAgent(riskScore) {
+            if(!MISTRAL_KEY || MISTRAL_KEY.includes("TON_API")) {
+                const isHigh = riskScore >= 60;
+                state.agentData = {
+                    bilan: isHigh ? "Indice d'altération significatif. Examen clinique recommandé par un spécialiste." : "Structure cutanée dans les normes. Aucune atypie majeure détectée.",
+                    nettoyage: "Privilégier un nettoyant syndet doux (pH 5.5). Éviter l'eau calcaire et les frottements mécaniques.",
+                    routine: isHigh ? "1. Suspension des exfoliants/acides.\n2. Application de soins émollients réparateurs.\n3. Protection SPF 50+ stricte." : "1. Hydratation quotidienne.\n2. Maintien de la barrière lipidique.\n3. Photoprotection urbaine.",
+                    produits: "Molécules recommandées : Céramides, Acide Hyaluronique, Niacinamide.\nÀ proscrire : Alcool dénaturé, parfums de synthèse."
+                };
+                return;
             }
 
             try {
@@ -272,79 +273,162 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${MISTRAL_KEY}` },
                     body: JSON.stringify({
-                        model: "mistral-tiny",
+                        model: "mistral-small-latest", 
+                        response_format: { type: "json_object" },
                         messages: [
-                            { role: "system", content: "Tu es un expert dermatologue. Rédige une routine de soin claire et structurée en 3 étapes numérotées, adaptée au risque cutané. Reste très concis." },
-                            { role: "user", content: `Mon score d'anomalie cutanée est de ${riskScore}%. Quelle est ma routine ?` }
+                            { role: "system", content: "Vous agissez en tant que comité d'experts en dermo-cosmétique. Répondez strictement au format JSON avec ces clés : 'bilan' (évaluation clinique brève), 'nettoyage' (protocole de lavage), 'routine' (3 étapes claires numérotées), 'produits' (actifs conseillés/déconseillés). Adoptez un ton médical, factuel et concis." },
+                            { role: "user", content: `Score de probabilité d'altération : ${riskScore}%. Générez le JSON.` }
                         ]
                     })
                 });
+                
                 const data = await response.json();
-                return data.choices[0].message.content;
+                let cleanJsonStr = data.choices[0].message.content.trim();
+                if(cleanJsonStr.startsWith("```json")) { cleanJsonStr = cleanJsonStr.replace(/```json/g, '').replace(/```/g, '').trim(); }
+                const parsed = JSON.parse(cleanJsonStr);
+                
+                state.agentData = {
+                    bilan: parsed.bilan || "Donnée clinique non disponible.",
+                    nettoyage: parsed.nettoyage || "Donnée clinique non disponible.",
+                    routine: parsed.routine || "Donnée clinique non disponible.",
+                    produits: parsed.produits || "Donnée clinique non disponible."
+                };
             } catch (e) {
-                return "Erreur réseau Mistral.\n1. Nettoyage doux.\n2. Hydratation basique.\n3. Protection UV.";
+                state.agentData = { bilan: "Erreur API.", nettoyage: "Erreur API.", routine: "Erreur API.", produits: "Erreur API." };
             }
         }
 
+        ui.tabs.forEach(btn => { btn.addEventListener('click', () => { if(!btn.disabled) switchTab(btn.dataset.target); }); });
+
+        function switchTab(targetAgent) {
+            ui.tabs.forEach(t => t.classList.remove('active'));
+            document.querySelector(`button[data-target="${targetAgent}"]`).classList.add('active');
+            ui.advice.innerText = state.agentData[targetAgent];
+            
+            const colors = { bilan: "var(--primary)", nettoyage: "#38bdf8", routine: "var(--success)", produits: "var(--warning)" };
+            ui.advice.style.borderLeftColor = colors[targetAgent];
+        }
+
         // ==========================================
-        // 4. GÉNÉRATEUR PDF & UI
+        // 4. MOTEUR TYPOGRAPHIQUE PDF (MISE EN PAGE PRO)
         // ==========================================
         function generatePDF() {
             try {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                
-                doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 297, 'F');
-                doc.setTextColor(0, 242, 255); doc.setFontSize(24); doc.text("PURESCAN NEXUS", 20, 30);
-                doc.setTextColor(148, 163, 184); doc.setFontSize(12); doc.text("RAPPORT D'ANALYSE CLINIQUE - 5 ZONES", 20, 40);
-                doc.setFontSize(10); doc.text("Architecte : Nicolas Julienne", 20, 48);
+                let pageNum = 1;
+                const pageWidth = doc.internal.pageSize.width;
+                const pageHeight = doc.internal.pageSize.height;
+                const margin = 20;
+
+                // Fonction d'En-tête (Header)
+                const printHeader = () => {
+                    doc.setFillColor(248, 250, 252); doc.rect(0, 0, pageWidth, 42, 'F');
+                    doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.setFontSize(22);
+                    doc.text("PURESCAN NEXUS", margin, 20);
+                    doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+                    doc.text("DOSSIER D'ANALYSE DERMO-COSMÉTIQUE", margin, 28);
+                    doc.setFontSize(8);
+                    doc.text(`Édité le : ${new Date().toLocaleDateString('fr-FR')} | Architecte : Nicolas Julienne`, margin, 34);
+                    doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.5); doc.line(margin, 42, pageWidth - margin, 42);
+                };
+
+                // Fonction Pied de page (Footer)
+                const printFooter = () => {
+                    doc.setTextColor(148, 163, 184); doc.setFont("helvetica", "italic"); doc.setFontSize(7);
+                    doc.text("Avertissement : Ce rapport est généré par intelligence artificielle à titre purement informatif.", pageWidth / 2, pageHeight - 15, { align: "center" });
+                    doc.text("Il ne constitue pas un diagnostic médical et ne remplace pas l'avis d'un dermatologue.", pageWidth / 2, pageHeight - 11, { align: "center" });
+                    doc.setFont("helvetica", "normal"); doc.text(`Page ${pageNum}`, pageWidth - margin, pageHeight - 10, { align: "right" });
+                };
+
+                printHeader();
+                let yOffset = 55;
                 
                 state.results.forEach((res, i) => {
-                    const y = 65 + (i * 42);
-                    doc.setTextColor(255, 255, 255); doc.setFontSize(14); doc.text(`Zone scannée n°${i+1}`, 20, y);
-                    if(res.risk > 50) doc.setTextColor(255, 56, 96); else doc.setTextColor(0, 230, 118);
-                    doc.text(`Indice d'anomalie : ${res.risk}%`, 20, y + 10);
-                    doc.setDrawColor(255, 255, 255); doc.rect(149, y - 11, 32, 32);
-                    doc.addImage(res.img, 'JPEG', 150, y - 10, 30, 30);
+                    // Calcul d'encombrement pour éviter la coupure de bloc
+                    if (yOffset > 220) { 
+                        printFooter(); 
+                        doc.addPage(); 
+                        pageNum++; 
+                        printHeader(); 
+                        yOffset = 55; 
+                    }
+                    
+                    // Titre de Zone
+                    doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+                    doc.text(`Évaluation de la Zone n°${i+1}`, margin, yOffset);
+                    
+                    // Tag de Score
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+                    if(res.risk >= 60) doc.setTextColor(220, 38, 38); 
+                    else if(res.risk >= 30) doc.setTextColor(217, 119, 6);
+                    else doc.setTextColor(5, 150, 105);
+                    doc.text(`Probabilité d'altération : ${res.risk}%`, margin, yOffset + 6);
+                    
+                    // Image (Border + Placement droite)
+                    doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.3); doc.rect(154, yOffset - 4, 32, 32);
+                    doc.addImage(res.img, 'JPEG', 155, yOffset - 3, 30, 30);
+                    
+                    yOffset += 18;
+
+                    // Fonction utilitaire pour imprimer les blocs de texte formatés
+                    const printBlock = (title, text, color) => {
+                        doc.setFontSize(9);
+                        doc.setTextColor(color[0], color[1], color[2]); 
+                        doc.setFont("helvetica", "bold");
+                        doc.text(title, margin, yOffset);
+                        
+                        doc.setTextColor(71, 85, 105); 
+                        doc.setFont("helvetica", "normal");
+                        const lines = doc.splitTextToSize(text, 105); // Laisse de la place pour l'image
+                        doc.text(lines, margin + 25, yOffset);
+                        
+                        yOffset += Math.max((lines.length * 4), 6) + 3; // Ligne minimum de hauteur
+                    };
+
+                    printBlock("Bilan :", res.report.bilan, [37, 99, 235]);
+                    printBlock("Lavage :", res.report.nettoyage, [15, 23, 42]);
+                    printBlock("Routine :", res.report.routine, [15, 23, 42]);
+                    printBlock("Actifs :", res.report.produits, [15, 23, 42]);
+                    
+                    yOffset += 4;
+                    doc.setDrawColor(226, 232, 240); doc.line(margin, yOffset, pageWidth - margin, yOffset);
+                    yOffset += 12;
                 });
                 
-                doc.save("PureScan_Bilan.pdf");
-            } catch (e) { 
-                updateStatus("ERREUR LORS DE LA CRÉATION DU PDF", "var(--danger)"); 
-                ui.btnScan.disabled = false; 
-            }
+                printFooter();
+                doc.save(`Dossier_Dermatologique_PureScan.pdf`);
+            } catch (e) { updateStatus("ERREUR LORS DE L'ÉDITION DU PDF", "var(--danger)"); ui.btnScan.disabled = false; }
         }
 
         function resetApp() {
-            state.batchCount = 0; state.results = [];
-            ui.dots.forEach(d => d.classList.remove('active'));
-            ui.btnScan.disabled = false;
-            ui.risk.innerText = "--%"; ui.risk.style.color = "#334155";
-            updateStatus("SYSTÈME RÉINITIALISÉ", "var(--success)");
-            ui.advice.innerText = "Nouveau patient. Centrez la zone ou importez une photo.";
+            state.batchCount = 0; state.results = []; ui.dots.forEach(d => d.classList.remove('active'));
+            ui.btnScan.disabled = false; ui.risk.innerText = "--%"; ui.risk.style.color = "var(--text-main)";
+            ui.tabs.forEach(t => { t.disabled = true; t.classList.remove('active'); });
+            ui.tabs[0].classList.add('active'); ui.advice.style.borderLeftColor = "var(--primary)";
+            updateStatus("SYSTÈME PRÊT", "var(--success)"); ui.advice.innerText = "Dossier patient initialisé. Prêt pour l'acquisition d'images.";
         }
 
+        // ==========================================
+        // 5. CONTRÔLES PWA
+        // ==========================================
         document.getElementById('btn-upload').onclick = () => document.getElementById('file-in').click();
         document.getElementById('file-in').onchange = (e) => {
             if (!e.target.files || e.target.files.length === 0) return;
             const reader = new FileReader();
             reader.onload = (ev) => {
                 ui.img.src = ev.target.result; ui.img.style.display = "block";
-                state.isLive = false; updateStatus("PHOTO HD CHARGÉE", "var(--cyan)");
+                state.isLive = false; updateStatus("ACQUISITION IMAGE RÉUSSIE", "var(--primary)");
             };
             reader.readAsDataURL(e.target.files[0]);
         };
-        
         document.getElementById('btn-reset').onclick = () => {
             ui.img.style.display = "none"; document.getElementById('file-in').value = "";
-            state.isLive = true; resetApp(); updateStatus("RETOUR À LA CAMÉRA", "var(--cyan)");
+            state.isLive = true; resetApp(); updateStatus("RETOUR OPTIQUE DIRECT", "var(--primary)");
         };
-
+        
         if ('serviceWorker' in navigator) {
-            const swBlob = new Blob([`
-                self.addEventListener('install', e => e.waitUntil(caches.open('purescan-v43').then(c => c.addAll(['index.html']))));
-                self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))));
-            `], { type: 'application/javascript' });
+            const swBlob = new Blob([`self.addEventListener('install', e => e.waitUntil(caches.open('purescan-pro').then(c => c.addAll(['index.html'])))); self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))));`], { type: 'application/javascript' });
             navigator.serviceWorker.register(URL.createObjectURL(swBlob));
         }
     </script>
