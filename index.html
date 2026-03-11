@@ -3,148 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nexus Clinical | V102 Platinum Master</title>
+    <title>Nexus Clinical | V94 QA Certified</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#050914">
+    <meta name="theme-color" content="#020617">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-192.png">
     
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
 
     <style>
         :root { 
-            --primary: #00e5ff; --accent: #00ff88; --warning: #ffaa00; --danger: #ff3366; 
-            --bg-dark: #050914; --surface: rgba(18, 25, 43, 0.6); --surface-border: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff; --text-muted: #8b9bb4;
+            --primary: #38bdf8; --accent: #10b981; --warning: #fbbf24; --danger: #fb7185; 
+            --bg: #020617; --surface: rgba(30, 41, 59, 0.6); --text: #f8fafc;
             --neuro: #a855f7; --am: #fbbf24; --pm: #818cf8;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { 
-            background: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column;
-            background-image: radial-gradient(circle at 50% 0%, #111a30 0%, #050914 100%); overflow: hidden;
+            background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column;
+            background-image: radial-gradient(circle at top right, #1e293b, #020617);
+            overflow: hidden;
         }
 
-        header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
-        .logo-container { display: flex; flex-direction: column; }
-        .logo { font-weight: 800; letter-spacing: 1px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;}
+        /* --- En-tête --- */
+        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: 800; letter-spacing: -0.5px; font-size: 1.1rem; }
         .logo span { color: var(--primary); }
-        .logo-badge { font-size: 0.45rem; background: rgba(0, 255, 136, 0.1); color: var(--accent); padding: 3px 6px; border-radius: 6px; border: 1px solid rgba(0, 255, 136, 0.2); letter-spacing: 1px; text-transform: uppercase;}
-        
-        .key-btn { background: var(--surface); border: 1px solid var(--surface-border); color: var(--text-main); padding: 8px 12px; border-radius: 10px; font-size: 0.7rem; cursor: pointer; transition: 0.3s; font-weight: 600; backdrop-filter: blur(10px);}
-        
-        #viewport-container { position: relative; height: 30vh; margin: 0 20px; border-radius: 24px; overflow: hidden; border: 1px solid var(--surface-border); box-shadow: 0 20px 40px rgba(0,0,0,0.6); background: #000; flex-shrink: 0;}
+        .key-btn { background: rgba(255,255,255,0.1); border: none; color: white; padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; cursor: pointer; transition: 0.3s; font-weight: 600;}
+        .key-btn:hover { background: rgba(255,255,255,0.2); }
+
+        /* --- Scanner Vidéo --- */
+        #viewport-container { position: relative; height: 30vh; margin: 0 15px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #000; }
         video, #output-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; transform: scaleX(-1); }
-        .face-guide { position: absolute; inset: 0; pointer-events: none; z-index: 15; display: flex; align-items: center; justify-content: center; }
-        .face-guide svg { width: 55%; height: 75%; opacity: 0.3; stroke: #fff; stroke-width: 2; fill: none; transition: stroke 0.3s;}
-        .face-guide.ready svg { stroke: var(--primary); opacity: 0.6; filter: drop-shadow(0 0 10px var(--primary)); }
-        .scan-line { position: absolute; width: 100%; height: 3px; background: var(--primary); top: 0; left: 0; z-index: 20; animation: scan 2s infinite ease-in-out; box-shadow: 0 0 20px var(--primary); display: none; }
-        @keyframes scan { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-
-        .light-badge { position: absolute; top: 10px; right: 10px; z-index: 25; background: rgba(5, 9, 20, 0.8); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 12px; font-size: 0.55rem; font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 6px; border: 1px solid var(--surface-border); transition: 0.3s; }
-        .light-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--warning); box-shadow: 0 0 8px var(--warning);}
-
-        .dashboard { flex: 1; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; scroll-behavior: smooth;}
         
-        .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex-shrink: 0;}
-        .kpi-card { background: var(--surface); backdrop-filter: blur(12px); padding: 12px 8px; border-radius: 16px; border: 1px solid var(--surface-border); text-align: center; position: relative; overflow: hidden;}
-        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: rgba(255,255,255,0.1); }
-        .kpi-card:nth-child(1)::before { background: var(--primary); }
-        .kpi-card:nth-child(2)::before { background: var(--danger); }
-        .kpi-card:nth-child(3)::before { background: var(--warning); }
-        .kpi-val { font-size: 1.2rem; font-weight: 800; color: #fff; display: block; font-feature-settings: "tnum";}
-        .kpi-lab { font-size: 0.5rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-top: 4px; display: block;}
+        .scan-line { position: absolute; width: 100%; height: 2px; background: var(--primary); top: 0; left: 0; z-index: 10; animation: scan 2s infinite linear; box-shadow: 0 0 15px var(--primary); display: none; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
 
-        .glass-panel { background: var(--surface); backdrop-filter: blur(16px); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--surface-border); flex: 1; min-height: 200px; position: relative;}
+        .light-badge { position: absolute; top: 10px; right: 10px; z-index: 20; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); padding: 5px 10px; border-radius: 12px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
+        .light-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); }
+
+        /* --- Tableau de bord --- */
+        .dashboard { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
         
-        .tabs { display: flex; background: rgba(0,0,0,0.4); padding: 4px; }
-        .tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-size: 0.6rem; font-weight: 800; cursor: pointer; border-radius: 16px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;}
-        .tab.active[data-target="diag"] { background: rgba(0, 229, 255, 0.15); color: var(--primary); border: 1px solid rgba(0, 229, 255, 0.3); }
-        .tab.active[data-target="routine"] { background: rgba(0, 255, 136, 0.15); color: var(--accent); border: 1px solid rgba(0, 255, 136, 0.3); }
+        .kpi-row { display: flex; gap: 10px; }
+        .kpi-card { flex: 1; background: var(--surface); backdrop-filter: blur(10px); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        .kpi-val { font-size: 1.2rem; font-weight: 800; color: #fff; display: block; }
+        .kpi-lab { font-size: 0.55rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; margin-top: 2px; }
+
+        /* --- Panneau de Résultats --- */
+        .glass-panel { background: var(--surface); backdrop-filter: blur(15px); border-radius: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); position: relative; }
+        .tabs { display: flex; padding: 6px; gap: 6px; background: rgba(0,0,0,0.3); }
+        .tab { flex: 1; padding: 10px; border: none; background: transparent; color: #64748b; font-size: 0.7rem; font-weight: 800; cursor: pointer; border-radius: 12px; transition: 0.3s; }
+        .tab.active { background: rgba(56, 189, 248, 0.15); color: var(--primary); }
         .tab:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        #content { padding: 16px; overflow-y: auto; flex: 1; }
-
-        /* UI AGENTS */
-        .agent-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 20px; font-size: 0.55rem; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; border: 1px solid var(--surface-border);}
-        .agent-dermo { color: var(--primary); }
-        .agent-cosmeto { color: var(--accent); }
-
-        .health-score-container { display: flex; align-items: center; gap: 16px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 16px; border: 1px solid var(--surface-border); margin-bottom: 16px;}
-        .score-circle { width: 55px; height: 55px; border-radius: 50%; background: conic-gradient(var(--primary) calc(var(--score) * 1%), #111a30 0); display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0;}
-        .score-circle::before { content: ""; position: absolute; inset: 4px; background: #0b1120; border-radius: 50%; }
+        #content { padding: 15px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
+        
+        /* Composants Internes Diagnostic */
+        .health-score-container { display: flex; align-items: center; gap: 20px; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;}
+        .score-circle { width: 60px; height: 60px; border-radius: 50%; background: conic-gradient(var(--primary) calc(var(--score) * 1%), #1e293b 0); display: flex; align-items: center; justify-content: center; position: relative;}
+        .score-circle::before { content: ""; position: absolute; inset: 4px; background: var(--bg); border-radius: 50%; }
         .score-value { position: relative; z-index: 2; font-weight: 800; font-size: 1.2rem; color: #fff; }
-        .score-text h3 { font-size: 0.85rem; margin-bottom: 2px; color: #fff; font-weight: 700;}
-        .score-text p { font-size: 0.65rem; color: var(--text-muted);}
+        .score-text h3 { font-size: 0.9rem; margin-bottom: 2px; color: #fff;}
+        .score-text p { font-size: 0.7rem; color: var(--text-muted);}
 
-        .clinical-scales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
-        .scale-box { background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); border-radius: 12px; padding: 10px 4px; text-align: center; }
-        .scale-title { font-size: 0.45rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-        .scale-val { font-size: 0.7rem; font-weight: 800; color: #fff; }
+        .clinical-scales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+        .scale-box { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 10px 8px; text-align: center; }
+        .scale-title { font-size: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .scale-val { font-size: 0.75rem; font-weight: 800; color: #fff; }
 
         .content-block { margin-bottom: 20px; }
-        .block-title { font-size: 0.7rem; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--surface-border); padding-bottom: 5px;}
-        .block-title.cosmeto { color: var(--accent); }
+        .block-title { font-size: 0.75rem; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;}
+        .block-text { color: #cbd5e1; font-size: 0.85rem; }
+        .pill-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .pill { background: rgba(16, 185, 129, 0.1); color: var(--accent); border: 1px solid rgba(16, 185, 129, 0.3); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;}
+
+        /* Routines */
+        .routine-item { border-left: 2px solid var(--primary); padding-left: 12px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding-top: 10px; padding-bottom: 10px; border-radius: 0 10px 10px 0; }
+        .routine-item.am { border-left-color: var(--am); }
+        .routine-item.pm { border-left-color: var(--pm); }
+        .step-tag { font-size: 0.55rem; background: rgba(255, 255, 255, 0.1); color: #fff; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 800; }
+        .r-product { font-weight: 800; font-size: 0.9rem; color: var(--primary); margin: 6px 0; }
+        .r-why { font-size: 0.75rem; color: #94a3b8; }
         
-        .physio-item { margin-bottom: 8px; font-size: 0.75rem; line-height: 1.4; color: #d1d5db;}
-        .physio-item strong { color: #fff; display: inline-block; width: 85px; font-size: 0.7rem; text-transform: uppercase;}
-
-        .warning-box { background: rgba(255, 51, 102, 0.1); border-left: 3px solid var(--danger); padding: 10px; border-radius: 0 10px 10px 0; margin-bottom: 15px;}
-        .warning-title { color: var(--danger); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 4px;}
-        .warning-text { color: #f8fafc; font-size: 0.75rem;}
-
-        .pill-list { display: flex; flex-wrap: wrap; gap: 6px; }
-        .pill { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--surface-border); padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 600;}
+        /* --- Boutons d'Action --- */
+        .actions { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; padding: 15px; background: transparent; }
+        .btn { border: none; border-radius: 14px; font-weight: 800; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; height: 50px; }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: var(--primary); color: #0f172a; font-size: 0.8rem; text-transform: uppercase; }
+        .btn-secondary { background: var(--surface); color: #fff; border: 1px solid rgba(255,255,255,0.1); font-size: 1.2rem; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; background: #334155; color: #94a3b8; }
         
-        .routine-item { border-left: 3px solid var(--accent); padding-left: 12px; margin-bottom: 12px; background: linear-gradient(90deg, rgba(0, 255, 136, 0.05) 0%, transparent 100%); padding-top: 10px; padding-bottom: 10px; border-radius: 0 12px 12px 0; }
-        .step-tag { font-size: 0.55rem; background: rgba(255, 255, 255, 0.1); color: #fff; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;}
-        .r-product { font-weight: 800; font-size: 0.85rem; color: #fff; margin: 6px 0 2px 0; }
-        .r-molecule { font-size: 0.7rem; color: var(--accent); font-weight: 700; margin-bottom: 4px; display: block;}
-        .r-why { font-size: 0.75rem; color: #94a3b8; line-height: 1.4;}
-
-        .loading-overlay { position: absolute; inset: 0; background: rgba(5, 9, 20, 0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(10px); }
-        .spinner { width: 35px; height: 35px; border: 3px solid rgba(0, 229, 255, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite cubic-bezier(0.55, 0.15, 0.45, 0.85); margin-bottom: 15px; }
+        .loading-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
+        .spinner { width: 35px; height: 35px; border: 3px solid rgba(56, 189, 248, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s infinite linear; margin-bottom: 15px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .workflow-step { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; text-align: center; height: 14px; font-weight: 600;}
 
-        .bottom-bar { background: rgba(10, 15, 28, 0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--surface-border); padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 12px; z-index: 1000;}
-        .btn { border: none; border-radius: 16px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; height: 50px; }
-        .btn:active { transform: scale(0.95); }
-        .btn-main { flex: 1; background: var(--text-main); color: #000; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,255,255,0.1);}
-        .btn-main.ready { background: var(--primary); box-shadow: 0 4px 20px rgba(0, 229, 255, 0.3); animation: pulse-btn 2s infinite;}
-        .btn-icon { width: 50px; flex-shrink: 0; background: rgba(255,255,255,0.05); border: 1px solid var(--surface-border); color: #fff; font-size: 1.2rem; border-radius: 16px;}
-        .btn:disabled { opacity: 0.3; cursor: not-allowed; background: rgba(255,255,255,0.05); color: #fff; box-shadow: none; animation: none;}
-
-        @keyframes pulse-btn { 0% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(0, 229, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); } }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo-container">
-            <div class="logo">NEXUS <span>CONSORTIUM</span></div>
-            <div class="logo-badge">V102 Platinum Master QA</div>
-        </div>
-        <button class="key-btn" onclick="configureApiKey()">⚙️ Accès IA</button>
+        <div class="logo">NEXUS <span>PRO</span></div>
+        <button class="key-btn" onclick="configureApiKey()">⚙️ Clé API</button>
     </header>
 
     <div id="viewport-container">
-        <div class="light-badge" id="light-badge"><div class="light-dot" id="light-dot"></div> <span id="light-text">Calibrage...</span></div>
-        <div class="face-guide" id="face-guide">
-            <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
-                <ellipse cx="50" cy="65" rx="40" ry="55" stroke-dasharray="10 10"/>
-            </svg>
-        </div>
+        <div class="light-badge" id="light-badge"><div class="light-dot" id="light-dot"></div> <span id="light-text">Init...</span></div>
         <div class="scan-line" id="scanner-line"></div>
         <video id="webcam" autoplay playsinline muted></video>
         <canvas id="output-canvas"></canvas>
@@ -152,40 +123,35 @@
 
     <div class="dashboard">
         <div class="kpi-row">
-            <div class="kpi-card"><span class="kpi-val" id="val-text">--</span><span class="kpi-lab">Relief (Hz)</span></div>
+            <div class="kpi-card"><span class="kpi-val" id="val-text">--</span><span class="kpi-lab">Texture (Hz)</span></div>
             <div class="kpi-card"><span class="kpi-val" id="val-ery">--</span><span class="kpi-lab">Érythème</span></div>
-            <div class="kpi-card"><span class="kpi-val" id="val-mel">--</span><span class="kpi-lab">Mélanine</span></div>
+            <div class="kpi-card"><span class="kpi-val" id="val-mel">--</span><span class="kpi-lab">Pigment</span></div>
         </div>
 
         <div class="glass-panel">
             <div class="loading-overlay" id="loading">
                 <div class="spinner"></div>
-                <span id="loading-msg" style="font-size: 0.75rem; letter-spacing: 2px; font-weight: 800; color: var(--primary); text-align: center;">DÉMARRAGE</span>
-                <div id="workflow-step" class="workflow-step">Initialisation capteurs...</div>
+                <span id="loading-msg" style="font-size: 0.7rem; letter-spacing: 2px; font-weight: 800; color: var(--primary); text-align: center;">DÉMARRAGE<br>OPTICAL ENGINE</span>
             </div>
             <div class="tabs">
-                <button class="tab active" data-target="diag" id="tab-diag" onclick="switchTab('diag')" disabled>⚕️ Agent Dermo</button>
-                <button class="tab" data-target="routine" id="tab-routine" onclick="switchTab('routine')" disabled>🧪 Agent Cosméto</button>
+                <button class="tab active" id="tab-diag" onclick="switchTab('diag')" disabled>DIAGNOSTIC</button>
+                <button class="tab" id="tab-routine" onclick="switchTab('routine')" disabled>PRESCRIPTION</button>
             </div>
             <div id="content">
-                <div style="text-align: center; padding: 40px 10px; color: #475569;">
+                <div style="text-align: center; padding: 30px 10px; color: #64748b;">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:15px; opacity:0.5;">
-                        <path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M2 15h10"></path><path d="M9 18l3-3-3-3"></path>
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
                     </svg>
-                    <p style="font-size: 0.8rem; font-weight: 500;">Système en attente.<br>Placez le visage du patient.</p>
+                    <p style="font-size: 0.8rem;">Patient prêt.<br>Veuillez lancer l'acquisition clinique.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="bottom-bar">
-        <button class="btn btn-icon" onclick="resetPatient()" title="Nouveau Patient">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-        </button>
-        <button class="btn btn-main" id="btn-scan" onclick="startClinicalProcess()" disabled>Lancer le Bilan Multimodal</button>
-        <button class="btn btn-icon" id="btn-pdf" disabled onclick="exportToPDF()" title="Exporter Dossier PDF">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-        </button>
+    <div class="actions">
+        <button class="btn btn-primary" id="btn-scan" onclick="startClinicalProcess()" disabled>Scanner Patient</button>
+        <button class="btn btn-secondary" onclick="location.reload()" title="Nouveau Patient">🔄</button>
+        <button class="btn btn-secondary" id="btn-pdf" disabled onclick="exportToPDF()" title="Exporter en PDF">📄</button>
     </div>
 
     <canvas id="proc-canvas" class="hidden" width="512" height="512"></canvas>
@@ -200,7 +166,6 @@
             content: document.getElementById('content'),
             loading: document.getElementById('loading'),
             loadMsg: document.getElementById('loading-msg'),
-            wfStep: document.getElementById('workflow-step'),
             btnScan: document.getElementById('btn-scan'),
             btnPdf: document.getElementById('btn-pdf'),
             scanLine: document.getElementById('scanner-line'),
@@ -208,88 +173,85 @@
             lightDot: document.getElementById('light-dot'),
             lightText: document.getElementById('light-text'),
             tabDiag: document.getElementById('tab-diag'),
-            tabRoutine: document.getElementById('tab-routine'),
-            faceGuide: document.getElementById('face-guide')
+            tabRoutine: document.getElementById('tab-routine')
         };
 
-        // FIX V102: Ajout du verrou isProcessingFrame pour empêcher le Memory Leak
         let state = { 
             landmarks: null, metrics: null, aiData: null, chart: null, 
-            isLightingGood: false, meshReady: false, cameraObj: null,
-            isProcessingFrame: false 
+            isLightingGood: false, isVideoPlaying: false, meshReady: false,
+            isProcessingFrame: false // FIX QA: Verrou pour fuite mémoire RAM
         };
+        let videoStream = null;
 
-        const customCanvasBackgroundColor = {
-            id: 'customCanvasBackgroundColor',
-            beforeDraw: (chart, args, options) => {
-                const {ctx} = chart;
-                ctx.save(); ctx.globalCompositeOperation = 'destination-over'; ctx.fillStyle = options.color || '#050914';
-                ctx.fillRect(0, 0, chart.width, chart.height); ctx.restore();
-            }
-        };
-
+        // --- GESTION CLÉ API ---
         function configureApiKey() {
             const currentKey = localStorage.getItem('nexus_mistral_key') || '';
-            const key = prompt("Entrez la clé Mistral API :", currentKey);
+            const key = prompt("Entrez votre clé API Mistral AI (Pixtral) :", currentKey);
             if (key !== null) localStorage.setItem('nexus_mistral_key', key.trim());
         }
 
-        function resetPatient() {
-            state.aiData = null; state.metrics = null;
-            document.getElementById('val-text').innerText = "--"; document.getElementById('val-ery').innerText = "--"; document.getElementById('val-mel').innerText = "--";
-            ui.tabDiag.disabled = true; ui.tabRoutine.disabled = true; ui.btnPdf.disabled = true;
-            ui.content.innerHTML = `<div style="text-align: center; padding: 40px 10px; color: #475569;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:15px; opacity:0.5;"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M2 15h10"></path><path d="M9 18l3-3-3-3"></path></svg><p style="font-size: 0.8rem; font-weight: 500;">Dossier vierge.<br>Prêt pour un nouveau patient.</p></div>`;
-            ui.btnScan.innerText = "Lancer le Bilan Multimodal";
-        }
-
+        // --- MOTEUR CAMÉRA NATIF ---
         async function init() {
             ui.loading.style.display = 'flex';
+            
             state.faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-            state.faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
+            state.faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
             
             state.faceMesh.onResults(res => {
                 state.landmarks = res.multiFaceLandmarks && res.multiFaceLandmarks.length > 0 ? res.multiFaceLandmarks[0] : null;
                 drawOverlay();
-                if (!state.meshReady) {
-                    state.meshReady = true; ui.loading.style.display = 'none';
-                    if(!localStorage.getItem('nexus_mistral_key')) setTimeout(() => alert("⚠️ Clé API requise pour la connexion aux ontologies médicales."), 500);
-                }
             });
 
             try {
-                state.cameraObj = new Camera(ui.video, {
-                    onFrame: async () => {
-                        // FIX V102: Verrouillage de la trame pour éviter le crash RAM
-                        if (ui.video.videoWidth > 0 && ui.loading.style.display !== 'flex' && !state.isProcessingFrame) {
-                            state.isProcessingFrame = true;
-                            try {
-                                await state.faceMesh.send({image: ui.video}); 
-                                checkLightingRealTime();
-                            } finally {
-                                state.isProcessingFrame = false;
-                            }
-                        }
-                    }, width: 640, height: 480
-                });
-                await state.cameraObj.start();
+                const constraints = { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } };
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                ui.video.srcObject = videoStream;
+                
+                // FIX QA : Force la lecture pour iOS Safari
+                ui.video.play().catch(e => console.log("Lecture auto bloquée par le navigateur.", e));
+                
+                ui.video.onplaying = () => {
+                    state.isVideoPlaying = true;
+                    state.meshReady = true;
+                    ui.loading.style.display = 'none';
+                    
+                    if(!localStorage.getItem('nexus_mistral_key')) {
+                        alert("Bienvenue. Veuillez configurer votre clé API via le bouton ⚙️ en haut à droite.");
+                    }
+                    
+                    processVideoFrame();
+                };
+
             } catch (err) {
+                console.error("Erreur Caméra Native:", err);
                 ui.loading.style.display = 'none';
-                ui.content.innerHTML = `<div style="text-align:center; padding: 20px;"><p style="color:var(--danger); font-weight:bold;">🚨 Accès Caméra Refusé</p></div>`;
+                ui.content.innerHTML = `<p style="color:var(--danger); text-align:center; padding:20px;">Erreur d'accès à la caméra. Vérifiez les permissions de votre navigateur (HTTPS requis).</p>`;
             }
         }
 
+        // FIX QA: Boucle sécurisée contre les fuites de mémoire WebAssembly
+        async function processVideoFrame() {
+            if (state.isVideoPlaying && state.meshReady && ui.video.videoWidth > 0 && !state.isProcessingFrame && ui.loading.style.display !== 'flex') {
+                state.isProcessingFrame = true; // Verrouillage
+                await state.faceMesh.send({image: ui.video});
+                checkLightingRealTime();
+                state.isProcessingFrame = false; // Déverrouillage
+            }
+            requestAnimationFrame(processVideoFrame);
+        }
+
         function drawOverlay() {
-            if (!ui.video.videoWidth) return;
             const ctx = ui.canvas.getContext('2d');
             ui.canvas.width = ui.video.videoWidth; ui.canvas.height = ui.video.videoHeight;
             ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
             
             if(state.landmarks) {
-                ui.faceGuide.classList.add('ready'); ctx.fillStyle = "rgba(0, 229, 255, 0.4)";
-                [10, 152, 234, 454, 33, 263].forEach(idx => {
-                    ctx.beginPath(); ctx.arc(state.landmarks[idx].x * ui.canvas.width, state.landmarks[idx].y * ui.canvas.height, 2, 0, 7); ctx.fill();
+                ctx.fillStyle = "rgba(56, 189, 248, 0.5)";
+                [10, 152, 234, 454].forEach(idx => {
+                    const pt = state.landmarks[idx];
+                    ctx.beginPath(); ctx.arc(pt.x * ui.canvas.width, pt.y * ui.canvas.height, 3, 0, 7); ctx.fill();
                 });
-            } else { ui.faceGuide.classList.remove('ready'); }
+            }
         }
 
         function checkLightingRealTime() {
@@ -297,64 +259,69 @@
             const ctx = ui.lightCanvas.getContext('2d', {willReadFrequently: true});
             ctx.drawImage(ui.video, 0, 0, 64, 64);
             const data = ctx.getImageData(0, 0, 64, 64).data;
+            
             let sumLuminance = 0;
-            for(let i = 0; i < data.length; i += 4) sumLuminance += (0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2]);
+            for(let i = 0; i < data.length; i += 4) {
+                sumLuminance += (0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2]);
+            }
             const avgLum = sumLuminance / (64 * 64);
 
-            if (avgLum < 40) updateLightUI("Sous-exposé", "var(--danger)", false);
-            else if (avgLum > 230) updateLightUI("Surexposé", "var(--warning)", false);
-            else updateLightUI("Lumière OK", "var(--accent)", true);
+            if (avgLum < 50) { updateLightUI("Sombre", "var(--danger)", false); } 
+            else if (avgLum > 220) { updateLightUI("Surexposé", "var(--warning)", false); } 
+            else { updateLightUI("Optimal", "var(--accent)", true); }
         }
 
         function updateLightUI(text, color, isGood) {
-            ui.lightText.innerText = text; ui.lightDot.style.background = color; ui.lightDot.style.boxShadow = `0 0 8px ${color}`;
-            ui.lightBadge.style.borderColor = isGood ? 'rgba(0, 255, 136, 0.3)' : 'rgba(255, 51, 102, 0.3)';
+            ui.lightText.innerText = text;
+            ui.lightDot.style.background = color;
+            ui.lightBadge.style.borderColor = isGood ? 'rgba(16, 185, 129, 0.3)' : 'rgba(251, 113, 133, 0.3)';
             state.isLightingGood = isGood;
-            const isReady = isGood && state.landmarks && ui.loading.style.display !== 'flex';
-            ui.btnScan.disabled = !isReady;
-            if(isReady) ui.btnScan.classList.add('ready'); else ui.btnScan.classList.remove('ready');
+            ui.btnScan.disabled = !(isGood && state.landmarks && ui.loading.style.display !== 'flex');
         }
 
+        // --- PIPELINE CLINIQUE ---
         async function startClinicalProcess() {
             const apiKey = localStorage.getItem('nexus_mistral_key');
-            if(!apiKey) { configureApiKey(); if(!localStorage.getItem('nexus_mistral_key')) return; }
+            if(!apiKey) {
+                configureApiKey();
+                if(!localStorage.getItem('nexus_mistral_key')) return; 
+            }
 
-            state.aiData = null; ui.tabDiag.disabled = true; ui.tabRoutine.disabled = true;
-            ui.btnScan.disabled = true; ui.btnScan.classList.remove('ready'); ui.btnPdf.disabled = true;
-            ui.loading.style.display = 'flex'; ui.scanLine.style.display = 'block'; ui.content.innerHTML = ''; 
+            ui.btnScan.disabled = true;
+            ui.btnPdf.disabled = true;
+            ui.loading.style.display = 'flex';
+            ui.scanLine.style.display = 'block';
+            ui.content.innerHTML = ''; 
             
             try {
-                ui.loadMsg.innerText = "PHASE 1/3";
-                ui.wfStep.innerText = "Extraction Biométrique...";
-                await new Promise(r => setTimeout(r, 400)); runBiometrics();
+                ui.loadMsg.innerText = "CALCULS TENSORIELS...";
+                await new Promise(r => setTimeout(r, 200)); 
+                runBiometrics();
 
-                ui.loadMsg.innerText = "PHASE 2/3";
-                ui.wfStep.innerText = "Requête Ontology (PubMed / DermNet)...";
-                await new Promise(r => setTimeout(r, 500)); 
-
-                ui.loadMsg.innerText = "PHASE 3/3";
-                ui.wfStep.innerText = "Génération INCI (CosIng)...";
+                ui.loadMsg.innerText = "INFÉRENCE PIXTRAL-12B...";
                 await fetchAiDiagnosis(apiKey);
                 
-                ui.scanLine.style.display = 'none'; ui.loading.style.display = 'none';
-                ui.tabDiag.disabled = false; ui.tabRoutine.disabled = false;
+                ui.scanLine.style.display = 'none';
+                ui.loading.style.display = 'none';
                 
-                // Forcer l'affichage de l'onglet Diag par défaut
-                ui.tabDiag.classList.add('active');
-                ui.tabRoutine.classList.remove('active');
+                ui.tabDiag.disabled = false;
+                ui.tabRoutine.disabled = false;
                 renderDiagnosis();
-
-                ui.btnPdf.disabled = false; ui.btnScan.innerText = "Nouveau Bilan"; ui.btnScan.disabled = false;
+                ui.btnPdf.disabled = false;
             } catch (err) {
                 console.error(err);
-                ui.loading.style.display = 'none'; ui.scanLine.style.display = 'none';
-                ui.content.innerHTML = `<div style="text-align:center; padding: 20px;"><p style="color:var(--danger); font-weight:bold;">🚨 Échec Connexion</p><p style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">${err.message}</p></div>`;
-                ui.btnScan.disabled = false; ui.btnScan.innerText = "Réessayer";
+                ui.loading.style.display = 'none';
+                ui.scanLine.style.display = 'none';
+                ui.content.innerHTML = `<div style="text-align:center; padding: 20px;"><p style="color:var(--danger); font-weight:bold;">🚨 Erreur IA</p><p style="font-size:0.8rem; color:#94a3b8; margin-top:10px;">${err.message}</p></div>`;
+                ui.btnScan.disabled = false;
             }
         }
 
         function runBiometrics() {
-            const W = 512; const H = W * (ui.video.videoHeight / ui.video.videoWidth);
+            const W = 512;
+            const aspect = ui.video.videoHeight / ui.video.videoWidth;
+            const H = W * aspect;
+            
             const ctx = ui.proc.getContext('2d', {willReadFrequently: true});
             ctx.drawImage(ui.video, 0, 0, W, H);
             
@@ -367,46 +334,32 @@
             }
             
             state.metrics = {
-                text: ((varL/count) * 2.5).toFixed(1), ery: ((r - g)/count * 2).toFixed(1), mel: (100 - (r+g+b)/(3*count)).toFixed(1)
+                text: ((varL/count) * 2.5).toFixed(1),
+                ery: ((r - g)/count * 2).toFixed(1),
+                mel: (100 - (r+g+b)/(3*count)).toFixed(1)
             };
+            
             document.getElementById('val-text').innerText = state.metrics.text;
             document.getElementById('val-ery').innerText = state.metrics.ery;
             document.getElementById('val-mel').innerText = state.metrics.mel;
         }
 
-        // FIX V102 : Sécurisation absolue du parser JSON
         async function fetchAiDiagnosis(key) {
             const base64 = ui.proc.toDataURL('image/jpeg', 0.6); 
-            const prompt = `Agis comme un système expert multi-agents.
-Agent 1 (Dermatologue) : Analyse la photo et les biomarqueurs (Relief ${state.metrics.text}Hz, Erythème ${state.metrics.ery}, Taches ${state.metrics.mel}). Base ton raisonnement sur les classifications médicales (ICD-11), la littérature PubMed et DermNet NZ.
-Agent 2 (Formulateur) : Croise le diagnostic médical avec la base européenne CosIng et le référentiel INCI pour dicter les molécules exactes.
-
-Format JSON STRICT requis :
+            const prompt = `Tu es Professeur en Dermatologie. Analyse la photo ET ces marqueurs: Relief ${state.metrics.text}Hz (idéal<22), Érythème ${state.metrics.ery} (idéal<14.5), Dyschromie ${state.metrics.mel} (idéal<4.5).
+Renvoie STRICTEMENT ce format JSON :
 {
-  "agent_dermatologue": {
-    "score_sante": 85,
-    "fitzpatrick": "Type II",
-    "glogau": "Type I",
-    "hydratation": "Niveau",
-    "diagnostic_medical": "Diagnostic clinique officiel",
-    "physiologie": {
-      "barriere": "Explication épidermique",
-      "vasculaire": "Explication dermique",
-      "pigmentaire": "Explication mélanocytaire"
-    },
-    "etiologie": ["Étiologie probable 1"],
-    "actes_medicaux": ["Nom clinique d'acte laser/peeling"],
-    "precautions_medicales": ["Alerte médicale"]
-  },
-  "agent_cosmetologue": {
-    "philosophie": "Stratégie moléculaire",
-    "routine_am": [
-      {"etape": "Matin", "type_produit": "Véhicule", "molecule_inci": "Nom INCI précis + Pourcentage", "objectif": "Mécanisme d'action biologique"}
-    ],
-    "routine_pm": [
-      {"etape": "Soir", "type_produit": "Véhicule", "molecule_inci": "Nom INCI précis + Pourcentage", "objectif": "Mécanisme d'action biologique"}
-    ]
-  }
+  "score": 85,
+  "fitzpatrick": "Type II",
+  "glogau": "Type I",
+  "hydratation": "Bonne",
+  "title": "Nom du diagnostic",
+  "physio": "Explication en 2 phrases",
+  "actes": ["Acte 1", "Acte 2"],
+  "routine": [
+    {"step": "Matin", "prod": "Actif 1", "why": "Raison 1"},
+    {"step": "Soir", "prod": "Actif 2", "why": "Raison 2"}
+  ]
 }`;
 
             const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
@@ -414,77 +367,60 @@ Format JSON STRICT requis :
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
                 body: JSON.stringify({
                     model: "pixtral-12b-2409",
-                    messages: [ { role: "user", content: [ {type: "text", text: prompt}, {type: "image_url", image_url: { url: base64 }} ] } ],
+                    messages: [
+                        { 
+                            role: "user", 
+                            content: [
+                                {type: "text", text: prompt},
+                                {type: "image_url", image_url: { url: base64 }} 
+                            ] 
+                        }
+                    ],
                     response_format: { type: "json_object" },
-                    temperature: 0.1 
+                    temperature: 0.1
                 })
             });
 
-            if (!res.ok) throw new Error("L'API a rejeté la requête. Clé invalide ou quota dépassé.");
+            if (!res.ok) throw new Error("API Mistral inaccessible. Vérifiez vos crédits ou votre clé.");
 
             const jsonResponse = await res.json();
             const rawContent = jsonResponse.choices[0].message.content;
             
-            try {
-                // Nettoyage agressif des hallucinations Markdown
-                let cleanContent = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
-                const match = cleanContent.match(/\{[\s\S]*\}/);
-                if(!match) throw new Error("Pas de structure d'objet trouvée.");
-                state.aiData = JSON.parse(match[0]);
-            } catch (e) {
-                throw new Error("L'IA a généré un rapport corrompu. Veuillez relancer l'analyse.");
-            }
+            // Sécurité : Extraction regex du JSON (évite les bugs Markdown)
+            const match = rawContent.match(/\{[\s\S]*\}/);
+            if(!match) throw new Error("Format IA non valide.");
+            state.aiData = JSON.parse(match[0]);
         }
 
         function renderDiagnosis() {
-            let derma = state.aiData.agent_dermatologue;
-            let colorScore = derma.score_sante > 80 ? 'var(--accent)' : (derma.score_sante > 60 ? 'var(--primary)' : 'var(--danger)');
+            switchTab('diag');
+            let colorScore = state.aiData.score > 80 ? 'var(--accent)' : (state.aiData.score > 60 ? 'var(--primary)' : 'var(--danger)');
             
             ui.content.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <div class="agent-badge agent-dermo" style="margin:0;">⚕️ DERMATOLOGUE CLINIQUE</div>
-                    <div style="font-size:0.5rem; color:#8b9bb4; text-transform:uppercase;">Ref: PubMed / DermNet</div>
-                </div>
-                
-                <div class="health-score-container" style="--score:${derma.score_sante}; --primary:${colorScore}">
-                    <div class="score-circle"><div class="score-value">${derma.score_sante}</div></div>
+                <div class="health-score-container" style="--score:${state.aiData.score}; --primary:${colorScore}">
+                    <div class="score-circle"><div class="score-value">${state.aiData.score}</div></div>
                     <div class="score-text">
-                        <h3>Index de Santé Cutanée</h3>
-                        <p>Évaluation Clinique IA</p>
+                        <h3>Vitalité Cutanée</h3>
+                        <p>Index Multimodal IA V94</p>
                     </div>
                 </div>
 
                 <div class="clinical-scales">
-                    <div class="scale-box"><div class="scale-title">Fitzpatrick</div><div class="scale-val" style="color:var(--primary)">${derma.fitzpatrick}</div></div>
-                    <div class="scale-box"><div class="scale-title">Glogau</div><div class="scale-val" style="color:var(--neuro)">${derma.glogau}</div></div>
-                    <div class="scale-box"><div class="scale-title">Hydratation</div><div class="scale-val" style="color:var(--accent)">${derma.hydratation}</div></div>
+                    <div class="scale-box"><div class="scale-title">Fitzpatrick</div><div class="scale-val" style="color:var(--primary)">${state.aiData.fitzpatrick}</div></div>
+                    <div class="scale-box"><div class="scale-title">Glogau</div><div class="scale-val" style="color:var(--neuro)">${state.aiData.glogau}</div></div>
+                    <div class="scale-box"><div class="scale-title">Hydratation</div><div class="scale-val" style="color:var(--accent)">${state.aiData.hydratation}</div></div>
                 </div>
 
                 <div style="height:180px; margin-bottom:15px; position:relative;"><canvas id="radarChart"></canvas></div>
 
                 <div class="content-block">
-                    <div class="block-title">PATHOLOGIE IDENTIFIÉE : ${derma.diagnostic_medical}</div>
-                    <div style="margin-top:10px;">
-                        <div class="physio-item"><strong>Épiderme</strong> ${derma.physiologie.barriere}</div>
-                        <div class="physio-item"><strong>Derme/Vasc.</strong> ${derma.physiologie.vasculaire}</div>
-                        <div class="physio-item"><strong>Mélanine</strong> ${derma.physiologie.pigmentaire}</div>
-                    </div>
+                    <div class="block-title">DIAGNOSTIC : ${state.aiData.title}</div>
+                    <div class="block-text">${state.aiData.physio}</div>
                 </div>
-
-                <div class="content-block">
-                    <div class="block-title">ÉTIOLOGIE & ACTES MÉDICAUX</div>
-                    <div class="pill-list" style="margin-bottom:8px;">${derma.etiologie.map(c => `<span class="pill">${c}</span>`).join('')}</div>
-                    <div class="pill-list">${derma.actes_medicaux.map(a => `<span class="pill" style="border-color:var(--primary); color:var(--primary);">${a}</span>`).join('')}</div>
-                </div>
-
-                ${derma.precautions_medicales && derma.precautions_medicales.length > 0 ? `
-                <div class="warning-box">
-                    <div class="warning-title">⚠️ ALERTE / CONTRE-INDICATIONS</div>
-                    ${derma.precautions_medicales.map(p => `<div class="warning-text">• ${p}</div>`).join('')}
-                </div>` : ''}
             `;
             
             if(state.chart) state.chart.destroy();
+
             const ctx = document.getElementById('radarChart').getContext('2d');
             state.chart = new Chart(ctx, {
                 type: 'radar',
@@ -492,170 +428,122 @@ Format JSON STRICT requis :
                     labels: ['Relief (Hz)', 'Inflammation', 'Dyschromie'],
                     datasets: [{
                         data: [state.metrics.text, state.metrics.ery, state.metrics.mel],
-                        backgroundColor: 'rgba(0, 229, 255, 0.2)', borderColor: '#00e5ff', borderWidth: 2,
-                        pointBackgroundColor: '#fff', pointBorderColor: '#00e5ff'
+                        backgroundColor: 'rgba(56, 189, 248, 0.25)',
+                        borderColor: '#38bdf8',
+                        borderWidth: 1.5,
+                        pointBackgroundColor: '#fff'
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, animation: false,
-                    scales: { r: { grid: {color: 'rgba(255,255,255,0.08)'}, angleLines: {color: 'rgba(255,255,255,0.08)'}, ticks: {display: false}, pointLabels: {color: '#8b9bb4', font: {size: 11, family: "'Plus Jakarta Sans'"}} } },
+                    responsive: true, maintainAspectRatio: false, animation: false, // Requis pour PDF instantané
+                    scales: { r: { grid: {color: 'rgba(255,255,255,0.05)'}, angleLines: {color: 'rgba(255,255,255,0.05)'}, ticks: {display: false}, pointLabels: {color: '#94a3b8'} } },
                     plugins: { legend: {display: false} }
-                },
-                plugins: [customCanvasBackgroundColor]
+                }
             });
         }
 
-        // FIX V102 : Prévention de destruction inutile du graphique
         function switchTab(t) {
             if(!state.aiData) return;
-            
-            const isCurrentlyDiag = ui.tabDiag.classList.contains('active');
-            if (t === 'diag' && isCurrentlyDiag && state.chart) return; // Ne rien faire si on y est déjà
-
             ui.tabDiag.classList.toggle('active', t==='diag');
             ui.tabRoutine.classList.toggle('active', t==='routine');
             
             if(t === 'routine') {
-                let cosmo = state.aiData.agent_cosmetologue;
-                let html = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                        <div class="agent-badge agent-cosmeto" style="margin:0;">🧪 FORMULATEUR CHIMISTE</div>
-                        <div style="font-size:0.5rem; color:#8b9bb4; text-transform:uppercase;">Ref: INCI / CosIng</div>
-                    </div>
-
-                    <div class="content-block">
-                        <div class="block-title cosmeto">STRATÉGIE MOLÉCULAIRE</div>
-                        <div class="block-text">${cosmo.philosophie}</div>
-                    </div>
-                `;
-                
-                html += cosmo.routine_am.map(i => `
-                    <div class="routine-item am">
-                        <span class="step-tag" style="color:var(--am);">${i.etape}</span>
-                        <div class="r-product">${i.type_produit}</div>
-                        <div class="r-molecule">Actif INCI : ${i.molecule_inci}</div>
-                        <div class="r-why">Cible : ${i.objectif}</div>
-                    </div>`).join('');
-
-                html += cosmo.routine_pm.map(i => `
-                    <div class="routine-item pm">
-                        <span class="step-tag" style="color:var(--pm);">${i.etape}</span>
-                        <div class="r-product">${i.type_produit}</div>
-                        <div class="r-molecule">Actif INCI : ${i.molecule_inci}</div>
-                        <div class="r-why">Cible : ${i.objectif}</div>
-                    </div>`).join('');
-
+                let html = `<div class="content-block"><div class="block-title" style="color:var(--text);">ACTES CONSEILLÉS</div><div class="pill-list">${state.aiData.actes.map(a => `<span class="pill">${a}</span>`).join('')}</div></div>`;
+                html += state.aiData.routine.map(i => {
+                    let isAm = i.step.toLowerCase().includes('matin');
+                    return `<div class="routine-item ${isAm ? 'am' : 'pm'}">
+                        <span class="step-tag">${i.step}</span>
+                        <div class="r-product">${i.prod}</div>
+                        <div class="r-why">${i.why}</div>
+                    </div>`;
+                }).join('');
                 ui.content.innerHTML = html;
             } else {
                 renderDiagnosis(); 
             }
         }
 
-        // FIX V102 : Capture PDF ultra-sécurisée
+        // FIX QA : Délai d'attente ajouté pour garantir le rendu complet du Chart.js dans le PDF
         function exportToPDF() {
             if(!state.aiData) return;
             
-            if (!ui.tabDiag.classList.contains('active')) {
-                switchTab('diag'); 
-            }
+            // Obliger l'affichage du graphique avant de le capturer
+            switchTab('diag'); 
             
-            // Délai nécessaire si et seulement si on vient de forcer le switch sur Diag
             setTimeout(() => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('p', 'mm', 'a4');
-                let yPos = 55;
-                let derma = state.aiData.agent_dermatologue;
-                let cosmo = state.aiData.agent_cosmetologue;
                 
-                const checkPage = (heightNeeded) => {
-                    if (yPos + heightNeeded > 280) { doc.addPage(); yPos = 20; return true; }
-                    return false;
-                };
-
-                doc.setFillColor(10, 15, 28); doc.rect(0, 0, 210, 40, 'F');
+                doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 35, 'F');
                 doc.setTextColor(255, 255, 255); doc.setFontSize(20); doc.setFont("helvetica", "bold");
-                doc.text("BILAN MULTI-AGENTS", 15, 20);
-                doc.setFontSize(10); doc.setTextColor(0, 255, 136); doc.setFont("helvetica", "normal");
-                doc.text("ONTOLOGY EDITION V102 (PubMed / INCI)", 15, 28);
+                doc.text("DOSSIER CLINIQUE NEXUS", 15, 20);
+                doc.setFontSize(10); doc.setTextColor(56, 189, 248); doc.text("V94 QA CERTIFIED EDITION", 15, 28);
                 
                 let patId = "NX-" + Math.floor(Math.random() * 100000);
-                doc.setTextColor(139, 155, 180); doc.setFontSize(9);
-                doc.text(`Date : ${new Date().toLocaleDateString('fr-FR')}`, 160, 20); 
-                doc.text(`Patient : ${patId}`, 160, 26);
+                doc.setTextColor(148, 163, 184); doc.setFontSize(9);
+                doc.text(`Date: ${new Date().toLocaleDateString('fr-FR')}`, 160, 20); doc.text(`Dossier N°: ${patId}`, 160, 26);
+                
+                let yPos = 50;
 
-                // PARTIE 1: AGENT DERMATOLOGUE
-                doc.setTextColor(0, 229, 255); doc.setFontSize(14); doc.setFont("helvetica", "bold");
-                doc.text("PARTIE 1 : AGENT DERMATOLOGUE CLINIQUE", 15, yPos);
-                doc.setDrawColor(0, 229, 255); doc.line(15, yPos + 3, 195, yPos + 3); yPos += 12;
+                doc.setTextColor(15, 23, 42); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+                doc.text("1. Relevé Biométrique Instrumental", 15, yPos);
+                doc.setDrawColor(226, 232, 240); doc.line(15, yPos + 3, 195, yPos + 3);
+                yPos += 12;
 
-                doc.setFillColor(241, 245, 249); 
-                doc.roundedRect(15, yPos, 55, 20, 2, 2, 'F'); doc.roundedRect(75, yPos, 55, 20, 2, 2, 'F'); doc.roundedRect(135, yPos, 55, 20, 2, 2, 'F');
-                doc.setTextColor(71, 85, 105); doc.setFontSize(9); doc.setFont("helvetica", "normal");
+                doc.setFillColor(241, 245, 249); doc.roundedRect(15, yPos, 55, 20, 3, 3, 'F');
+                doc.roundedRect(75, yPos, 55, 20, 3, 3, 'F'); doc.roundedRect(135, yPos, 55, 20, 3, 3, 'F');
+                doc.setTextColor(51, 65, 85); doc.setFontSize(9); doc.setFont("helvetica", "normal");
                 doc.text("Texture (Relief)", 20, yPos + 7); doc.text("Sensibilité (a*)", 80, yPos + 7); doc.text("Mélanine (Taches)", 140, yPos + 7);
-                doc.setTextColor(5, 9, 20); doc.setFontSize(12); doc.setFont("helvetica", "bold");
+                doc.setTextColor(15, 23, 42); doc.setFontSize(12); doc.setFont("helvetica", "bold");
                 doc.text(`${state.metrics.text} Hz`, 20, yPos + 15); doc.text(`${state.metrics.ery}`, 80, yPos + 15); doc.text(`${state.metrics.mel} ΔL`, 140, yPos + 15);
-                yPos += 32;
+                yPos += 30;
 
-                doc.setTextColor(5, 9, 20); doc.setFontSize(12); doc.text(`Bilan Médical (Score ${derma.score_sante}/100) : ${derma.diagnostic_medical}`, 15, yPos); yPos += 8;
-                doc.setTextColor(71, 85, 105); doc.setFontSize(9); doc.setFont("helvetica", "normal");
-                doc.text(`• Épiderme : ${derma.physiologie.barriere}`, 15, yPos); yPos += 5;
-                doc.text(`• Vasculaire : ${derma.physiologie.vasculaire}`, 15, yPos); yPos += 5;
-                doc.text(`• Pigmentaire : ${derma.physiologie.pigmentaire}`, 15, yPos); yPos += 8;
+                doc.setTextColor(168, 85, 247); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+                doc.text("2. Classifications Internationales", 15, yPos);
+                doc.setDrawColor(226, 232, 240); doc.line(15, yPos + 3, 195, yPos + 3);
+                yPos += 10;
+                doc.setTextColor(51, 65, 85); doc.setFontSize(10); doc.setFont("helvetica", "normal");
+                doc.text(`• Fitzpatrick : ${state.aiData.fitzpatrick}`, 15, yPos); yPos += 6;
+                doc.text(`• Glogau : ${state.aiData.glogau}`, 15, yPos); yPos += 6;
+                doc.text(`• Hydratation : ${state.aiData.hydratation}`, 15, yPos); yPos += 12;
 
-                if (derma.precautions_medicales && derma.precautions_medicales.length > 0) {
-                    doc.setTextColor(255, 51, 102); doc.setFont("helvetica", "bold");
-                    doc.text("⚠️ PRÉCAUTIONS :", 15, yPos); yPos += 5;
-                    doc.setFont("helvetica", "normal");
-                    derma.precautions_medicales.forEach(p => { doc.text(`- ${p}`, 15, yPos); yPos += 5; });
-                    yPos += 5;
-                }
+                doc.setTextColor(2, 132, 199); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+                doc.text(`3. Diagnostic Multimodal (Score: ${state.aiData.score}/100)`, 15, yPos);
+                doc.setDrawColor(226, 232, 240); doc.line(15, yPos + 3, 195, yPos + 3);
+                yPos += 10;
+                doc.setTextColor(15, 23, 42); doc.text(`Bilan : ${state.aiData.title}`, 15, yPos); yPos += 6;
+                doc.setTextColor(51, 65, 85); doc.setFontSize(10); doc.setFont("helvetica", "normal");
+                let physioLines = doc.splitTextToSize(state.aiData.physio, 180);
+                doc.text(physioLines, 15, yPos); yPos += (physioLines.length * 5) + 10;
 
-                checkPage(80);
+                // Image garantie à 100% grâce au setTimeout
                 const img = document.getElementById('radarChart').toDataURL('image/png', 1.0);
                 doc.addImage(img, 'PNG', 55, yPos, 100, 70); yPos += 80;
 
-                // PARTIE 2: AGENT COSMETO
-                checkPage(40);
-                doc.setTextColor(0, 255, 136); doc.setFontSize(14); doc.setFont("helvetica", "bold");
-                doc.text("PARTIE 2 : AGENT FORMULATEUR COSMÉTIQUE", 15, yPos); 
-                doc.setDrawColor(0, 255, 136); doc.line(15, yPos + 3, 195, yPos + 3); yPos += 12;
+                if(yPos > 250) { doc.addPage(); yPos = 20; }
+                doc.setTextColor(245, 158, 11); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+                doc.text("4. Protocoles & Prescription", 15, yPos);
+                doc.setDrawColor(226, 232, 240); doc.line(15, yPos + 3, 195, yPos + 3);
+                yPos += 12;
                 
-                doc.setTextColor(71, 85, 105); doc.setFontSize(9); doc.setFont("helvetica", "italic");
-                let phLines = doc.splitTextToSize(`Stratégie : ${cosmo.philosophie}`, 180);
-                doc.text(phLines, 15, yPos); yPos += (phLines.length * 5) + 5;
-
-                doc.setTextColor(5, 9, 20); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-                doc.text("ROUTINE MATIN", 15, yPos); yPos += 6;
-                cosmo.routine_am.forEach(r => {
-                    checkPage(25);
-                    doc.setTextColor(5, 9, 20); doc.setFont("helvetica", "bold"); doc.text(`[${r.etape}] ${r.type_produit}`, 15, yPos); yPos += 5;
-                    doc.setTextColor(0, 180, 216); doc.text(`INCI : ${r.molecule_inci}`, 20, yPos); yPos += 5;
-                    doc.setTextColor(71, 85, 105); doc.setFont("helvetica", "normal");
-                    let whyLines = doc.splitTextToSize(r.objectif, 175);
-                    doc.text(whyLines, 20, yPos); yPos += (whyLines.length * 5) + 4;
+                state.aiData.routine.forEach(r => {
+                    if(yPos > 270) { doc.addPage(); yPos = 20; }
+                    doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+                    doc.text(`[${r.step}] ${r.prod}`, 15, yPos); yPos += 5;
+                    doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "normal");
+                    let whyLines = doc.splitTextToSize(r.why, 175);
+                    doc.text(whyLines, 20, yPos); yPos += (whyLines.length * 5) + 5;
                 });
 
-                yPos += 4;
-                doc.setTextColor(5, 9, 20); doc.setFont("helvetica", "bold");
-                doc.text("ROUTINE SOIR", 15, yPos); yPos += 6;
-                cosmo.routine_pm.forEach(r => {
-                    checkPage(25);
-                    doc.setTextColor(5, 9, 20); doc.setFont("helvetica", "bold"); doc.text(`[${r.etape}] ${r.type_produit}`, 15, yPos); yPos += 5;
-                    doc.setTextColor(0, 180, 216); doc.text(`INCI : ${r.molecule_inci}`, 20, yPos); yPos += 5;
-                    doc.setTextColor(71, 85, 105); doc.setFont("helvetica", "normal");
-                    let whyLines = doc.splitTextToSize(r.objectif, 175);
-                    doc.text(whyLines, 20, yPos); yPos += (whyLines.length * 5) + 4;
-                });
-
-                doc.setFontSize(8); doc.setTextColor(148, 163, 184);
-                doc.text("Généré par Consortium IA Nexus V102. Réservé au corps médical.", 105, 290, {align: "center"});
+                doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.text("Généré par Intelligence Artificielle. Ne remplace pas un avis médical.", 105, 290, {align: "center"});
 
                 if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) { window.open(URL.createObjectURL(doc.output('blob'))); } 
-                else { doc.save(`Nexus_Consortium_${patId}.pdf`); }
+                else { doc.save(`Nexus_Dossier_${patId}.pdf`); }
             
-            }, 300); 
+            }, 150); // Pause critique de 150ms pour laisser le temps au Canvas Chart.js d'être tracé dans le DOM
         }
 
+        // --- PWA SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
         }
