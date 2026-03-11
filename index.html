@@ -19,65 +19,49 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        body { 
-            background: var(--bg); color: #fff; height: 100dvh; 
-            display: flex; flex-direction: column; overflow: hidden; 
-            background-image: radial-gradient(circle at 50% 0%, #111a30 0%, #050914 100%);
-        }
+        body { background: var(--bg); color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background-image: radial-gradient(circle at 50% 0%, #111a30 0%, #050914 100%); }
 
-        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
+        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; z-index: 100; }
         .brand { display: flex; flex-direction: column; }
-        .logo { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; text-transform: uppercase; color: #fff; }
+        .logo { font-weight: 800; font-size: 1.1rem; text-transform: uppercase; color: #fff; }
         .logo span { color: var(--primary); }
-        .archi-credit { font-size: 0.5rem; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; opacity: 0.8; }
+        .archi-credit { font-size: 0.5rem; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
 
-        /* VIEWPORT & INTELLIGENT GUIDE */
-        #viewport-container { position: relative; height: 28dvh; margin: 0 15px; border-radius: 24px; overflow: hidden; border: 1px solid var(--border); background: #000; flex-shrink: 0; box-shadow: 0 15px 40px rgba(0,0,0,0.7); }
-        video, #output-canvas, #heatmap-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; transform: scaleX(-1); }
-        #heatmap-canvas { opacity: 0.4; pointer-events: none; }
+        #viewport-container { position: relative; height: 26dvh; margin: 0 15px; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; flex-shrink: 0; }
+        video, #output-canvas, #static-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; transform: scaleX(-1); }
+        #static-canvas { transform: none; display: none; }
         
-        .guide-overlay { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-        .face-oval { width: 55%; height: 75%; border: 2px dashed rgba(255,255,255,0.2); border-radius: 50% 50% 45% 45%; transition: 0.4s; }
+        .face-oval { position: absolute; inset: 0; margin: auto; width: 55%; height: 80%; border: 2px dashed rgba(255,255,255,0.2); border-radius: 50% 50% 45% 45%; z-index: 10; transition: 0.4s; }
         .face-oval.ready { border-color: var(--primary); border-style: solid; box-shadow: 0 0 30px rgba(0,229,255,0.3); }
 
-        /* KPIS D'ANALYSE SOBEL */
         .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px 15px; flex-shrink: 0; }
-        .kpi-card { background: var(--surface); padding: 10px 5px; border-radius: 16px; border: 1px solid var(--border); text-align: center; }
-        .kpi-val { font-size: 1.1rem; font-weight: 800; display: block; color: #fff; }
-        .kpi-lab { font-size: 0.4rem; color: #8b9bb4; text-transform: uppercase; font-weight: 800; margin-top: 3px; }
+        .kpi-card { background: var(--surface); padding: 10px 5px; border-radius: 14px; border: 1px solid var(--border); text-align: center; }
+        .kpi-val { font-size: 1.1rem; font-weight: 800; color: #fff; display: block; }
+        .kpi-lab { font-size: 0.4rem; color: #8b9bb4; text-transform: uppercase; font-weight: 800; margin-top: 2px; }
 
-        /* DASHBOARD SOUVERAIN */
-        .main-card { flex: 1; margin: 0 15px 10px 15px; background: var(--surface); border-radius: 28px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .main-card { flex: 1; margin: 0 15px 10px 15px; background: var(--surface); border-radius: 28px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
         .tabs { display: flex; background: rgba(0,0,0,0.4); padding: 5px; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
-        .tab { flex: 1; padding: 12px 10px; border: none; background: transparent; color: #8b9bb4; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; border-radius: 15px; white-space: nowrap; transition: 0.2s; }
+        .tab { flex: 1; padding: 12px 10px; border: none; background: transparent; color: #8b9bb4; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; border-radius: 15px; transition: 0.2s; }
         .tab.active { background: var(--primary); color: #000; font-weight: 900; }
 
         #scroll-area { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
-
-        /* CLINICAL CONTENT */
-        .report-title { color: var(--primary); font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; text-transform: uppercase; }
+        
         .report-section { margin-bottom: 22px; border-left: 3px solid var(--primary); padding-left: 15px; }
-        .report-label { color: var(--primary); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 4px; }
-        .report-text { font-size: 0.85rem; line-height: 1.6; color: #cbd5e1; text-align: justify; }
+        .report-label { color: var(--primary); font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .report-text { font-size: 0.85rem; line-height: 1.6; color: #cbd5e1; }
 
-        .mol-card { background: rgba(255,255,255,0.03); border-radius: 20px; padding: 18px; margin-bottom: 12px; border-left: 5px solid var(--accent); }
-        .inci-tag { background: rgba(0,255,136,0.1); color: var(--accent); padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; display: inline-block; margin-top: 8px; }
+        .prod-card { background: rgba(255,255,255,0.03); border-radius: 20px; padding: 18px; margin-bottom: 12px; border-left: 5px solid var(--accent); }
+        .brand-name { color: var(--primary); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; display: block; background: rgba(0,229,255,0.1); padding: 4px 8px; border-radius: 6px; width: fit-content;}
 
         .loader { position: absolute; inset: 0; background: var(--bg); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        .spinner { width: 45px; height: 45px; border: 4px solid rgba(0, 229, 255, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s infinite linear; }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(0, 229, 255, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* CONTROLS BAS DE PAGE */
-        .bottom-bar { 
-            background: rgba(10, 15, 28, 0.98); border-top: 1px solid var(--border); 
-            padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); 
-            display: flex; gap: 12px; flex-shrink: 0; z-index: 1000;
-        }
-        .btn { border: none; border-radius: 20px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 58px; transition: 0.2s; }
-        .btn-main { flex: 1; background: #fff; color: #000; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+        .bottom-bar { background: rgba(10, 15, 28, 0.98); border-top: 1px solid var(--border); padding: 12px 20px calc(15px + env(safe-area-inset-bottom)); display: flex; gap: 12px; flex-shrink: 0; z-index: 1000; }
+        .btn { border: none; border-radius: 20px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 56px; transition: 0.2s; }
+        .btn-main { flex: 1; background: #fff; color: #000; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
         .btn-main.ready { background: var(--primary); box-shadow: 0 0 30px rgba(0, 229, 255, 0.3); }
-        .btn-icon { width: 58px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border); border-radius: 20px; font-size: 1.4rem; }
-        .btn:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-icon { width: 56px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border); border-radius: 20px; font-size: 1.3rem; }
         .btn:disabled { opacity: 0.15; }
 
         .hidden { display: none; }
@@ -88,22 +72,24 @@
     <header>
         <div class="brand">
             <div class="logo">PureSkin <span>AI</span></div>
-            <div class="archi-credit">Architecte: Nicolas JULIENNE</div>
+            <div class="archi-credit">Nicolas JULIENNE Architect</div>
         </div>
-        <button style="background:none; border:none; color:white; font-size:1.1rem;" onclick="setApiKey()">⚙️</button>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-icon" style="width:40px; height:40px; font-size:1.1rem;" onclick="document.getElementById('file-up').click()">📁</button>
+            <button style="background:none; border:none; color:white; font-size:1.1rem;" onclick="setKey()">⚙️</button>
+        </div>
+        <input type="file" id="file-up" class="hidden" accept="image/*" onchange="loadFile(event)">
     </header>
 
     <div id="viewport-container">
-        <video id="webcam" autoplay playsinline muted></video>
+        <video id="webcam" autoplay playsinline muted disablePictureInPicture></video>
+        <canvas id="static-canvas"></canvas>
         <canvas id="output-canvas"></canvas>
-        <canvas id="heatmap-canvas"></canvas>
-        <div class="guide-overlay">
-            <div class="face-oval" id="face-oval"></div>
-        </div>
+        <div class="face-oval" id="oval"></div>
     </div>
 
     <div class="kpi-row">
-        <div class="kpi-card"><span class="kpi-val" id="val-t">--</span><span class="kpi-lab">Texture Sobel</span></div>
+        <div class="kpi-card"><span class="kpi-val" id="val-t">--</span><span class="kpi-lab">Texture</span></div>
         <div class="kpi-card"><span class="kpi-val" id="val-e">--</span><span class="kpi-lab">Inflamm.</span></div>
         <div class="kpi-card" style="border-color: var(--primary);"><span class="kpi-val" id="val-s">--</span><span class="kpi-lab">Santé</span></div>
     </div>
@@ -111,18 +97,18 @@
     <div class="main-card">
         <div class="loader" id="loader">
             <div class="spinner"></div>
-            <span style="font-size: 0.6rem; color: var(--primary); margin-top: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">PureSkin AI Processing...</span>
+            <span style="font-size: 0.6rem; color: var(--primary); margin-top: 15px; font-weight: 800; letter-spacing: 2px;">PURESKIN AI SYNERGY...</span>
         </div>
         <div class="tabs">
             <button class="tab active" id="t-diag" onclick="tab('diag')" disabled>⚕️ Dermo</button>
-            <button class="tab" id="t-rout" onclick="tab('routine')" disabled>🧪 Molécule</button>
-            <button class="tab" id="t-life" onclick="tab('life')" disabled>🥗 Holistique</button>
-            <button class="tab" id="t-hist" onclick="tab('history')">📈 Historique</button>
+            <button class="tab" id="t-rout" onclick="tab('routine')" disabled>🧪 Produits</button>
+            <button class="tab" id="t-life" onclick="tab('life')" disabled>🥗 Vie</button>
+            <button class="tab" id="t-hist" onclick="tab('history')">📈 Suivi</button>
         </div>
         <div id="scroll-area">
             <div style="text-align:center; padding-top: 50px; color:#475569;">
-                <p style="font-size:0.95rem; font-weight:800; color:#fff;">SYSTÈME SOUVERAIN V122</p>
-                <p style="font-size:0.8rem; margin-top:10px;">Veuillez cliquer sur DÉMARRER pour initialiser PureSkin AI.</p>
+                <p style="font-size:0.95rem; font-weight:800; color:#fff;">PURESKIN AI V126</p>
+                <p style="font-size:0.75rem; margin-top:10px;">Architecte: Nicolas JULIENNE</p>
             </div>
         </div>
     </div>
@@ -140,104 +126,91 @@
             v: document.getElementById('webcam'),
             c: document.getElementById('output-canvas'),
             ctx: document.getElementById('output-canvas').getContext('2d'),
-            h: document.getElementById('heatmap-canvas'),
-            hCtx: document.getElementById('heatmap-canvas').getContext('2d'),
+            s: document.getElementById('static-canvas'),
+            sCtx: document.getElementById('static-canvas').getContext('2d'),
             area: document.getElementById('scroll-area'),
             loader: document.getElementById('loader'),
             btnScan: document.getElementById('btn-scan'),
             btnPdf: document.getElementById('btn-pdf'),
-            oval: document.getElementById('face-oval'),
+            oval: document.getElementById('oval'),
             proc: document.getElementById('proc-canvas')
         };
 
-        let state = { landmarks: null, ai: null, isRunning: false, isBusy: false, isAiWorking: false };
+        let state = { landmarks: null, ai: null, isRunning: false, isAiWorking: false, source: 'video' };
+        const fm = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+        fm.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7 });
+        fm.onResults(res => {
+            state.landmarks = res.multiFaceLandmarks?.[0] || null;
+            ui.oval.classList.toggle('ready', !!state.landmarks);
+            ui.btnScan.disabled = !state.landmarks;
+            if(state.landmarks) ui.btnScan.classList.add('ready');
+            drawOverlay();
+        });
 
-        function setApiKey() {
+        function setKey() {
             const k = prompt("Clé API Mistral :");
             if (k) localStorage.setItem('pure_key', k.trim());
         }
 
-        // --- MOTEUR VISION UNIVERSEL ---
         async function initCamera() {
-            const fm = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-            fm.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7 });
-            
-            fm.onResults(res => {
-                state.landmarks = res.multiFaceLandmarks && res.multiFaceLandmarks.length > 0 ? res.multiFaceLandmarks[0] : null;
-                if (state.landmarks) {
-                    ui.oval.classList.add('ready'); ui.btnScan.disabled = false; ui.btnScan.classList.add('ready');
-                } else {
-                    ui.oval.classList.remove('ready'); ui.btnScan.disabled = true; ui.btnScan.classList.remove('ready');
-                }
-                draw();
-            });
-
             try {
                 if (ui.v.srcObject) ui.v.srcObject.getTracks().forEach(t => t.stop());
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 } } });
-                ui.v.srcObject = stream;
-                await new Promise(r => ui.v.onloadedmetadata = r);
-                ui.v.play();
-                const cam = new Camera(ui.v, { onFrame: async () => { if (!state.isAiWorking) await fm.send({image: ui.v}); }, width: 640, height: 480 });
-                await cam.start();
-                state.isRunning = true; ui.btnScan.innerText = "Lancer Analyse";
-            } catch (e) { alert("Accès caméra requis."); }
+                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                ui.v.srcObject = s;
+                await new Promise(r => ui.v.onloadedmetadata = r); ui.v.play();
+                const cam = new Camera(ui.v, { onFrame: async () => { if(state.source === 'video') await fm.send({image: ui.v}); }, width: 640, height: 480 });
+                cam.start(); state.isRunning = true; ui.btnScan.innerText = "Scanner";
+            } catch (e) { alert("iOS: Veuillez autoriser la caméra dans Safari."); }
         }
 
-        function handleAction() { if (!state.isRunning) initCamera(); else runPureSkinAnalysis(); }
+        async function loadFile(e) {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = async () => {
+                    state.source = 'image';
+                    ui.v.style.display = 'none'; ui.s.style.display = 'block';
+                    ui.s.width = 640; ui.s.height = 480;
+                    ui.sCtx.drawImage(img, 0, 0, 640, 480);
+                    await fm.send({image: ui.s});
+                    ui.btnScan.innerText = "Analyser Photo";
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
 
-        function draw() {
-            ui.c.width = ui.h.width = ui.v.videoWidth; ui.c.height = ui.h.height = ui.v.videoHeight;
-            ui.ctx.clearRect(0,0,ui.c.width,ui.c.height);
-            ui.hCtx.clearRect(0,0,ui.h.width,ui.h.height);
+        function drawOverlay() {
+            ui.c.width = 640; ui.c.height = 480;
+            ui.ctx.clearRect(0,0,640,480);
             if (state.landmarks) {
                 ui.ctx.fillStyle = "rgba(0,229,255,0.6)";
                 [10, 152, 234, 454].forEach(i => {
                     const pt = state.landmarks[i];
-                    ui.ctx.beginPath(); ui.ctx.arc(pt.x * ui.c.width, pt.y * ui.c.height, 3, 0, 7); ui.ctx.fill();
+                    ui.ctx.beginPath(); ui.ctx.arc(pt.x * 640, pt.y * 480, 3, 0, 7); ui.ctx.fill();
                 });
-                const nose = state.landmarks[1];
-                let g = ui.hCtx.createRadialGradient(nose.x*ui.h.width, nose.y*ui.h.height, 0, nose.x*ui.h.width, nose.y*ui.h.height, 80);
-                g.addColorStop(0, 'rgba(255, 51, 102, 0.4)'); g.addColorStop(1, 'transparent');
-                ui.hCtx.fillStyle = g; ui.hCtx.fillRect(0,0,ui.h.width,ui.h.height);
             }
         }
 
-        // --- ANALYSE BIOMÉTRIQUE SOBEL & IA ---
         async function runPureSkinAnalysis() {
-            const key = localStorage.getItem('pure_key');
-            if (!key) return setApiKey();
+            const key = localStorage.getItem('pure_key'); if (!key) return setKey();
             state.isAiWorking = true; ui.loader.style.display = 'flex';
-
+            
             try {
-                const W = 512, H = Math.floor(512 * (ui.v.videoHeight / ui.v.videoWidth));
-                ui.proc.height = H;
-                const pCtx = ui.proc.getContext('2d');
-                pCtx.drawImage(ui.v, 0, 0, W, H);
-                const pix = pCtx.getImageData(0,0,W,H).data;
+                const target = state.source === 'video' ? ui.v : ui.s;
+                ui.proc.getContext('2d').drawImage(target, 0, 0, 512, 512);
+                const pix = ui.proc.getContext('2d').getImageData(0,0,512,512).data;
                 
-                // Algorithme de Sobel (Relief Texture)
-                let edgeSum = 0;
-                for(let i=0; i<pix.length - 4; i+=16) {
-                    edgeSum += Math.abs(pix[i] - pix[i+4]);
-                }
-                const m = { 
-                    t:(edgeSum/(pix.length/16)*0.8).toFixed(1), 
-                    e:((pix[0]-pix[1])/255*100 + 10).toFixed(1), 
-                    s:(100 - (edgeSum/(pix.length/16)*0.2)).toFixed(0) 
-                };
-
+                let edge = 0; for(let i=0; i<pix.length - 4; i+=16) edge += Math.abs(pix[i] - pix[i+4]);
+                const m = { t:(edge/(pix.length/16)*0.8).toFixed(1), e:((pix[0]-pix[1])/255*100 + 10).toFixed(1), s:(100 - (edge/(pix.length/16)*0.2)).toFixed(0) };
+                
                 document.getElementById('val-t').innerText = m.t;
                 document.getElementById('val-e').innerText = m.e;
                 document.getElementById('val-s').innerText = m.s + "%";
 
-                const b64 = ui.proc.toDataURL('image/jpeg', 0.5);
-                const prompt = `PureSkin AI Consortium (Architecte: N. JULIENNE). 
-                Analyse : Texture Sobel ${m.t}, Erythème ${m.e}, Vitalité ${m.s}%.
-                1. Diagnostic Dermatologique structurel. 
-                2. Ordonnance Moléculaire (INCI + concentration %).
-                3. LifeStyle Holistique (Nutrition, UV).
-                JSON STRICT : {"score":${m.s}, "diag":{"title":"Pathologie", "secs":[{"l":"Label", "t":"Texte (50 mots min)"}]}, "rout":[{"s":"MATIN", "p":"Produit", "i":"INCI %", "w":"Cible"}], "life":[{"i":"🥗", "l":"Titre", "t":"Conseil"}]}`;
+                const b64 = ui.proc.toDataURL('image/jpeg', 0.4); // Compression augmentée pour iOS
+                const prompt = `PureSkin AI (Architecte: N. JULIENNE). Diagnostic Dermo/Chimique/Holistique. Texture ${m.t}, Erythème ${m.e}, Santé ${m.s}%. JSON STRICT: {"score":${m.s}, "diag":{"title":"Pathologie", "secs":[{"l":"Analyse", "t":"Détails (50 mots)"}]}, "rout":[{"s":"MATIN", "b":"MARQUE RÉELLE (ex: CeraVe)", "p":"Type Soin", "i":"Actif %", "w":"Action"}], "life":[{"i":"🥗", "l":"Vie", "t":"Conseil"}]}`;
 
                 const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
                     method: 'POST',
@@ -249,33 +222,32 @@
                     })
                 });
 
-                const data = await res.json();
-                state.ai = JSON.parse(data.choices[0].message.content);
+                if(!res.ok) throw new Error("Status " + res.status);
+                state.ai = JSON.parse((await res.json()).choices[0].message.content);
                 
-                // Historique
-                let h = JSON.parse(localStorage.getItem('pure_hist') || "[]");
+                let h = JSON.parse(localStorage.getItem('pure_h') || "[]");
                 h.push({ d: new Date().toLocaleDateString(), s: m.s });
                 if(h.length > 10) h.shift();
-                localStorage.setItem('pure_hist', JSON.stringify(h));
+                localStorage.setItem('pure_h', JSON.stringify(h));
 
                 ui.loader.style.display = 'none';
-                ['t-diag','t-rout','t-life'].forEach(id => document.getElementById(id).disabled = false);
-                tab('diag');
+                ['t-diag','t-rout','t-life'].forEach(id => document.getElementById(id).disabled = false); tab('diag');
                 ui.btnPdf.disabled = false;
-            } catch (e) { alert("Incident IA."); ui.loader.style.display = 'none'; } finally { state.isAiWorking = false; }
+            } catch (e) { 
+                alert("Incident IA: " + e.message + ". Vérifiez votre clé Mistral."); 
+                ui.loader.style.display = 'none'; 
+            } finally { state.isAiWorking = false; }
         }
 
-        function tab(t) {
-            ['t-diag','t-rout','t-life','t-hist'].forEach(id => document.getElementById(id).classList.toggle('active', id === 't-'+t));
-            render(t);
-        }
+        function handleAction() { if(!state.isRunning && state.source === 'video') initCamera(); else runPureSkinAnalysis(); }
+        function tab(t) { ['t-diag','t-rout','t-life','t-hist'].forEach(id => document.getElementById(id).classList.toggle('active', id === 't-'+t)); render(t); }
 
         function render(mode) {
             if (mode === 'history') {
-                const h = JSON.parse(localStorage.getItem('pure_hist') || "[]");
-                ui.area.innerHTML = `<div class="report-title">Suivi Clinique</div><canvas id="pureChart" height="150"></canvas>` + 
-                    h.reverse().map(i => `<div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border);"><span>${i.d}</span><span style="color:var(--primary); font-weight:800;">${i.s}%</span></div>`).join('');
-                new Chart(document.getElementById('pureChart'), { type: 'line', data: { labels: h.map(x=>x.d), datasets: [{ data: h.map(x=>x.s), borderColor: '#00e5ff', tension: 0.4 }] }, options: { plugins: { legend: false }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
+                const h = JSON.parse(localStorage.getItem('pure_h') || "[]");
+                ui.area.innerHTML = `<div class="report-label">Évolution PureSkin</div><canvas id="pChart" height="150"></canvas>` + 
+                    h.reverse().map(i => `<div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border); font-size:0.8rem;"><span>${i.d}</span><span style="color:var(--primary); font-weight:800;">${i.s}%</span></div>`).join('');
+                new Chart(document.getElementById('pChart'), { type: 'line', data: { labels: h.map(x=>x.d), datasets: [{ data: h.map(x=>x.s), borderColor: '#00e5ff', tension: 0.4 }] }, options: { plugins: { legend: false }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
                 return;
             }
             if (!state.ai) return;
@@ -283,22 +255,21 @@
             if (mode === 'diag') {
                 ui.area.innerHTML = `<div class="report-title">${d.diag.title}</div>` + d.diag.secs.map(s => `<div class="report-section"><span class="report-label">${s.l}</span><p class="report-text">${s.t}</p></div>`).join('');
             } else if (mode === 'routine') {
-                ui.area.innerHTML = d.rout.map(r => `<div class="mol-card"><div style="color:var(--accent); font-size:0.6rem; font-weight:800;">${r.s}</div><div style="font-weight:700; font-size:1rem; margin:5px 0;">${r.p}</div><span class="inci-tag">🧪 INCI : ${r.i}</span><p class="report-text" style="font-size:0.8rem; margin-top:10px;">${r.w}</p></div>`).join('');
-            } else {
-                ui.area.innerHTML = d.life.map(l => `<div style="display:flex; gap:15px; background:rgba(255,170,0,0.05); padding:15px; border-radius:20px; margin-bottom:12px; border:1px solid rgba(255,170,0,0.1);"><span style="font-size:1.6rem;">${l.i}</span><div><div style="font-weight:800; font-size:0.85rem; color:var(--warning);">${l.l}</div><p style="font-size:0.75rem; color:#cbd5e1; line-height:1.4; margin-top:3px;">${l.t}</p></div></div>`).join('');
+                ui.area.innerHTML = d.rout.map(r => `<div class="prod-card"><span class="brand-name">${r.b}</span><div style="color:var(--accent); font-size:0.6rem; font-weight:800;">${r.s}</div><div style="font-weight:700; font-size:1rem; margin:3px 0;">${r.p}</div><div style="font-size:0.7rem; color:var(--primary); margin-bottom:10px;">${r.i}</div><p class="report-text" style="font-size:0.8rem;">${r.w}</p></div>`).join('');
+            } else if (mode === 'life') {
+                ui.area.innerHTML = d.life.map(l => `<div style="display:flex; gap:15px; background:rgba(255,170,0,0.05); padding:15px; border-radius:20px; margin-bottom:10px; border:1px solid rgba(255,170,0,0.1);"><span style="font-size:1.6rem;">${l.i}</span><div><div style="font-weight:800; font-size:0.8rem; color:var(--warning);">${l.l}</div><p style="font-size:0.75rem; color:#cbd5e1; line-height:1.4;">${l.t}</p></div></div>`).join('');
             }
         }
 
         function exportPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            doc.setFillColor(10, 15, 28); doc.rect(0, 0, 210, 45, 'F');
-            doc.setTextColor(255,255,255); doc.setFontSize(22); doc.text("DOSSIER PureSkin AI", 15, 25);
+            doc.setFillColor(5, 9, 20); doc.rect(0, 0, 210, 45, 'F');
+            doc.setTextColor(255,255,255); doc.setFontSize(22); doc.text("PURESKIN AI DOSSIER", 15, 25);
             doc.setFontSize(9); doc.setTextColor(0, 229, 255); doc.text("ARCHITECTE LOGICIEL : NICOLAS JULIENNE", 15, 33);
-            doc.setTextColor(10,15,28); doc.setFontSize(14); doc.text("Diagnostic : " + state.ai.diag.title, 15, 60);
-            const b = doc.output('blob'); window.open(URL.createObjectURL(b));
+            window.open(URL.createObjectURL(doc.output('blob')), '_blank');
         }
 
-        window.onload = () => { ui.btnScan.disabled = false; };
+        window.onload = () => ui.btnScan.disabled = false;
     </script>
 </body>
 </html>
