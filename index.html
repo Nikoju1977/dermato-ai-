@@ -4,455 +4,434 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>PureScan Nexus | Dispositif d'Analyse Clinique EBM</title>
+    <meta name="author" content="Nicolas JULIENNE - Architecte AI Elite">
+    <meta name="date" content="Mars 2026">
+    <title>PureScan Nexus | V84 Gold Master</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script async src="https://docs.opencv.org/4.8.0/opencv.js" onload="onOpenCvReady();"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script async src="https://docs.opencv.org/4.5.0/opencv.js" onload="onOpenCvScriptLoaded();"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        :root { --primary: #2563eb; --primary-dark: #1e40af; --bg-dark: #0f172a; --bg-panel: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --danger: #ef4444; --warning: #f59e0b; --success: #10b981; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        
-        body { 
-            font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); 
-            height: 100vh; display: flex; flex-direction: column; overflow: hidden; 
-            /* Sécurité pour les anciens navigateurs */
-            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        :root { 
+            --primary: #06b6d4; --accent: #10b981; --danger: #ef4444; --neuro: #8b5cf6;
+            --bg: #020617; --card: #0f172a; --text: #f8fafc; --border: #1e293b;
+            --am: #fbbf24; --pm: #818cf8;
         }
 
-        #viewport { position: relative; flex: 0 0 30vh; background: #000; overflow: hidden; border-bottom: 1px solid #334155; }
-        video, #preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
-        #preview-img { display: none; z-index: 5; }
-        .guide-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40vw; height: 40vw; max-width: 180px; max-height: 180px; border: 2px solid rgba(255, 255, 255, 0.4); border-radius: 12px; z-index: 10; transition: all 0.3s ease; }
-        .guide-box::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); }
-        .guide-box.scanning { border-color: var(--primary); transform: translate(-50%, -50%) scale(0.95); background: rgba(37, 99, 235, 0.1); }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Ajustement dynamique pour les encoches d'iPhone (Safe Area) */
-        .dashboard { flex: 1; padding: 10px 14px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; background: var(--bg-dark); overflow-y: auto; }
-        
-        .status-badge { font-size: 0.65rem; color: var(--text-main); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; padding: 6px 10px; background: var(--bg-panel); border-radius: 6px; text-align: center; margin-bottom: 8px; border: 1px solid #334155; transition: all 0.3s; }
-        .batch-tracker { display: flex; gap: 8px; margin-bottom: 8px; justify-content: center; align-items: center; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #334155; transition: 0.3s; }
-        .dot.active { background: var(--primary); box-shadow: 0 0 8px rgba(37, 99, 235, 0.6); }
+        header { padding: 12px; border-bottom: 1px solid var(--border); background: var(--card); z-index: 100; display: flex; justify-content: space-between; align-items: center;}
+        .arch-signature { font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--primary); font-weight: 800; }
+        .b2b-badge { font-size: 0.5rem; background: rgba(16, 185, 129, 0.2); color: var(--accent); border: 1px solid var(--accent); padding: 3px 6px; border-radius: 4px; font-weight: 800; }
 
-        .analysis-card { background: var(--bg-panel); border-radius: 12px; padding: 12px; border: 1px solid #334155; margin-bottom: 8px; display: flex; flex-direction: column; flex-grow: 1; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #334155; }
-        .risk-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 2px; }
-        #risk-val { font-size: 2rem; font-weight: 700; color: var(--text-main); line-height: 1; transition: color 0.3s; }
+        #viewport { position: relative; flex: 0 0 25vh; background: #000; overflow: hidden; border-bottom: 2px solid var(--primary); }
+        video, #output-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; transform: scaleX(-1); }
+        #output-canvas { z-index: 6; pointer-events: none; }
         
-        /* Cacher la barre de défilement sur TOUS les navigateurs */
-        .tabs { display: flex; gap: 6px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; }
-        .tabs::-webkit-scrollbar { display: none; }
-        .tab-btn { flex: 0 0 auto; background: transparent; border: 1px solid #475569; color: var(--text-muted); padding: 6px 10px; border-radius: 6px; font-size: 0.65rem; cursor: pointer; transition: 0.2s; font-weight: 600; }
-        .tab-btn.active { background: #334155; color: var(--text-main); border-color: #64748b; }
-        .tab-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .loading-mesh { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--primary); font-weight: 800; z-index: 20; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; display: none; text-align: center;}
 
-        #advice { font-size: 0.75rem; color: var(--text-main); line-height: 1.6; text-align: left; padding: 12px; background: #0f172a; border-radius: 8px; border-left: 3px solid var(--primary); white-space: pre-line; flex-grow: 1; overflow-y: auto; }
+        .dashboard { flex: 1; padding: 10px; display: flex; flex-direction: column; overflow-y: auto; gap: 8px; }
+        
+        .status-badge { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; padding: 8px; background: var(--card); border-radius: 8px; text-align: center; border: 1px solid var(--border); letter-spacing: 1px; transition: all 0.3s; }
+        .status-ready { border-color: var(--primary); color: var(--primary); background: rgba(6, 182, 212, 0.1); }
+        .status-error { border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.1); }
 
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; padding-bottom: 4px; }
-        .btn { padding: 10px; border: none; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn-main { background: var(--primary); color: white; grid-column: span 2; padding: 12px; font-size: 0.8rem;}
-        .btn-main:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
-        .btn-sub { background: transparent; color: var(--text-main); border: 1px solid #475569; }
-        .btn-full { grid-column: span 2; }
+        .bio-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .stat-card { background: var(--card); padding: 8px 4px; border-radius: 12px; border: 1px solid var(--border); text-align: center; position: relative; overflow: hidden;}
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--primary); opacity: 0.5; }
+        .stat-label { font-size: 0.45rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; font-weight: 800; }
+        .stat-val { font-size: 1rem; font-weight: 800; color: var(--text); font-feature-settings: "tnum"; }
+        .stat-unit { font-size: 0.55rem; color: #64748b; margin-left: 1px; }
+
+        .main-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #94a3b8; padding: 10px 4px; font-size: 0.6rem; cursor: pointer; font-weight: 800; text-transform: uppercase; transition: 0.2s; white-space: nowrap; }
+        .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); background: rgba(6, 182, 212, 0.05); }
+
+        #advice-area { font-size: 0.8rem; line-height: 1.5; padding: 14px; color: #cbd5e1; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px;}
+
+        .section-title { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #f8fafc; border-bottom: 1px solid #334155; padding-bottom: 4px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .report-box { padding: 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); }
+        .report-box.synergy { border-left: 3px solid var(--neuro); }
+        .synergy-tags { display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap;}
+        .s-tag { font-size: 0.45rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; background: #1e293b; color: #94a3b8; border: 1px solid #334155; text-transform: uppercase;}
+        .s-tag.cmo { color: var(--primary); border-color: var(--primary); background: rgba(6, 182, 212, 0.1);}
+        .box-text { font-size: 0.75rem; color: #cbd5e1; }
+        .box-text strong { color: var(--primary); }
+        ul.clinical-list { list-style: none; margin-top: 6px; padding-left: 0;}
+        ul.clinical-list li { position: relative; padding-left: 14px; margin-bottom: 6px; font-size: 0.75rem;}
+        ul.clinical-list li::before { content: '▸'; position: absolute; left: 0; color: var(--primary); font-weight: bold; }
+        .step-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; border: 1px solid #1e293b;}
+        .step-num { flex: 0 0 18px; height: 18px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; font-weight: bold; color: #000;}
+        .step-desc { flex: 1; font-size: 0.75rem; }
+        .step-desc strong { color: #f8fafc; display: block; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 2px;}
+
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; padding-top: 5px;}
+        .btn { padding: 14px; border: none; border-radius: 12px; font-weight: 800; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; transition: transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-main { background: var(--primary); color: #000; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); grid-column: span 2;}
+        .btn-main:active { transform: scale(0.98); }
+        .btn-main:disabled { background: #334155; color: #64748b; cursor: not-allowed; box-shadow: none;}
+        .btn-sub { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+        .btn-sub:disabled { border-color: #334155; color: #475569; cursor: not-allowed; }
         
-        /* Compatibilité Select Safari/Firefox/Chrome */
-        .btn-select { 
-            grid-column: span 2; background: #0f172a; color: var(--text-main); border: 1px solid #475569; 
-            appearance: none; -webkit-appearance: none; -moz-appearance: none; padding-right: 30px;
-            background-image: url("data:image/svg+xml;utf8,<svg fill='%2394a3b8' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
-            background-repeat: no-repeat; background-position-x: 96%; background-position-y: center;
-        }
-        
-        .legal-disclaimer { text-align: center; font-size: 0.5rem; color: #64748b; margin-top: 6px; line-height: 1.4; padding: 0 5px; }
+        .hidden-proc { display: none; }
     </style>
 </head>
 <body>
 
+    <header>
+        <div class="arch-signature">Nexus Master V84</div>
+        <div class="b2b-badge">GOLD MASTER</div>
+    </header>
+
     <div id="viewport">
         <video id="webcam" autoplay playsinline muted></video>
-        <img id="preview-img">
-        <div class="guide-box" id="guide"></div>
+        <canvas id="output-canvas"></canvas>
+        <div class="loading-mesh" id="mesh-loader">BOOT MATRICE<br><span style="font-size: 0.5rem; color: #64748b;">Vérification sécurité...</span></div>
     </div>
 
     <div class="dashboard">
-        <div id="status" class="status-badge">AUTO-DIAGNOSTIC SYSTÈME...</div>
-
-        <div class="batch-tracker" id="batch-dots">
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="status-badge" id="status">INIT. BIOMÉTRIQUE...</div>
+        
+        <div class="bio-stats">
+            <div class="stat-card">
+                <div class="stat-label">Texture</div>
+                <div><span id="v-text" class="stat-val">--</span><span class="stat-unit">Hz</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Sensibilité</div>
+                <div><span id="v-ery" class="stat-val">--</span><span class="stat-unit">a*</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Éclat</div>
+                <div><span id="v-mel" class="stat-val">--</span><span class="stat-unit">ΔL</span></div>
+            </div>
         </div>
-
-        <div class="analysis-card">
-            <div class="top-row">
-                <div>
-                    <div class="risk-label">Pathologie (HAM10000)</div>
-                    <div id="risk-val">--%</div>
+        
+        <div class="main-card">
+            <div class="tabs">
+                <button class="tab-btn active" data-target="diag">1. Bilan & Soins</button>
+                <button class="tab-btn" data-target="rituel">2. Protocoles</button>
+                <button class="tab-btn" data-target="produits">3. INCI</button>
+            </div>
+            <div id="advice-area">
+                <div class="report-box synergy">
+                    <div class="box-title"><i>🩺</i> Système Opérationnel</div>
+                    <div class="box-text">L'acquisition générera le dossier interactif et débloquera la fonction d'export PDF pour le patient.</div>
                 </div>
             </div>
-
-            <div class="tabs" id="agent-tabs">
-                <button class="tab-btn active" data-target="bilan" disabled>Physiopathologie</button>
-                <button class="tab-btn" data-target="nettoyage" disabled>Lavage</button>
-                <button class="tab-btn" data-target="matin" disabled>Rituel Matin</button>
-                <button class="tab-btn" data-target="soir" disabled>Rituel Soir</button>
-                <button class="tab-btn" data-target="actifs" disabled>Ciblage INCI</button>
-            </div>
-
-            <div id="advice">En attente de connexion sécurisée...</div>
         </div>
 
         <div class="controls">
-            <input type="file" id="file-in" style="display:none;" accept="image/*" multiple>
-            
-            <button class="btn btn-main" id="btn-scan" disabled>DÉMARRER L'EXAMEN CLINIQUE</button>
-            <select id="camera-select" class="btn btn-select"><option value="">Détection des capteurs optiques...</option></select>
-            <button class="btn btn-sub" id="btn-upload">📁 Import Multiple</button>
-            <button class="btn btn-sub" id="btn-reset">🔄 Patient</button>
-            <button class="btn btn-sub btn-full" id="btn-api">🔑 Configurer la Clé API Mistral</button>
+            <button class="btn btn-main" id="btn-scan" disabled>Lancer l'Acquisition Clinique</button>
+            <button class="btn btn-sub" id="btn-pdf" disabled style="grid-column: span 2;">📄 Exporter l'Ordonnance PDF</button>
         </div>
-        
-        <div class="legal-disclaimer">Dispositif Médical Expérimental (EBM). Ne remplace pas un diagnostic officiel certifié.</div>
     </div>
 
-    <canvas id="proc-canvas" style="display:none;"></canvas>
+    <canvas id="proc-canvas" class="hidden-proc"></canvas>
+    <canvas id="mask-canvas" class="hidden-proc"></canvas>
 
     <script>
-        // ==========================================
-        // GESTION SÉCURISÉE DE LA CLÉ API
-        // ==========================================
-        function getApiKey() { return localStorage.getItem('mistral_api_key') || ""; }
-        document.getElementById('btn-api').onclick = () => {
-            const newKey = prompt("Veuillez saisir votre clé API Mistral :", getApiKey());
-            if (newKey !== null) { localStorage.setItem('mistral_api_key', newKey.trim()); updateStatus("CLÉ API ENREGISTRÉE", "var(--success)"); }
-        };
-
         const ui = {
-            v: document.getElementById('webcam'), img: document.getElementById('preview-img'),
-            btnScan: document.getElementById('btn-scan'), status: document.getElementById('status'),
-            advice: document.getElementById('advice'), risk: document.getElementById('risk-val'),
-            guide: document.getElementById('guide'), dots: document.querySelectorAll('.dot'),
-            canvas: document.getElementById('proc-canvas'), tabs: document.querySelectorAll('.tab-btn'),
-            camSelect: document.getElementById('camera-select')
+            v: document.getElementById('webcam'),
+            canvas: document.getElementById('output-canvas'),
+            ctx: document.getElementById('output-canvas').getContext('2d'),
+            proc: document.getElementById('proc-canvas'),
+            mask: document.getElementById('mask-canvas'),
+            btnScan: document.getElementById('btn-scan'),
+            btnPdf: document.getElementById('btn-pdf'),
+            advice: document.getElementById('advice-area'),
+            status: document.getElementById('status'),
+            meshLoader: document.getElementById('mesh-loader'),
+            stats: { text: document.getElementById('v-text'), ery: document.getElementById('v-ery'), mel: document.getElementById('v-mel') },
+            tabs: document.querySelectorAll('.tab-btn')
         };
-        
-        let state = { cvReady: false, aiReady: false, isLive: true, batchCount: 0, results: [], model: null, isMedicalModel: false, videoReady: false, currentDeviceId: null, videoStream: null, agentData: { bilan: "", nettoyage: "", matin: "", soir: "", actifs: "" } };
 
-        const HAM10000_CLASSES = [
-            { id: "akiec", name: "Kératose Actinique (Pré-cancéreux)", danger: 85 },
-            { id: "bcc", name: "Carcinome Basocellulaire", danger: 95 },
-            { id: "bkl", name: "Kératose Séborrhéique (Bénin)", danger: 15 },
-            { id: "df", name: "Dermatofibrome (Bénin)", danger: 10 },
-            { id: "mel", name: "Mélanome (Malin)", danger: 100 },
-            { id: "nv", name: "Nævus Mélanocytaire (Bénin)", danger: 5 },
-            { id: "vasc", name: "Lésion Vasculaire (Bénin)", danger: 20 }
-        ];
+        let state = { 
+            cvReady: false, meshReady: false, faceMesh: null, lastLandmarks: null, 
+            metrics: { text: 0, ery: 0, mel: 0 },
+            report: { diag: "", rituel: "", produits: "" } 
+        };
 
-        window.onload = () => { initAI(); initCamera(); };
-
-        // Poll OpenCV pour éviter les problèmes de cache réseau lents
-        function onOpenCvScriptLoaded() {
-            let retries = 0; const checkCv = setInterval(() => {
-                if (typeof cv !== 'undefined' && typeof cv.Mat === 'function') { clearInterval(checkCv); state.cvReady = true; checkSystemReady(); }
-                if(++retries > 50) { clearInterval(checkCv); updateStatus("ERREUR MATÉRIELLE : OPENCV", "var(--danger)"); }
-            }, 200);
+        // --- VERIFICATION SECURITE & HTTPS ---
+        if (window.isSecureContext === false) {
+            alert("⚠️ Avertissement : L'application n'est pas sur un serveur sécurisé (HTTPS). L'accès à la caméra sera bloqué par le navigateur.");
+            ui.meshLoader.innerHTML = "ERREUR SÉCURITÉ<br>Nécessite HTTPS";
+            ui.meshLoader.style.color = "var(--danger)";
+            updateStatus("ÉCHEC SÉCURITÉ", false, true);
         }
 
-        async function initAI() {
-            updateStatus("CONNEXION AU RÉSEAU MÉDICAL...", "var(--primary)");
-            try { await tf.setBackend('webgl'); await tf.ready(); } catch (err) { await tf.setBackend('cpu'); await tf.ready(); }
+        const HTMLGen = {
+            title: (icon, text) => `<div class="section-title"><i>${icon}</i> ${text}</div>`,
+            synergy: (tags, title, text) => {
+                let tagsStr = tags.map(t => `<span class="s-tag ${t === 'CMO' ? 'cmo' : ''}">${t}</span>`).join('');
+                return `<div class="report-box synergy"><div class="synergy-tags">${tagsStr}</div><div class="box-text"><strong>${title} :</strong> ${text}</div></div>`;
+            },
+            list: (items) => `<ul class="clinical-list">${items.map(i => `<li>${i}</li>`).join('')}</ul>`,
+            step: (num, title, text) => `<div class="step-item"><div class="step-num">${num}</div><div class="step-desc"><strong>${title}</strong>${text}</div></div>`
+        };
+
+        const AgenticSwarm = {
+            consult: function(text, ery, mel) {
+                let isInflamed = (ery > 132); let isRough = (text > 25); let isPigmented = (mel > 15);
+                let htmlDiag = ""; let htmlRituel = ""; let htmlProduits = "";
+
+                // DIAGNOSTIC
+                htmlDiag += HTMLGen.title("🧠", "1. Analyse Agentique");
+                let zones = []; let traitements = [];
+                
+                if (isInflamed && isRough) {
+                    htmlDiag += HTMLGen.synergy(["Vasculaire", "Kératologue", "CMO"], "Inflammation Hyperkératosique", "Altération de la barrière (rougeurs) + épaississement de la couche cornée. L'exfoliation agressive est bloquée.");
+                    zones.push("Joues et Ailes du nez (Érythème)", "Zone T (Irrégularités)");
+                    traitements.push("LED Thérapie Rouge (Anti-inflammatoire).", "Hydrafacial doux.");
+                } else if (isInflamed) {
+                    htmlDiag += HTMLGen.synergy(["Vasculaire", "CMO"], "Hyper-réactivité Vasculaire", "Afflux sanguin sous-dermique (rosacée ou échauffement cutané).");
+                    zones.push("Pommettes, Joues, Sillons nasogéniens.");
+                    traitements.push("Laser Vasculaire (VBeam / Nd:YAG).", "Cryothérapie faciale locale.");
+                } else if (isRough) {
+                    htmlDiag += HTMLGen.synergy(["Kératologue", "CMO"], "Relief Micro-Kystique", "Accumulation de cellules mortes. La peau est calme, l'exfoliation est autorisée.");
+                    zones.push("Zone médiane (Zone T) et Menton.");
+                    traitements.push("Peeling médical (Acide Glycolique 20%).", "Microneedling léger.");
+                } else if (isPigmented) {
+                    htmlDiag += HTMLGen.synergy(["Pigmentaire", "CMO"], "Dyschromie Mélanique", "Amas de mélanine et oxydation détectée.");
+                    zones.push("Haut des pommettes, Front, Lèvre supérieure.");
+                    traitements.push("Laser Q-Switched ou Lumière Pulsée (IPL).", "Peeling dépigmentant.");
+                } else {
+                    htmlDiag += HTMLGen.synergy(["Essaim", "CMO"], "Homéostasie Optimale", "Biomarqueurs au vert. Objectif : Well-Aging.");
+                    zones.push("Visage complet unifié.");
+                    traitements.push("Radiofréquence (fermeté).", "Mésothérapie.");
+                }
+
+                htmlDiag += `<br>` + HTMLGen.title("📍", "2. Zones & Actes Cliniques");
+                htmlDiag += HTMLGen.list([...zones, ...traitements]);
+
+                // RITUEL
+                htmlRituel += HTMLGen.title("🧼", "3. Protocole de Soin");
+                if (isInflamed) {
+                    htmlRituel += HTMLGen.list(["Eau tiède/froide uniquement (la chaleur dilate les vaisseaux).", "Matin : Spray d'eau thermale apaisante.", "Soir : Nettoyant lacté aux doigts, sans coton."]);
+                    htmlRituel += HTMLGen.step("1", "Séchage Doux", "Tamponnez avec un mouchoir à usage unique.");
+                    htmlRituel += HTMLGen.step("2", "Cryo-Massage", "Conservez vos soins au frais et massez de l'intérieur vers l'extérieur.");
+                } else {
+                    htmlRituel += HTMLGen.list(["Température : Eau tiède.", "Double Nettoyage (Soir) : 1. Baume démaquillant. 2. Gel moussant pH neutre."]);
+                    htmlRituel += HTMLGen.step("1", "Séchage Doux", "Tamponnez avec une serviette microfibre.");
+                    if (isRough) htmlRituel += HTMLGen.step("2", "Rituel Peeling", "Appliquez la lotion exfoliante aux doigts. Attendez 5 min avant la crème.");
+                    else htmlRituel += HTMLGen.step("2", "Massage Liftant", "Lissages ascendants pour stimuler les fibroblastes.");
+                }
+
+                // PRODUITS
+                htmlProduits += HTMLGen.title("🧪", "4. Prescription INCI (À se procurer)");
+                let produits = ["<b>Nettoyant :</b> Base lavante douce sans SLS.", "<b>Jour :</b> Fluide Solaire SPF 50."];
+                
+                if (isInflamed && isRough) produits.push("<b>Sérum :</b> Acide Azélaïque 10%.", "<b>Nuit :</b> Baume réparateur (Céramides, Panthénol).");
+                else if (isInflamed) produits.push("<b>Sérum :</b> Niacinamide 5% ou Centella Asiatica.", "<b>Nuit :</b> Crème riche à l'Avoine colloïdale.");
+                else if (isRough) produits.push("<b>Lotion Soir :</b> BHA (Acide Salicylique 2%).", "<b>Crème :</b> Gel-crème Acide Hyaluronique.");
+                else if (isPigmented) produits.push("<b>Sérum Matin :</b> Vitamine C pure (10-15%).", "<b>Sérum Soir :</b> Alpha-Arbutine ou Tranexamique.");
+                else produits.push("<b>Sérum :</b> Complexe de Peptides.", "<b>Soin Nuit :</b> Rétinol micro-encapsulé (0.1%).");
+
+                htmlProduits += HTMLGen.list(produits);
+
+                return { diag: htmlDiag, rituel: htmlRituel, produits: htmlProduits };
+            }
+        };
+
+        // --- PIPELINE VISION ---
+        async function initAll() {
+            if (window.isSecureContext === false) return; // Stop if not secure
+            ui.meshLoader.style.display = 'block';
+            state.faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+            state.faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.8, minTrackingConfidence: 0.8 });
+            state.faceMesh.onResults(onResults);
+            
             try {
-                state.model = await tf.loadLayersModel('./model/model.json');
-                state.isMedicalModel = true; state.aiReady = true; 
-                updateStatus("IA DERMATOLOGIQUE CHARGÉE (HAM10000)", "var(--success)");
-                checkSystemReady();
+                state.camera = new Camera(ui.v, { onFrame: async () => { await state.faceMesh.send({image: ui.v}); }, width: 1280, height: 720 });
+                await state.camera.start();
+                state.meshReady = true; ui.meshLoader.style.display = 'none';
+                checkSystem();
             } catch (e) {
-                updateStatus("MODE GÉNÉRALISTE (MODÈLE MÉDICAL ABSENT)", "var(--warning)");
-                try {
-                    state.model = await mobilenet.load({version: 2, alpha: 1.0}); 
-                    state.isMedicalModel = false; state.aiReady = true; 
-                    checkSystemReady();
-                } catch(e2) { updateStatus("ERREUR MATÉRIELLE IA", "var(--danger)"); }
+                alert("Impossible d'accéder à la caméra. Vérifiez les permissions.");
             }
         }
 
-        async function getCameras() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoInputs = devices.filter(device => device.kind === 'videoinput');
-                ui.camSelect.innerHTML = ''; 
-                if (videoInputs.length === 0) return;
-                videoInputs.forEach((device, index) => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId; option.text = device.label || `Objectif ${index + 1}`;
-                    ui.camSelect.appendChild(option);
-                });
-                if (state.currentDeviceId) { ui.camSelect.value = state.currentDeviceId; } else { state.currentDeviceId = videoInputs[0].deviceId; }
-            } catch (e) { console.warn("Erreur capteurs", e); }
+        function onOpenCvReady() { state.cvReady = true; checkSystem(); }
+
+        function checkSystem() {
+            if (state.cvReady && state.meshReady) {
+                ui.btnScan.disabled = false; updateStatus("SYSTÈME PRÊT", true);
+            }
         }
 
-        // CORRECTIF iOS SAFARI : Séparation des contraintes de caméra
-        async function initCamera(deviceId = null) {
-            if (state.videoStream) { state.videoStream.getTracks().forEach(track => track.stop()); }
-            try {
-                let constraints = { video: {} };
-                if (deviceId) {
-                    constraints.video.deviceId = { exact: deviceId };
-                } else {
-                    constraints.video.facingMode = 'environment';
+        function updateStatus(m, ready=false, err=false) {
+            ui.status.innerText = m; ui.status.className = 'status-badge';
+            if(ready) ui.status.classList.add('status-ready');
+            if(err) ui.status.classList.add('status-error');
+        }
+
+        function onResults(results) {
+            ui.canvas.width = ui.v.videoWidth; ui.canvas.height = ui.v.videoHeight;
+            ui.ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                state.lastLandmarks = results.multiFaceLandmarks[0];
+                drawConnectors(ui.ctx, state.lastLandmarks, FACEMESH_FACE_OVAL, {color: '#06b6d4', lineWidth: 1});
+            } else { state.lastLandmarks = null; }
+        }
+
+        async function runAnalysis() {
+            if (!state.lastLandmarks || !state.cvReady) return;
+            ui.btnScan.disabled = true; ui.btnPdf.disabled = true; updateStatus("ACQUISITION EN COURS...");
+
+            const W = ui.v.videoWidth; const H = ui.v.videoHeight;
+            ui.proc.width = W; ui.proc.height = H; ui.mask.width = W; ui.mask.height = H;
+            const procCtx = ui.proc.getContext('2d', {willReadFrequently: true});
+            const maskCtx = ui.mask.getContext('2d', {willReadFrequently: true});
+
+            procCtx.drawImage(ui.v, 0, 0, W, H);
+            maskCtx.fillStyle = '#000000'; maskCtx.fillRect(0, 0, W, H);
+            
+            const drawRegion = (region, color, composite = 'source-over') => {
+                maskCtx.globalCompositeOperation = composite; maskCtx.fillStyle = color; maskCtx.beginPath();
+                let currentPoint = region[0][0]; let points = [currentPoint]; let remainingEdges = [...region];
+                while(remainingEdges.length > 0) {
+                    let nextEdgeIdx = remainingEdges.findIndex(e => e[0] === currentPoint || e[1] === currentPoint);
+                    if(nextEdgeIdx === -1) break;
+                    let edge = remainingEdges.splice(nextEdgeIdx, 1)[0];
+                    currentPoint = (edge[0] === currentPoint) ? edge[1] : edge[0]; points.push(currentPoint);
                 }
-                
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                state.videoStream = stream; ui.v.srcObject = stream;
-                
-                // Hack compatibilité mobile pour le démarrage vidéo
-                ui.v.setAttribute('autoplay', '');
-                ui.v.setAttribute('muted', '');
-                ui.v.setAttribute('playsinline', '');
-                
-                ui.v.onloadedmetadata = async () => { state.videoReady = true; checkSystemReady(); if (ui.camSelect.options.length <= 1) await getCameras(); };
-            } catch (e) { state.isLive = false; state.videoReady = true; updateStatus("MODE IMPORTATION", "var(--warning)"); }
+                maskCtx.moveTo(state.lastLandmarks[points[0]].x * W, state.lastLandmarks[points[0]].y * H);
+                for(let i=1; i<points.length; i++) maskCtx.lineTo(state.lastLandmarks[points[i]].x * W, state.lastLandmarks[points[i]].y * H);
+                maskCtx.closePath(); maskCtx.fill();
+            };
+
+            drawRegion(FACEMESH_FACE_OVAL, '#FFFFFF');
+            const exclusions = [FACEMESH_LEFT_EYE, FACEMESH_RIGHT_EYE, FACEMESH_LEFT_EYEBROW, FACEMESH_RIGHT_EYEBROW, FACEMESH_LIPS];
+            exclusions.forEach(ex => drawRegion(ex, '#000000', 'destination-out'));
+
+            // OPENCV PROCESS - CORRECTION GARBAGE COLLECTOR V84
+            let srcMat = cv.imread(ui.proc);
+            let maskMatRaw = cv.imread(ui.mask); let maskMat = new cv.Mat(); cv.cvtColor(maskMatRaw, maskMat, cv.COLOR_RGBA2GRAY);
+            let grayMat = new cv.Mat(); cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
+            let labMat = new cv.Mat(); cv.cvtColor(srcMat, labMat, cv.COLOR_RGBA2Lab);
+            let labPlanes = new cv.MatVector(); cv.split(labMat, labPlanes);
+
+            let lap = new cv.Mat(); cv.Laplacian(grayMat, lap, cv.CV_64F);
+            
+            // FIX V84 : Utilisation explicite de cv.Mat() pour mean/stddev pour éviter les fuites mémoire
+            let meanMat = new cv.Mat(); let stdMat = new cv.Mat(); 
+            
+            cv.meanStdDev(lap, meanMat, stdMat, maskMat); 
+            state.metrics.text = parseFloat(stdMat.data64F[0].toFixed(2));
+
+            cv.meanStdDev(labPlanes.get(1), meanMat, stdMat, maskMat);
+            state.metrics.ery = parseFloat(meanMat.data64F[0].toFixed(1));
+
+            cv.meanStdDev(labPlanes.get(0), meanMat, stdMat, maskMat);
+            state.metrics.mel = parseFloat(stdMat.data64F[0].toFixed(1));
+
+            ui.stats.text.innerText = state.metrics.text; ui.stats.ery.innerText = state.metrics.ery; ui.stats.mel.innerText = state.metrics.mel;
+
+            // FIX V84 : Nettoyage absolu de la mémoire RAM C++ d'OpenCV
+            srcMat.delete(); maskMatRaw.delete(); maskMat.delete(); grayMat.delete(); labMat.delete(); labPlanes.delete(); lap.delete();
+            meanMat.delete(); stdMat.delete();
+
+            setTimeout(() => {
+                state.report = AgenticSwarm.consult(state.metrics.text, state.metrics.ery, state.metrics.mel);
+                ui.tabs.forEach(t => t.classList.remove('active')); ui.tabs[0].classList.add('active');
+                ui.advice.innerHTML = state.report.diag; 
+                updateStatus("DOSSIER GÉNÉRÉ. EXPORT DISPONIBLE.", true);
+                ui.btnScan.disabled = false;
+                ui.btnPdf.disabled = false;
+            }, 600);
         }
 
-        ui.camSelect.addEventListener('change', (e) => { 
-            state.currentDeviceId = e.target.value; 
-            state.isLive = true; 
-            ui.img.style.display = "none"; 
-            ui.v.style.display = "block";
-            updateStatus("CALIBRAGE...", "var(--primary)"); 
-            initCamera(state.currentDeviceId); 
+        ui.btnScan.onclick = runAnalysis;
+        
+        ui.tabs.forEach(btn => {
+            btn.onclick = () => {
+                ui.tabs.forEach(t => t.classList.remove('active')); btn.classList.add('active');
+                ui.advice.innerHTML = state.report[btn.dataset.target] || "Données en attente.";
+            };
         });
 
-        function checkSystemReady() {
-            if (state.cvReady && state.aiReady && state.videoReady) {
-                updateStatus(state.isMedicalModel ? "IA CLINIQUE OPÉRATIONNELLE" : "IA SECONDAIRE OPÉRATIONNELLE", "var(--success)"); 
-                ui.btnScan.disabled = false; ui.advice.innerText = "Alignez la lésion au centre du viseur.";
-            }
-        }
-
-        function updateStatus(text, color = "var(--text-main)") { ui.status.innerText = text; ui.status.style.color = color; ui.status.style.borderColor = color === "var(--text-main)" ? "#334155" : color; }
-
-        // ==========================================
-        // LE MOTEUR D'EXÉCUTION (BATCH COMPATIBLE)
-        // ==========================================
-        async function executeAnalysis() {
-            if (!state.cvReady || !state.aiReady) return;
-            ui.btnScan.disabled = true; ui.guide.classList.add('scanning');
-            updateStatus("ANALYSE EN COURS...", "var(--primary)");
-            ui.tabs.forEach(t => t.disabled = true);
-
-            const ctx = ui.canvas.getContext('2d'); ui.canvas.width = 224; ui.canvas.height = 224;
-            const source = state.isLive ? ui.v : ui.img;
-            const sW = state.isLive ? ui.v.videoWidth : ui.img.naturalWidth;
-            const sH = state.isLive ? ui.v.videoHeight : ui.img.naturalHeight;
-            const size = Math.min(sW, sH);
-            ctx.drawImage(source, (sW - size)/2, (sH - size)/2, size, size, 0, 0, 224, 224);
-
-            let srcRGBA, srcRGB, gray, kernel, dst, finalScore, detectedPathology;
-            try {
-                srcRGBA = cv.imread(ui.canvas); srcRGB = new cv.Mat(); cv.cvtColor(srcRGBA, srcRGB, cv.COLOR_RGBA2RGB); 
-                gray = new cv.Mat(); cv.cvtColor(srcRGBA, gray, cv.COLOR_RGBA2GRAY);
-                kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(5, 1));
-                cv.morphologyEx(gray, gray, cv.MORPH_BLACKHAT, kernel); cv.threshold(gray, gray, 15, 255, cv.THRESH_BINARY);
-                dst = new cv.Mat(); cv.inpaint(srcRGB, gray, dst, 3, cv.INPAINT_TELEA); cv.imshow(ui.canvas, dst); 
-
-                // Pause asynchrone pour laisser le DOM respirer (Anti-Crash Android)
-                await tf.nextFrame();
-
-                if (state.isMedicalModel) {
-                    let tensor = tf.browser.fromPixels(ui.canvas).resizeNearestNeighbor([224, 224]).toFloat();
-                    let normalized = tensor.div(tf.scalar(255.0)).expandDims();
-                    const predictions = await state.model.predict(normalized).data();
-                    tf.dispose([tensor, normalized]);
-
-                    const maxProbIndex = predictions.indexOf(Math.max(...predictions));
-                    const rawProb = predictions[maxProbIndex];
-                    
-                    detectedPathology = HAM10000_CLASSES[maxProbIndex].name;
-                    finalScore = Math.min(Math.round((rawProb * 100 * 0.4) + (HAM10000_CLASSES[maxProbIndex].danger * 0.6)), 99);
-                } else {
-                    const tensor = tf.browser.fromPixels(ui.canvas);
-                    const predictions = await state.model.classify(tensor);
-                    tf.dispose(tensor); 
-                    finalScore = Math.min(Math.round(predictions[0].probability * 100 * 1.5), 99); 
-                    detectedPathology = "Lésion non-classifiée";
-                }
-
-                state.batchCount++;
-                ui.dots[state.batchCount - 1].classList.add('active');
-                ui.risk.innerText = finalScore + "%";
-                ui.risk.style.color = finalScore >= 60 ? "var(--danger)" : (finalScore >= 30 ? "var(--warning)" : "var(--success)");
-
-                ui.advice.innerText = `Lésion : ${detectedPathology}. Interrogation EBM...`;
-                await fetchMistralMultiAgent(finalScore, detectedPathology);
-
-                state.results.push({ risk: finalScore, pathology: detectedPathology, img: ui.canvas.toDataURL('image/jpeg', 0.8), report: state.agentData });
-
-                ui.tabs.forEach(t => t.disabled = false); switchTab('bilan'); 
-
-                if (state.batchCount >= 5) {
-                    updateStatus("ÉDITION DU DOSSIER PATIENT PDF...", "var(--success)"); generatePDF(); ui.btnScan.disabled = true;
-                } else {
-                    updateStatus(`ZONE ${state.batchCount}/5 ANALYSÉE`, "var(--primary)"); 
-                    if(state.isLive) ui.btnScan.disabled = false;
-                }
-            } catch (err) { 
-                updateStatus("ERREUR D'ANALYSE", "var(--danger)"); 
-                if(state.isLive) ui.btnScan.disabled = false; 
-                console.error(err);
-            } finally {
-                if(srcRGBA) srcRGBA.delete(); if(srcRGB) srcRGB.delete(); if(gray) gray.delete(); if(kernel) kernel.delete(); if(dst) dst.delete();
-                ui.guide.classList.remove('scanning');
-            }
-        }
-
-        ui.btnScan.onclick = executeAnalysis;
-
-        async function fetchMistralMultiAgent(riskScore, pathology) {
-            const apiKey = getApiKey();
-            if(!apiKey) {
-                state.agentData = { bilan: `Détection : ${pathology}. Dermoscopie requise.`, nettoyage: "Nettoyage syndet.", matin: "1. Antioxydant\n2. SPF50", soir: "1. Lavage\n2. Réparation", actifs: "Niacinamide, Céramides." }; return;
-            }
-            try {
-                const systemPrompt = `Tu es un Professeur en Dermatologie (EBM). Analyse la pathologie suspectée: "${pathology}" (Score gravité: ${riskScore}%).
-                Fournis un JSON strict avec: 'bilan' (physiopathologie), 'nettoyage' (pH/microbiome), 'matin' (3 étapes diurnes), 'soir' (3 étapes nocturnes), 'actifs' (Molécules INCI). Ton académique. Ne coupe pas les phrases.`;
-
-                const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                    body: JSON.stringify({ model: "mistral-small-latest", response_format: { type: "json_object" }, messages: [{ role: "system", content: systemPrompt }, { role: "user", content: `Génère le rapport.` }] })
-                });
-                
-                let content = (await response.json()).choices[0].message.content;
-                content = content.replace(/```json/gi, '').replace(/```/g, '').trim();
-                let parsed;
-                try { parsed = JSON.parse(content); } catch (e) {
-                    const first = content.indexOf('{'); const last = content.lastIndexOf('}');
-                    if (first !== -1 && last > first) { parsed = JSON.parse(content.substring(first, last + 1)); } 
-                    else { parsed = { bilan: "Erreur IA", nettoyage: "-", matin: "-", soir: "-", actifs: "-" }; }
-                }
-                state.agentData = { 
-                    bilan: (parsed && parsed.bilan) ? String(parsed.bilan) : "-", 
-                    nettoyage: (parsed && parsed.nettoyage) ? String(parsed.nettoyage) : "-", 
-                    matin: (parsed && parsed.matin) ? String(parsed.matin) : "-", 
-                    soir: (parsed && parsed.soir) ? String(parsed.soir) : "-", 
-                    actifs: (parsed && parsed.actifs) ? String(parsed.actifs) : "-" 
-                };
-            } catch (e) { state.agentData = { bilan: "Erreur Réseau", nettoyage: "-", matin: "-", soir: "-", actifs: "-" }; }
-        }
-
-        ui.tabs.forEach(btn => { btn.addEventListener('click', () => { if(!btn.disabled) switchTab(btn.dataset.target); }); });
-        function switchTab(targetAgent) {
-            ui.tabs.forEach(t => t.classList.remove('active')); document.querySelector(`button[data-target="${targetAgent}"]`).classList.add('active');
-            ui.advice.innerText = state.agentData[targetAgent];
-            const colors = { bilan: "var(--primary)", nettoyage: "#38bdf8", matin: "#fcd34d", soir: "#818cf8", actifs: "var(--success)" };
-            ui.advice.style.borderLeftColor = colors[targetAgent];
-        }
-
-        // ==========================================
-        // MOTEUR PDF UNIVERSEL
-        // ==========================================
-        function generatePDF() {
-            try {
-                const { jsPDF } = window.jspdf; const doc = new jsPDF();
-                let pageNum = 1; const pageWidth = doc.internal.pageSize.width; const pageHeight = doc.internal.pageSize.height; const margin = 20;
-
-                const printHeader = () => {
-                    doc.setFillColor(248, 250, 252); doc.rect(0, 0, pageWidth, 50, 'F'); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.text("PURESCAN NEXUS | EXPERTISE CLINIQUE", margin, 20); doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text("DOSSIER PATIENT EBM", margin, 28);
-                    doc.setFontSize(9); doc.setTextColor(15, 23, 42); doc.text("Patient : ________________________", margin, 40); doc.text("ID : ________________", margin + 85, 40); doc.text(`Date : ${new Date().toLocaleDateString('fr-FR')}`, margin + 150, 40); doc.setDrawColor(203, 213, 225); doc.line(margin, 50, pageWidth - margin, 50);
-                };
-                const printFooter = () => {
-                    doc.setTextColor(148, 163, 184); doc.setFont("helvetica", "italic"); doc.setFontSize(7); doc.text("Document IA. Validation médicale requise.", pageWidth / 2, pageHeight - 11, { align: "center" }); doc.setFont("helvetica", "normal"); doc.text(`Page ${pageNum}`, pageWidth - margin, pageHeight - 10, { align: "right" });
-                };
-
-                printHeader(); let yOffset = 60;
-                state.results.forEach((res, i) => {
-                    if (yOffset > 150) { printFooter(); doc.addPage(); pageNum++; printHeader(); yOffset = 60; }
-                    doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text(`Lésion n°${i+1} : ${res.pathology}`, margin, yOffset); doc.setFont("helvetica", "normal"); doc.setFontSize(10); if(res.risk >= 60) doc.setTextColor(220, 38, 38); else if(res.risk >= 30) doc.setTextColor(217, 119, 6); else doc.setTextColor(5, 150, 105); doc.text(`Gravité évaluée : ${res.risk}%`, margin, yOffset + 6); doc.setDrawColor(203, 213, 225); doc.rect(164, yOffset - 4, 27, 27); doc.addImage(res.img, 'JPEG', 165, yOffset - 3, 25, 25); yOffset += 16;
-                    const printBlock = (title, text, color) => { doc.setFontSize(9); const lines = doc.splitTextToSize(text.replace(/\\n/g, '\n').replace(/\*/g, ''), 115); const bH = (lines.length * 4) + 8; if (yOffset + bH > 270) { printFooter(); doc.addPage(); pageNum++; printHeader(); yOffset = 60; } doc.setTextColor(color[0], color[1], color[2]); doc.setFont("helvetica", "bold"); doc.text(title, margin, yOffset); doc.setTextColor(71, 85, 105); doc.setFont("helvetica", "normal"); doc.text(lines, margin + 28, yOffset); yOffset += bH; };
-                    printBlock("Bilan :", res.report.bilan, [37, 99, 235]); printBlock("Lavage :", res.report.nettoyage, [14, 165, 233]); printBlock("Matin :", res.report.matin, [217, 119, 6]); printBlock("Soir :", res.report.soir, [79, 70, 229]); printBlock("INCI :", res.report.actifs, [5, 150, 105]);
-                    if (yOffset + 25 > 275) { printFooter(); doc.addPage(); pageNum++; printHeader(); yOffset = 60; } doc.setFontSize(9); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.text("Prescription :", margin, yOffset + 4); try { var tf = new jsPDF.API.AcroForm.TextField(); tf.Rect = [margin + 28, yOffset, 130, 12]; tf.multiline = true; tf.V = ""; tf.T = "Prescription" + i; doc.addField(tf); doc.setDrawColor(203, 213, 225); doc.rect(margin + 28, yOffset, 130, 12); } catch(e) { doc.setDrawColor(203, 213, 225); doc.rect(margin + 28, yOffset, 130, 12); } yOffset += 18; doc.setDrawColor(226, 232, 240); doc.line(margin, yOffset, pageWidth - margin, yOffset); yOffset += 8;
-                });
-                printFooter(); 
-                
-                // Fallback sécurité Partage Web vs Ordinateur
-                if (navigator.share && /Mobi|Android|iPhone/i.test(navigator.userAgent)) {
-                    const blob = doc.output('blob'); const file = new File([blob], "Dossier_Medical.pdf", { type: 'application/pdf' });
-                    navigator.share({ title: 'Dossier Clinique', files: [file] }).catch(() => window.open(URL.createObjectURL(blob), '_blank'));
-                } else { doc.save(`Dossier_Medical_PureScan.pdf`); }
-            } catch (e) { updateStatus("ERREUR PDF", "var(--danger)"); ui.btnScan.disabled = false; console.error(e); }
-        }
-
-        // ==========================================
-        // SÉQUENCEUR DE FICHIERS MULTIPLES (BATCH)
-        // ==========================================
-        document.getElementById('btn-upload').onclick = () => document.getElementById('file-in').click();
+        // ============================================================================
+        // 🖨️ MOTEUR DE GÉNÉRATION PDF B2B (Mise à jour V84)
+        // ============================================================================
         
-        document.getElementById('file-in').onchange = async (e) => { 
-            if (!e.target.files || e.target.files.length === 0) return; 
+        function stripHTMLForPDF(html) {
+            // FIX V84 : Meilleur parsing pour enlever les balises <b> et nettoyer le texte pour le PDF
+            let text = html.replace(/<li>/gi, '\n- ').replace(/<\/li>/gi, '');
+            text = text.replace(/<div class="step-desc">/gi, ' : ').replace(/<div class="step-num">/gi, '\nÉtape ');
+            text = text.replace(/<b>/gi, '').replace(/<\/b>/gi, '');
+            text = text.replace(/<strong>/gi, '').replace(/<\/strong>/gi, '');
+            text = text.replace(/<br\s*[\/]?>/gi, "\n").replace(/<\/div>/gi, "\n");
+            return text.replace(/<[^>]+>/g, '').replace(/\n\s*\n/g, '\n\n').trim();
+        }
+
+        ui.btnPdf.onclick = () => {
+            updateStatus("GÉNÉRATION DU PDF EN COURS...");
+            const { jsPDF } = window.jspdf; 
+            const doc = new jsPDF('p', 'mm', 'a4');
             
-            if(state.videoStream) { state.videoStream.getTracks().forEach(t => t.stop()); } 
-            state.isLive = false; 
-            ui.v.style.display = "none";
-            ui.img.style.display = "block";
+            doc.setFillColor(248, 250, 252); doc.rect(0, 0, 210, 297, 'F');
+            doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 35, 'F');
             
-            let files = Array.from(e.target.files);
-            let slots = 5 - state.batchCount;
+            doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold");
+            doc.text("ORDONNANCE DERMOCOSMÉTIQUE", 15, 20);
+            doc.setFontSize(10); doc.setTextColor(6, 182, 212); doc.setFont("helvetica", "normal");
+            doc.text("Généré par Nexus AI System V84 - Gold Master", 15, 28);
             
-            if(files.length > slots) {
-                alert(`Le dossier médical est limité à 5 lésions. Seules les ${slots} premières images seront analysées.`);
-                files = files.slice(0, slots);
-            }
+            let today = new Date().toLocaleDateString('fr-FR');
+            doc.setTextColor(255, 255, 255); doc.text(`Date : ${today}`, 165, 20);
+
+            doc.setTextColor(15, 23, 42); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+            doc.text("1. Relevé Biométrique (CIELAB)", 15, 50);
+            doc.setDrawColor(203, 213, 225); doc.line(15, 52, 195, 52);
             
-            ui.btnScan.disabled = true;
-            document.getElementById('btn-upload').disabled = true;
-            
-            for (let i = 0; i < files.length; i++) {
-                updateStatus(`CHARGEMENT IMAGE ${i+1}/${files.length}...`, "var(--warning)");
+            doc.setFontSize(10); doc.setFont("helvetica", "normal");
+            doc.text(`> Relief Cutané (Laplacien) : ${state.metrics.text} Hz`, 15, 60);
+            doc.text(`> Sensibilité (Érythème a*) : ${state.metrics.ery}`, 15, 67);
+            doc.text(`> Dyschromie (Mélanine ΔL) : ${state.metrics.mel}`, 15, 74);
+
+            let yPos = 90;
+            const printSection = (title, rawHTML) => {
+                if (yPos > 250) { doc.addPage(); yPos = 20; }
                 
-                await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = async (ev) => {
-                        ui.img.src = ev.target.result;
-                        // Donne le temps au DOM de peindre l'image pour l'extraction Canvas
-                        setTimeout(resolve, 250); 
-                    };
-                    reader.readAsDataURL(files[i]);
-                });
+                doc.setTextColor(6, 182, 212); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+                doc.text(title, 15, yPos);
+                doc.setDrawColor(203, 213, 225); doc.line(15, yPos + 2, 195, yPos + 2);
+                yPos += 12;
+
+                doc.setTextColor(51, 65, 85); doc.setFontSize(10); doc.setFont("helvetica", "normal");
+                let cleanText = stripHTMLForPDF(rawHTML);
+                let lines = doc.splitTextToSize(cleanText, 180);
                 
-                await executeAnalysis();
-                if (state.batchCount >= 5) break;
-                // Protection contre la saturation réseau Mistral API
-                await new Promise(r => setTimeout(r, 1500));
+                if (yPos + (lines.length * 5) > 280) { doc.addPage(); yPos = 20; }
+                doc.text(lines, 15, yPos);
+                yPos += (lines.length * 5) + 15;
+            };
+
+            printSection("2. Synthèse Clinique & Actes", state.report.diag);
+            printSection("3. Protocoles & Gestuelle", state.report.rituel);
+            printSection("4. Prescription de Soins INCI", state.report.produits);
+
+            doc.setFontSize(8); doc.setTextColor(148, 163, 184);
+            doc.text("Document généré par Intelligence Artificielle. Ne remplace pas une consultation médicale.", 105, 290, {align: "center"});
+
+            if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
+                const blob = doc.output('blob');
+                window.open(URL.createObjectURL(blob));
+            } else {
+                doc.save(`Ordonnance_Nexus_${today.replace(/\//g, '-')}.pdf`);
             }
-            
-            document.getElementById('btn-upload').disabled = false;
+            updateStatus("PDF GÉNÉRÉ AVEC SUCCÈS", true);
         };
 
-        document.getElementById('btn-reset').onclick = () => { 
-            ui.img.style.display = "none"; 
-            ui.v.style.display = "block";
-            document.getElementById('file-in').value = ""; 
-            state.isLive = true; 
-            initCamera(state.currentDeviceId); 
-            state.batchCount = 0; 
-            state.results = []; 
-            ui.dots.forEach(d => d.classList.remove('active')); 
-            ui.btnScan.disabled = false; 
-            ui.risk.innerText = "--%"; 
-            ui.risk.style.color = "var(--text-main)"; 
-            ui.tabs.forEach(t => { t.disabled = true; t.classList.remove('active'); }); 
-            ui.tabs[0].classList.add('active'); 
-            ui.advice.style.borderLeftColor = "var(--primary)"; 
-            updateStatus("SYSTÈME PRÊT", "var(--success)"); 
-            ui.advice.innerText = "Dossier réinitialisé. Nouveau patient."; 
-        };
-        
-        if ('serviceWorker' in navigator) { const swBlob = new Blob([`self.addEventListener('install', e => e.waitUntil(caches.open('purescan').then(c => c.addAll(['index.html'])))); self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))));`], { type: 'application/javascript' }); navigator.serviceWorker.register(URL.createObjectURL(swBlob)); }
+        window.onload = initAll;
     </script>
 </body>
 </html>
