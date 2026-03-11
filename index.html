@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nexus Clinical | V109 Gold</title>
+    <title>Nexus Clinical | V110 Final</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -15,41 +15,54 @@
     <style>
         :root { 
             --primary: #00e5ff; --accent: #00ff88; --warning: #ffaa00; --danger: #ff3366; 
-            --bg: #050914; --surface: rgba(18, 25, 43, 0.8); --border: rgba(255, 255, 255, 0.1);
+            --bg: #050914; --surface: rgba(18, 25, 43, 0.7); --border: rgba(255, 255, 255, 0.1);
+            --am: #fbbf24; --pm: #818cf8;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        body { 
+            background: var(--bg); color: #fff; height: 100dvh; 
+            display: flex; flex-direction: column; overflow: hidden; 
+            background-image: radial-gradient(circle at 50% 0%, #111a30 0%, #050914 100%);
+        }
 
-        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .logo { font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        header { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .logo { font-weight: 800; font-size: 1rem; letter-spacing: 1px; text-transform: uppercase; }
         .logo span { color: var(--primary); }
+        .key-btn { background: var(--surface); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 10px; cursor: pointer; }
 
-        #viewport { position: relative; height: 30vh; margin: 0 15px; border-radius: 24px; overflow: hidden; border: 1px solid var(--border); background: #000; flex-shrink: 0; }
+        #viewport { position: relative; height: 28vh; margin: 0 15px; border-radius: 24px; overflow: hidden; border: 1px solid var(--border); background: #000; flex-shrink: 0; }
         video, #output-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; transform: scaleX(-1); }
         .face-guide { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .face-guide svg { width: 50%; height: 70%; opacity: 0.2; stroke: #fff; fill: none; transition: 0.3s; }
         .face-guide.ready svg { stroke: var(--primary); opacity: 0.6; }
 
-        .dashboard { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+        .dashboard { flex: 1; padding: 12px 15px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .kpi-card { background: var(--surface); padding: 12px 5px; border-radius: 18px; border: 1px solid var(--border); text-align: center; }
         .kpi-val { font-size: 1.1rem; font-weight: 800; color: #fff; display: block; }
         .kpi-lab { font-size: 0.45rem; color: #8b9bb4; text-transform: uppercase; font-weight: 800; margin-top: 4px; }
 
-        .glass-panel { background: var(--surface); backdrop-filter: blur(20px); border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); flex: 1; position: relative; }
-        .tabs { display: flex; background: rgba(0,0,0,0.3); padding: 5px; }
-        .tab { flex: 1; padding: 12px; border: none; background: transparent; color: #8b9bb4; font-size: 0.65rem; font-weight: 800; border-radius: 18px; text-transform: uppercase; }
+        .glass-panel { background: var(--surface); backdrop-filter: blur(20px); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); flex: 1; position: relative; }
+        .tabs { display: flex; background: rgba(0,0,0,0.4); padding: 4px; }
+        .tab { flex: 1; padding: 12px; border: none; background: transparent; color: #8b9bb4; font-size: 0.65rem; font-weight: 800; border-radius: 16px; text-transform: uppercase; }
         .tab.active { background: var(--primary); color: #000; }
+        .tab:disabled { opacity: 0.2; }
 
         #content { padding: 15px; }
-        .diag-card { background: rgba(0,229,255,0.1); padding: 15px; border-radius: 18px; border: 1px solid rgba(0,229,255,0.2); }
+        .health-score-container { display: flex; align-items: center; gap: 16px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 16px;}
+        .score-circle { width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(var(--primary) calc(var(--score) * 1%), #111a30 0); display: flex; align-items: center; justify-content: center; position: relative; }
+        .score-circle::before { content: ""; position: absolute; inset: 4px; background: #0b1120; border-radius: 50%; }
+        .score-value { position: relative; z-index: 2; font-weight: 800; font-size: 1.1rem; color: #fff; }
 
-        .loader { position: absolute; inset: 0; background: rgba(5, 9, 20, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        .spinner { width: 35px; height: 35px; border: 4px solid rgba(0, 229, 255, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; }
+        .routine-item { border-left: 3px solid var(--accent); padding-left: 12px; margin-bottom: 12px; background: linear-gradient(90deg, rgba(0, 255, 136, 0.05) 0%, transparent 100%); padding-top: 10px; padding-bottom: 10px; border-radius: 0 12px 12px 0; }
+
+        .loader { position: absolute; inset: 0; background: rgba(5, 9, 20, 0.98); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        .spinner { width: 35px; height: 35px; border: 3px solid rgba(0, 229, 255, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .bottom-bar { background: rgba(10, 15, 28, 0.98); border-top: 1px solid var(--border); padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 15px; flex-shrink: 0; }
-        .btn { border: none; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 54px; transition: 0.2s; }
+        .bottom-bar { background: rgba(10, 15, 28, 0.98); border-top: 1px solid var(--border); padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 15px; flex-shrink: 0; z-index: 1000; }
+        .btn { border: none; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 52px; transition: 0.2s; }
         .btn-main { flex: 1; background: #fff; color: #000; font-size: 0.8rem; text-transform: uppercase; }
         .btn-main.ready { background: var(--primary); box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); }
         .btn-icon { width: 55px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border); border-radius: 18px; font-size: 1.3rem; }
@@ -62,7 +75,7 @@
 
     <header>
         <div class="logo">NEXUS <span>PRO</span></div>
-        <button style="background:var(--surface); border:none; color:white; width:38px; height:38px; border-radius:12px; font-size: 1.2rem;" onclick="configureKey()">⚙️</button>
+        <button class="key-btn" onclick="configureKey()">⚙️</button>
     </header>
 
     <div id="viewport">
@@ -74,30 +87,31 @@
     <div class="dashboard">
         <div class="kpi-row">
             <div class="kpi-card"><span class="kpi-val" id="val-text">--</span><span class="kpi-lab">Texture</span></div>
-            <div class="kpi-card"><span class="kpi-val" id="val-ery">--</span><span class="kpi-lab">Sensibilité</span></div>
+            <div class="kpi-card"><span class="kpi-val" id="val-ery">--</span><span class="kpi-lab">Inflamm.</span></div>
             <div class="kpi-card"><span class="kpi-val" id="val-mel">--</span><span class="kpi-lab">Pigment</span></div>
         </div>
 
         <div class="glass-panel">
             <div class="loader" id="loader">
                 <div class="spinner"></div>
-                <span id="load-msg" style="font-size: 0.6rem; color: var(--primary); margin-top: 12px; font-weight: 800; letter-spacing: 2px;">GOLD ENGINE V109</span>
+                <span id="load-msg" style="font-size: 0.6rem; color: var(--primary); margin-top: 10px; font-weight: 800; text-transform: uppercase;">Analyse en cours...</span>
             </div>
             <div class="tabs">
-                <button class="tab active" id="tab-diag" onclick="switchTab('diag')" disabled>Diagnostic</button>
+                <button class="tab active" id="tab-diag" onclick="switchTab('diag')" disabled>Bilan</button>
                 <button class="tab" id="tab-routine" onclick="switchTab('routine')" disabled>Routine</button>
             </div>
             <div id="content">
-                <div style="text-align: center; color: #475569; padding-top: 40px;">
-                    <p style="font-size: 0.8rem;">Prêt pour une analyse biométrique.</p>
+                <div style="text-align: center; color: #475569; padding-top: 30px;">
+                    <p style="font-size: 0.8rem;">Veuillez cliquer sur Démarrer.</p>
                 </div>
             </div>
         </div>
+        <div style="height: 30px; flex-shrink: 0;"></div>
     </div>
 
     <div class="bottom-bar">
         <button class="btn btn-icon" onclick="location.reload()">🔄</button>
-        <button class="btn btn-main" id="btn-scan" onclick="handleAction()" disabled>Initialisation...</button>
+        <button class="btn btn-main" id="btn-scan" onclick="handleAction()" disabled>Démarrer</button>
         <button class="btn btn-icon" id="btn-pdf" disabled onclick="exportToPDF()">📄</button>
     </div>
 
@@ -122,11 +136,8 @@
         let state = { landmarks: null, aiData: null, isRunning: false, isBusy: false };
 
         function configureKey() {
-            const k = prompt("Entrez la clé Mistral API :");
-            if (k) {
-                localStorage.setItem('nexus_mistral_key', k.trim());
-                alert("Clé enregistrée avec succès.");
-            }
+            const k = prompt("Collez votre clé Mistral API :");
+            if (k) localStorage.setItem('nexus_mistral_key', k.trim());
         }
 
         async function init() {
@@ -136,20 +147,15 @@
             fm.onResults(res => {
                 state.landmarks = res.multiFaceLandmarks && res.multiFaceLandmarks.length > 0 ? res.multiFaceLandmarks[0] : null;
                 if (state.landmarks) {
-                    ui.guide.classList.add('ready');
-                    ui.btnScan.disabled = false; ui.btnScan.classList.add('ready');
+                    ui.guide.classList.add('ready'); ui.btnScan.disabled = false; ui.btnScan.classList.add('ready');
                 } else {
-                    ui.guide.classList.remove('ready');
-                    ui.btnScan.disabled = true; ui.btnScan.classList.remove('ready');
+                    ui.guide.classList.remove('ready'); ui.btnScan.disabled = true; ui.btnScan.classList.remove('ready');
                 }
                 drawOverlay();
             });
 
             try {
-                if (ui.v.srcObject) ui.v.srcObject.getTracks().forEach(t => t.stop());
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
                 ui.v.srcObject = stream;
                 ui.v.onloadedmetadata = () => ui.v.play();
                 
@@ -158,19 +164,13 @@
                     width: 640, height: 480
                 });
                 await cam.start();
-                state.isRunning = true;
-                ui.loader.style.display = 'none';
-                ui.btnScan.innerText = "Scanner Patient";
+                state.isRunning = true; ui.loader.style.display = 'none'; ui.btnScan.innerText = "Scanner";
             } catch (e) {
-                ui.msg.innerText = "ERREUR CAMÉRA";
-                ui.btnScan.innerText = "Réessayer"; ui.btnScan.disabled = false;
+                alert("Erreur Caméra. Vérifiez les réglages.");
             }
         }
 
-        function handleAction() {
-            if (!state.isRunning) init();
-            else analyze();
-        }
+        function handleAction() { if (!state.isRunning) init(); else analyze(); }
 
         function drawOverlay() {
             ui.canvas.width = ui.v.videoWidth; ui.canvas.height = ui.v.videoHeight;
@@ -188,10 +188,8 @@
             const k = localStorage.getItem('nexus_mistral_key');
             if (!k) return configureKey();
 
-            state.isBusy = true;
-            ui.loader.style.display = 'flex';
-            ui.msg.innerText = "LANCEUR IA...";
-
+            state.isBusy = true; ui.loader.style.display = 'flex';
+            
             try {
                 const W = 512, H = Math.floor(512 * (ui.v.videoHeight / ui.v.videoWidth));
                 ui.proc.height = H;
@@ -205,35 +203,27 @@
                 }
                 const count = pix.length/step;
                 const m = { text:(vL/count*4).toFixed(1), ery:((r-g)/count*2.2).toFixed(1), mel:(100-(r+g+b)/(3*count)).toFixed(1) };
-
+                
                 document.getElementById('val-text').innerText = m.text;
                 document.getElementById('val-ery').innerText = m.ery;
                 document.getElementById('val-mel').innerText = m.mel;
 
                 const b64 = ui.proc.toDataURL('image/jpeg', 0.5);
-                const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${k}` },
                     body: JSON.stringify({
                         model: "pixtral-12b-2409",
                         messages: [{ role: "user", content: [
-                            {type:"text", text:`Dermatologue. Analyse: Texture ${m.text}Hz, Erythème ${m.ery}, Pigment ${m.mel}. Réponds UNIQUEMENT en JSON: {"score":85, "title":"Diagnostic", "physio":"Description", "routine":[{"step":"Matin", "prod":"Soin", "why":"Raison"}]}`},
+                            {type:"text", text:`Dermatologue & Chimiste. Analyse: Relief ${m.text}, Rougeur ${m.ery}, Taches ${m.mel}. Renvoie JSON STRICT: {"score":85, "title":"Diagnostic", "physio":"Description", "routine":[{"step":"Matin", "prod":"Produit", "why":"Cible"}]}`},
                             {type:"image_url", image_url:{url:b64}}
                         ] }],
                         response_format: { type: "json_object" }
                     })
                 });
-                
-                if(!res.ok) throw new Error("Clé invalide ou quota dépassé.");
+
                 const d = await res.json();
-                
-                // --- FIX V109: PARSER ROBUSTE ---
-                const raw = d.choices[0].message.content;
-                state.aiData = JSON.parse(raw);
-                
-                // Vérification de sécurité des données
-                if(!state.aiData.title) state.aiData.title = "Analyse Complétée";
-                if(!state.aiData.score) state.aiData.score = "--";
+                state.aiData = JSON.parse(d.choices[0].message.content);
 
                 ui.loader.style.display = 'none';
                 ui.tabDiag.disabled = false; ui.tabRoutine.disabled = false;
@@ -241,7 +231,7 @@
                 ui.btnPdf.disabled = false;
                 ui.btnScan.innerText = "Nouveau Scan";
             } catch (e) {
-                alert("Erreur critique: " + e.message);
+                alert("Erreur IA. Vérifiez votre clé.");
                 ui.loader.style.display = 'none';
             } finally { state.isBusy = false; }
         }
@@ -249,24 +239,21 @@
         function switchTab(t) {
             ui.tabDiag.classList.toggle('active', t === 'diag');
             ui.tabRoutine.classList.toggle('active', t === 'routine');
-            
             if (!state.aiData) return;
-            
             if (t === 'diag') {
                 ui.content.innerHTML = `
-                    <div class="diag-card">
-                        <h3 style="color:var(--primary); font-size:0.95rem;">${state.aiData.title || 'Diagnostic'}</h3>
-                        <p style="font-size:0.8rem; color:#d1d5db; margin-top:8px;">${state.aiData.physio || 'Calcul en cours...'}</p>
+                    <div class="health-score-container" style="--score:${state.aiData.score};">
+                        <div class="score-circle"><div class="score-value">${state.aiData.score}</div></div>
+                        <div style="margin-left:15px;"><h4 style="font-size:0.85rem;">Santé Globale</h4><p style="font-size:0.6rem; color:#8b9bb4;">Analyse Multimodale</p></div>
                     </div>
-                    <div style="text-align:center; padding:25px;">
-                        <div style="font-size:2.8rem; font-weight:800; color:var(--primary);">${state.aiData.score}%</div>
-                        <span style="font-size:0.55rem; color:#8b9bb4; letter-spacing:2px; font-weight:700;">INDICE VITALITÉ</span>
-                    </div>`;
+                    <h3 style="color:var(--primary); font-size:0.9rem;">${state.aiData.title}</h3>
+                    <p style="font-size:0.75rem; color:#d1d5db; margin-top:8px; line-height:1.5;">${state.aiData.physio}</p>
+                `;
             } else {
-                ui.content.innerHTML = (state.aiData.routine || []).map(r => `
-                    <div style="border-left:3px solid var(--accent); padding:15px; background:rgba(255,255,255,0.03); margin-bottom:12px; border-radius:0 15px 15px 0;">
-                        <span style="font-size:0.55rem; color:var(--accent); font-weight:800; text-transform:uppercase;">${r.step}</span>
-                        <div style="font-weight:800; font-size:0.9rem; margin:6px 0; color:#fff;">${r.prod}</div>
+                ui.content.innerHTML = state.aiData.routine.map(r => `
+                    <div class="routine-item">
+                        <span style="font-size:0.55rem; color:var(--accent); font-weight:800;">${r.step}</span>
+                        <div style="font-weight:800; font-size:0.85rem; margin:4px 0; color:#fff;">${r.prod}</div>
                         <p style="font-size:0.75rem; color:#94a3b8; line-height:1.4;">${r.why}</p>
                     </div>`).join('');
             }
@@ -275,13 +262,13 @@
         function exportToPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text("RAPPORT NEXUS V109", 15, 20);
-            doc.text("Bilan : " + (state.aiData.title || "Analyse"), 15, 40);
+            doc.text("BILAN NEXUS CLINICAL", 15, 20);
+            doc.text("Diagnostic : " + state.aiData.title, 15, 40);
             if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) window.open(URL.createObjectURL(doc.output('blob')));
-            else doc.save("Nexus_Gold_Report.pdf");
+            else doc.save("Nexus_Report.pdf");
         }
 
-        window.onload = () => { ui.btnScan.disabled = false; ui.btnScan.innerText = "Démarrer Nexus"; };
+        window.onload = () => { ui.btnScan.disabled = false; ui.btnScan.innerText = "Démarrer"; };
     </script>
 </body>
 </html>
