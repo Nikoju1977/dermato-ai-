@@ -6,8 +6,10 @@
     
     <meta name="author" content="Nicolas JULIENNE - Architecte AI Elite">
     <meta name="date" content="Mars 2026">
-    <title>PureScan Nexus | V84 Gold Master</title>
+    <title>PureScan Nexus | V85 Mobile Resilience</title>
     
+    <meta name="theme-color" content="#06b6d4">
+
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
@@ -29,9 +31,9 @@
 
         header { padding: 12px; border-bottom: 1px solid var(--border); background: var(--card); z-index: 100; display: flex; justify-content: space-between; align-items: center;}
         .arch-signature { font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--primary); font-weight: 800; }
-        .b2b-badge { font-size: 0.5rem; background: rgba(16, 185, 129, 0.2); color: var(--accent); border: 1px solid var(--accent); padding: 3px 6px; border-radius: 4px; font-weight: 800; }
+        .b2b-badge { font-size: 0.5rem; background: rgba(6, 182, 212, 0.2); color: var(--primary); border: 1px solid var(--primary); padding: 3px 6px; border-radius: 4px; font-weight: 800; }
 
-        #viewport { position: relative; flex: 0 0 25vh; background: #000; overflow: hidden; border-bottom: 2px solid var(--primary); }
+        #viewport { position: relative; flex: 0 0 30vh; background: #000; overflow: hidden; border-bottom: 2px solid var(--primary); }
         video, #output-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; transform: scaleX(-1); }
         #output-canvas { z-index: 6; pointer-events: none; }
         
@@ -44,37 +46,38 @@
         .status-error { border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.1); }
 
         .bio-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .stat-card { background: var(--card); padding: 8px 4px; border-radius: 12px; border: 1px solid var(--border); text-align: center; position: relative; overflow: hidden;}
+        .stat-card { background: var(--card); padding: 12px 4px; border-radius: 12px; border: 1px solid var(--border); text-align: center; position: relative; overflow: hidden;}
         .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--primary); opacity: 0.5; }
-        .stat-label { font-size: 0.45rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; font-weight: 800; }
-        .stat-val { font-size: 1rem; font-weight: 800; color: var(--text); font-feature-settings: "tnum"; }
-        .stat-unit { font-size: 0.55rem; color: #64748b; margin-left: 1px; }
+        .stat-label { font-size: 0.45rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; font-weight: 800; }
+        .stat-val { font-size: 1.1rem; font-weight: 800; color: var(--text); font-feature-settings: "tnum"; }
+        .stat-unit { font-size: 0.55rem; color: #64748b; margin-left: 2px; }
 
         .main-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; flex: 1; overflow: hidden; }
         .tabs { display: flex; border-bottom: 1px solid var(--border); }
-        .tab-btn { flex: 1; background: transparent; border: none; color: #94a3b8; padding: 10px 4px; font-size: 0.6rem; cursor: pointer; font-weight: 800; text-transform: uppercase; transition: 0.2s; white-space: nowrap; }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #94a3b8; padding: 12px 4px; font-size: 0.65rem; cursor: pointer; font-weight: 800; text-transform: uppercase; transition: 0.2s; white-space: nowrap; }
         .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); background: rgba(6, 182, 212, 0.05); }
 
         #advice-area { font-size: 0.8rem; line-height: 1.5; padding: 14px; color: #cbd5e1; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px;}
 
-        .section-title { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #f8fafc; border-bottom: 1px solid #334155; padding-bottom: 4px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-        .report-box { padding: 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); }
+        .section-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #f8fafc; border-bottom: 1px solid #334155; padding-bottom: 4px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .report-box { padding: 12px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); }
         .report-box.synergy { border-left: 3px solid var(--neuro); }
-        .synergy-tags { display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap;}
-        .s-tag { font-size: 0.45rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; background: #1e293b; color: #94a3b8; border: 1px solid #334155; text-transform: uppercase;}
+        .report-box.alert { border-left: 3px solid var(--danger); background: rgba(239, 68, 68, 0.05); }
+        .synergy-tags { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap;}
+        .s-tag { font-size: 0.45rem; padding: 3px 6px; border-radius: 4px; font-weight: bold; background: #1e293b; color: #94a3b8; border: 1px solid #334155; text-transform: uppercase;}
         .s-tag.cmo { color: var(--primary); border-color: var(--primary); background: rgba(6, 182, 212, 0.1);}
-        .box-text { font-size: 0.75rem; color: #cbd5e1; }
+        .box-text { font-size: 0.8rem; color: #cbd5e1; }
         .box-text strong { color: var(--primary); }
-        ul.clinical-list { list-style: none; margin-top: 6px; padding-left: 0;}
-        ul.clinical-list li { position: relative; padding-left: 14px; margin-bottom: 6px; font-size: 0.75rem;}
+        ul.clinical-list { list-style: none; margin-top: 8px; padding-left: 0;}
+        ul.clinical-list li { position: relative; padding-left: 14px; margin-bottom: 8px; font-size: 0.8rem;}
         ul.clinical-list li::before { content: '▸'; position: absolute; left: 0; color: var(--primary); font-weight: bold; }
-        .step-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; border: 1px solid #1e293b;}
-        .step-num { flex: 0 0 18px; height: 18px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; font-weight: bold; color: #000;}
-        .step-desc { flex: 1; font-size: 0.75rem; }
-        .step-desc strong { color: #f8fafc; display: block; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 2px;}
+        .step-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid #1e293b;}
+        .step-num { flex: 0 0 20px; height: 20px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; color: #000;}
+        .step-desc { flex: 1; font-size: 0.8rem; }
+        .step-desc strong { color: #f8fafc; display: block; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 2px;}
 
         .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; padding-top: 5px;}
-        .btn { padding: 14px; border: none; border-radius: 12px; font-weight: 800; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; transition: transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn { padding: 16px; border: none; border-radius: 12px; font-weight: 800; font-size: 0.75rem; cursor: pointer; text-transform: uppercase; transition: transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-main { background: var(--primary); color: #000; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); grid-column: span 2;}
         .btn-main:active { transform: scale(0.98); }
         .btn-main:disabled { background: #334155; color: #64748b; cursor: not-allowed; box-shadow: none;}
@@ -87,14 +90,14 @@
 <body>
 
     <header>
-        <div class="arch-signature">Nexus Master V84</div>
-        <div class="b2b-badge">GOLD MASTER</div>
+        <div class="arch-signature">Nexus Master V85</div>
+        <div class="b2b-badge">MOBILE RESILIENCE</div>
     </header>
 
     <div id="viewport">
         <video id="webcam" autoplay playsinline muted></video>
         <canvas id="output-canvas"></canvas>
-        <div class="loading-mesh" id="mesh-loader">BOOT MATRICE<br><span style="font-size: 0.5rem; color: #64748b;">Vérification sécurité...</span></div>
+        <div class="loading-mesh" id="mesh-loader">BOOT MATRICE...</div>
     </div>
 
     <div class="dashboard">
@@ -160,14 +163,6 @@
             report: { diag: "", rituel: "", produits: "" } 
         };
 
-        // --- VERIFICATION SECURITE & HTTPS ---
-        if (window.isSecureContext === false) {
-            alert("⚠️ Avertissement : L'application n'est pas sur un serveur sécurisé (HTTPS). L'accès à la caméra sera bloqué par le navigateur.");
-            ui.meshLoader.innerHTML = "ERREUR SÉCURITÉ<br>Nécessite HTTPS";
-            ui.meshLoader.style.color = "var(--danger)";
-            updateStatus("ÉCHEC SÉCURITÉ", false, true);
-        }
-
         const HTMLGen = {
             title: (icon, text) => `<div class="section-title"><i>${icon}</i> ${text}</div>`,
             synergy: (tags, title, text) => {
@@ -178,6 +173,7 @@
             step: (num, title, text) => `<div class="step-item"><div class="step-num">${num}</div><div class="step-desc"><strong>${title}</strong>${text}</div></div>`
         };
 
+        // --- MOTEUR EXPERT AGENTIQUE ---
         const AgenticSwarm = {
             consult: function(text, ery, mel) {
                 let isInflamed = (ery > 132); let isRough = (text > 25); let isPigmented = (mel > 15);
@@ -190,23 +186,23 @@
                 if (isInflamed && isRough) {
                     htmlDiag += HTMLGen.synergy(["Vasculaire", "Kératologue", "CMO"], "Inflammation Hyperkératosique", "Altération de la barrière (rougeurs) + épaississement de la couche cornée. L'exfoliation agressive est bloquée.");
                     zones.push("Joues et Ailes du nez (Érythème)", "Zone T (Irrégularités)");
-                    traitements.push("LED Thérapie Rouge (Anti-inflammatoire).", "Hydrafacial doux.");
+                    traitements.push("LED Thérapie Rouge (Anti-inflammatoire).", "Hydrafacial doux sans acides forts.");
                 } else if (isInflamed) {
-                    htmlDiag += HTMLGen.synergy(["Vasculaire", "CMO"], "Hyper-réactivité Vasculaire", "Afflux sanguin sous-dermique (rosacée ou échauffement cutané).");
+                    htmlDiag += HTMLGen.synergy(["Vasculaire", "CMO"], "Hyper-réactivité Vasculaire", "Afflux sanguin sous-dermique détecté. Risque d'échauffement ou rosacée.");
                     zones.push("Pommettes, Joues, Sillons nasogéniens.");
                     traitements.push("Laser Vasculaire (VBeam / Nd:YAG).", "Cryothérapie faciale locale.");
                 } else if (isRough) {
                     htmlDiag += HTMLGen.synergy(["Kératologue", "CMO"], "Relief Micro-Kystique", "Accumulation de cellules mortes. La peau est calme, l'exfoliation est autorisée.");
                     zones.push("Zone médiane (Zone T) et Menton.");
-                    traitements.push("Peeling médical (Acide Glycolique 20%).", "Microneedling léger.");
+                    traitements.push("Peeling médical superficiel (Acide Glycolique 20%).", "Microneedling léger.");
                 } else if (isPigmented) {
-                    htmlDiag += HTMLGen.synergy(["Pigmentaire", "CMO"], "Dyschromie Mélanique", "Amas de mélanine et oxydation détectée.");
+                    htmlDiag += HTMLGen.synergy(["Pigmentaire", "CMO"], "Dyschromie Mélanique", "Amas de mélanine et oxydation détectée. Perte d'homogénéité.");
                     zones.push("Haut des pommettes, Front, Lèvre supérieure.");
-                    traitements.push("Laser Q-Switched ou Lumière Pulsée (IPL).", "Peeling dépigmentant.");
+                    traitements.push("Laser Q-Switched ou Lumière Pulsée (IPL).", "Peeling dépigmentant léger.");
                 } else {
                     htmlDiag += HTMLGen.synergy(["Essaim", "CMO"], "Homéostasie Optimale", "Biomarqueurs au vert. Objectif : Well-Aging.");
                     zones.push("Visage complet unifié.");
-                    traitements.push("Radiofréquence (fermeté).", "Mésothérapie.");
+                    traitements.push("Radiofréquence (pour la fermeté).", "Mésothérapie (Vitamines).");
                 }
 
                 htmlDiag += `<br>` + HTMLGen.title("📍", "2. Zones & Actes Cliniques");
@@ -227,13 +223,13 @@
 
                 // PRODUITS
                 htmlProduits += HTMLGen.title("🧪", "4. Prescription INCI (À se procurer)");
-                let produits = ["<b>Nettoyant :</b> Base lavante douce sans SLS.", "<b>Jour :</b> Fluide Solaire SPF 50."];
+                let produits = ["<b>Nettoyant :</b> Base lavante douce sans SLS.", "<b>Jour :</b> Fluide Solaire SPF 50+."];
                 
-                if (isInflamed && isRough) produits.push("<b>Sérum :</b> Acide Azélaïque 10%.", "<b>Nuit :</b> Baume réparateur (Céramides, Panthénol).");
-                else if (isInflamed) produits.push("<b>Sérum :</b> Niacinamide 5% ou Centella Asiatica.", "<b>Nuit :</b> Crème riche à l'Avoine colloïdale.");
-                else if (isRough) produits.push("<b>Lotion Soir :</b> BHA (Acide Salicylique 2%).", "<b>Crème :</b> Gel-crème Acide Hyaluronique.");
-                else if (isPigmented) produits.push("<b>Sérum Matin :</b> Vitamine C pure (10-15%).", "<b>Sérum Soir :</b> Alpha-Arbutine ou Tranexamique.");
-                else produits.push("<b>Sérum :</b> Complexe de Peptides.", "<b>Soin Nuit :</b> Rétinol micro-encapsulé (0.1%).");
+                if (isInflamed && isRough) produits.push("<b>Sérum :</b> Acide Azélaïque 10% (Anti-inflammatoire et lissant).", "<b>Nuit :</b> Baume réparateur (Céramides, Panthénol).");
+                else if (isInflamed) produits.push("<b>Sérum :</b> Niacinamide 5% ou extrait de Centella Asiatica.", "<b>Nuit :</b> Crème riche à l'Avoine colloïdale.");
+                else if (isRough) produits.push("<b>Lotion Soir :</b> BHA (Acide Salicylique 2%) ou PHA.", "<b>Crème :</b> Gel-crème Acide Hyaluronique.");
+                else if (isPigmented) produits.push("<b>Sérum Matin :</b> Vitamine C pure (10-15%).", "<b>Sérum Soir :</b> Alpha-Arbutine ou Acide Tranexamique.");
+                else produits.push("<b>Sérum :</b> Complexe de Peptides (Matrixyl).", "<b>Soin Nuit :</b> Rétinol micro-encapsulé (0.1% à 0.3%).");
 
                 htmlProduits += HTMLGen.list(produits);
 
@@ -241,21 +237,25 @@
             }
         };
 
-        // --- PIPELINE VISION ---
+        // --- PIPELINE DE VISION ---
         async function initAll() {
-            if (window.isSecureContext === false) return; // Stop if not secure
             ui.meshLoader.style.display = 'block';
             state.faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
             state.faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.8, minTrackingConfidence: 0.8 });
             state.faceMesh.onResults(onResults);
             
             try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                ui.v.srcObject = stream;
                 state.camera = new Camera(ui.v, { onFrame: async () => { await state.faceMesh.send({image: ui.v}); }, width: 1280, height: 720 });
                 await state.camera.start();
                 state.meshReady = true; ui.meshLoader.style.display = 'none';
                 checkSystem();
             } catch (e) {
-                alert("Impossible d'accéder à la caméra. Vérifiez les permissions.");
+                console.error("Camera error:", e);
+                ui.meshLoader.innerHTML = "Caméra non autorisée<br>ou non disponible.";
+                ui.meshLoader.style.color = "var(--danger)";
+                updateStatus("ERREUR CAMÉRA", false, true);
             }
         }
 
@@ -263,7 +263,7 @@
 
         function checkSystem() {
             if (state.cvReady && state.meshReady) {
-                ui.btnScan.disabled = false; updateStatus("SYSTÈME PRÊT", true);
+                ui.btnScan.disabled = false; updateStatus("SYSTÈME OPÉRATIONNEL", true);
             }
         }
 
@@ -282,71 +282,106 @@
             } else { state.lastLandmarks = null; }
         }
 
+        // ============================================================================
+        // 🔬 FIX V85 : CŒUR DU CALCUL TENSORIEL (RÉSILIENCE MOBILE)
+        // ============================================================================
+        
+        // Tableau ordonné fixe de l'ovale du visage (Garantit que le masque ne sera jamais vide)
+        const OVAL_INDICES = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
+        const EYE_L_INDICES = [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246];
+        const EYE_R_INDICES = [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398];
+        const LIPS_INDICES = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40];
+
+        function drawSafeMask(ctx, indices, w, h, color, composite) {
+            ctx.globalCompositeOperation = composite;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            indices.forEach((idx, i) => {
+                let p = state.lastLandmarks[idx];
+                if(i === 0) ctx.moveTo(p.x * w, p.y * h);
+                else ctx.lineTo(p.x * w, p.y * h);
+            });
+            ctx.closePath();
+            ctx.fill();
+        }
+
         async function runAnalysis() {
             if (!state.lastLandmarks || !state.cvReady) return;
-            ui.btnScan.disabled = true; ui.btnPdf.disabled = true; updateStatus("ACQUISITION EN COURS...");
-
-            const W = ui.v.videoWidth; const H = ui.v.videoHeight;
-            ui.proc.width = W; ui.proc.height = H; ui.mask.width = W; ui.mask.height = H;
-            const procCtx = ui.proc.getContext('2d', {willReadFrequently: true});
-            const maskCtx = ui.mask.getContext('2d', {willReadFrequently: true});
-
-            procCtx.drawImage(ui.v, 0, 0, W, H);
-            maskCtx.fillStyle = '#000000'; maskCtx.fillRect(0, 0, W, H);
             
-            const drawRegion = (region, color, composite = 'source-over') => {
-                maskCtx.globalCompositeOperation = composite; maskCtx.fillStyle = color; maskCtx.beginPath();
-                let currentPoint = region[0][0]; let points = [currentPoint]; let remainingEdges = [...region];
-                while(remainingEdges.length > 0) {
-                    let nextEdgeIdx = remainingEdges.findIndex(e => e[0] === currentPoint || e[1] === currentPoint);
-                    if(nextEdgeIdx === -1) break;
-                    let edge = remainingEdges.splice(nextEdgeIdx, 1)[0];
-                    currentPoint = (edge[0] === currentPoint) ? edge[1] : edge[0]; points.push(currentPoint);
-                }
-                maskCtx.moveTo(state.lastLandmarks[points[0]].x * W, state.lastLandmarks[points[0]].y * H);
-                for(let i=1; i<points.length; i++) maskCtx.lineTo(state.lastLandmarks[points[i]].x * W, state.lastLandmarks[points[i]].y * H);
-                maskCtx.closePath(); maskCtx.fill();
-            };
-
-            drawRegion(FACEMESH_FACE_OVAL, '#FFFFFF');
-            const exclusions = [FACEMESH_LEFT_EYE, FACEMESH_RIGHT_EYE, FACEMESH_LEFT_EYEBROW, FACEMESH_RIGHT_EYEBROW, FACEMESH_LIPS];
-            exclusions.forEach(ex => drawRegion(ex, '#000000', 'destination-out'));
-
-            // OPENCV PROCESS - CORRECTION GARBAGE COLLECTOR V84
-            let srcMat = cv.imread(ui.proc);
-            let maskMatRaw = cv.imread(ui.mask); let maskMat = new cv.Mat(); cv.cvtColor(maskMatRaw, maskMat, cv.COLOR_RGBA2GRAY);
-            let grayMat = new cv.Mat(); cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
-            let labMat = new cv.Mat(); cv.cvtColor(srcMat, labMat, cv.COLOR_RGBA2Lab);
-            let labPlanes = new cv.MatVector(); cv.split(labMat, labPlanes);
-
-            let lap = new cv.Mat(); cv.Laplacian(grayMat, lap, cv.CV_64F);
+            // On bloque l'interface
+            ui.btnScan.disabled = true; ui.btnPdf.disabled = true; 
+            updateStatus("CALCUL EN COURS...");
             
-            // FIX V84 : Utilisation explicite de cv.Mat() pour mean/stddev pour éviter les fuites mémoire
-            let meanMat = new cv.Mat(); let stdMat = new cv.Mat(); 
-            
-            cv.meanStdDev(lap, meanMat, stdMat, maskMat); 
-            state.metrics.text = parseFloat(stdMat.data64F[0].toFixed(2));
-
-            cv.meanStdDev(labPlanes.get(1), meanMat, stdMat, maskMat);
-            state.metrics.ery = parseFloat(meanMat.data64F[0].toFixed(1));
-
-            cv.meanStdDev(labPlanes.get(0), meanMat, stdMat, maskMat);
-            state.metrics.mel = parseFloat(stdMat.data64F[0].toFixed(1));
-
-            ui.stats.text.innerText = state.metrics.text; ui.stats.ery.innerText = state.metrics.ery; ui.stats.mel.innerText = state.metrics.mel;
-
-            // FIX V84 : Nettoyage absolu de la mémoire RAM C++ d'OpenCV
-            srcMat.delete(); maskMatRaw.delete(); maskMat.delete(); grayMat.delete(); labMat.delete(); labPlanes.delete(); lap.delete();
-            meanMat.delete(); stdMat.delete();
-
+            // FIX V85 : Le setTimeout laisse le navigateur afficher "CALCUL EN COURS..." 
+            // AVANT de geler le téléphone avec les calculs lourds d'OpenCV
             setTimeout(() => {
-                state.report = AgenticSwarm.consult(state.metrics.text, state.metrics.ery, state.metrics.mel);
-                ui.tabs.forEach(t => t.classList.remove('active')); ui.tabs[0].classList.add('active');
-                ui.advice.innerHTML = state.report.diag; 
-                updateStatus("DOSSIER GÉNÉRÉ. EXPORT DISPONIBLE.", true);
-                ui.btnScan.disabled = false;
-                ui.btnPdf.disabled = false;
-            }, 600);
+                try {
+                    const W = ui.v.videoWidth; const H = ui.v.videoHeight;
+                    ui.proc.width = W; ui.proc.height = H; ui.mask.width = W; ui.mask.height = H;
+                    
+                    const procCtx = ui.proc.getContext('2d', {willReadFrequently: true});
+                    const maskCtx = ui.mask.getContext('2d', {willReadFrequently: true});
+
+                    procCtx.drawImage(ui.v, 0, 0, W, H);
+                    maskCtx.fillStyle = '#000000'; maskCtx.fillRect(0, 0, W, H);
+                    
+                    // FIX V85 : Dessin de masque garanti sans boucle infinie
+                    drawSafeMask(maskCtx, OVAL_INDICES, W, H, '#FFFFFF', 'source-over');
+                    drawSafeMask(maskCtx, EYE_L_INDICES, W, H, '#000000', 'destination-out');
+                    drawSafeMask(maskCtx, EYE_R_INDICES, W, H, '#000000', 'destination-out');
+                    drawSafeMask(maskCtx, LIPS_INDICES, W, H, '#000000', 'destination-out');
+
+                    // EXÉCUTION OPENCV (Blindée)
+                    let srcMat = cv.imread(ui.proc);
+                    let maskMatRaw = cv.imread(ui.mask); 
+                    let maskMat = new cv.Mat(); cv.cvtColor(maskMatRaw, maskMat, cv.COLOR_RGBA2GRAY);
+                    
+                    let grayMat = new cv.Mat(); cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
+                    
+                    // Conversion mobile-safe : RGBA -> RGB -> LAB
+                    let rgbMat = new cv.Mat(); cv.cvtColor(srcMat, rgbMat, cv.COLOR_RGBA2RGB);
+                    let labMat = new cv.Mat(); cv.cvtColor(rgbMat, labMat, cv.COLOR_RGB2Lab);
+                    let labPlanes = new cv.MatVector(); cv.split(labMat, labPlanes);
+
+                    let lap = new cv.Mat(); cv.Laplacian(grayMat, lap, cv.CV_64F);
+                    
+                    let meanMat = new cv.Mat(); let stdMat = new cv.Mat(); 
+                    
+                    cv.meanStdDev(lap, meanMat, stdMat, maskMat); 
+                    state.metrics.text = stdMat.data64F ? parseFloat(stdMat.data64F[0].toFixed(2)) : 0;
+
+                    cv.meanStdDev(labPlanes.get(1), meanMat, stdMat, maskMat);
+                    state.metrics.ery = meanMat.data64F ? parseFloat(meanMat.data64F[0].toFixed(1)) : 0;
+
+                    cv.meanStdDev(labPlanes.get(0), meanMat, stdMat, maskMat);
+                    state.metrics.mel = stdMat.data64F ? parseFloat(stdMat.data64F[0].toFixed(1)) : 0;
+
+                    ui.stats.text.innerText = state.metrics.text; 
+                    ui.stats.ery.innerText = state.metrics.ery; 
+                    ui.stats.mel.innerText = state.metrics.mel;
+
+                    // NETTOYAGE MÉMOIRE ABSOLU
+                    srcMat.delete(); maskMatRaw.delete(); maskMat.delete(); 
+                    grayMat.delete(); rgbMat.delete(); labMat.delete(); labPlanes.delete(); 
+                    lap.delete(); meanMat.delete(); stdMat.delete();
+
+                    // Affichage des résultats
+                    state.report = AgenticSwarm.consult(state.metrics.text, state.metrics.ery, state.metrics.mel);
+                    ui.tabs.forEach(t => t.classList.remove('active')); ui.tabs[0].classList.add('active');
+                    ui.advice.innerHTML = state.report.diag; 
+                    
+                    updateStatus("DOSSIER GÉNÉRÉ. EXPORT DISPONIBLE.", true);
+                    ui.btnScan.disabled = false;
+                    ui.btnPdf.disabled = false;
+
+                } catch (error) {
+                    // FIX V85 : En cas de crash OpenCV, l'application ne freeze plus
+                    console.error("Crash Matrice Mobile :", error);
+                    ui.advice.innerHTML = `<div class="report-box alert"><div class="box-title">🚨 Échec du Calcul Cutané</div><div class="box-text">L'analyse a échoué. Assurez-vous d'être bien éclairé et relancez le scan.</div></div>`;
+                    updateStatus("ERREUR D'ANALYSE", false, true);
+                    ui.btnScan.disabled = false;
+                }
+            }, 100); // 100ms de pause pour laisser le téléphone respirer avant le calcul
         }
 
         ui.btnScan.onclick = runAnalysis;
@@ -359,11 +394,9 @@
         });
 
         // ============================================================================
-        // 🖨️ MOTEUR DE GÉNÉRATION PDF B2B (Mise à jour V84)
+        // 🖨️ EXPORT PDF 
         // ============================================================================
-        
         function stripHTMLForPDF(html) {
-            // FIX V84 : Meilleur parsing pour enlever les balises <b> et nettoyer le texte pour le PDF
             let text = html.replace(/<li>/gi, '\n- ').replace(/<\/li>/gi, '');
             text = text.replace(/<div class="step-desc">/gi, ' : ').replace(/<div class="step-num">/gi, '\nÉtape ');
             text = text.replace(/<b>/gi, '').replace(/<\/b>/gi, '');
@@ -383,7 +416,7 @@
             doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold");
             doc.text("ORDONNANCE DERMOCOSMÉTIQUE", 15, 20);
             doc.setFontSize(10); doc.setTextColor(6, 182, 212); doc.setFont("helvetica", "normal");
-            doc.text("Généré par Nexus AI System V84 - Gold Master", 15, 28);
+            doc.text("Généré par Nexus AI System V85", 15, 28);
             
             let today = new Date().toLocaleDateString('fr-FR');
             doc.setTextColor(255, 255, 255); doc.text(`Date : ${today}`, 165, 20);
@@ -420,7 +453,7 @@
             printSection("4. Prescription de Soins INCI", state.report.produits);
 
             doc.setFontSize(8); doc.setTextColor(148, 163, 184);
-            doc.text("Document généré par Intelligence Artificielle. Ne remplace pas une consultation médicale.", 105, 290, {align: "center"});
+            doc.text("Document généré par IA - Nexus System. Ne remplace pas une consultation médicale.", 105, 290, {align: "center"});
 
             if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
                 const blob = doc.output('blob');
