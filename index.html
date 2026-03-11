@@ -3,25 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nexus Clinical | V110 Final</title>
+    <title>Nexus Clinical | V115 Platinum</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root { 
             --primary: #00e5ff; --accent: #00ff88; --warning: #ffaa00; --danger: #ff3366; 
-            --bg: #050914; --surface: rgba(18, 25, 43, 0.7); --border: rgba(255, 255, 255, 0.1);
-            --am: #fbbf24; --pm: #818cf8;
+            --bg: #050914; --surface: #111a2e; --border: rgba(255, 255, 255, 0.1);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { 
-            background: var(--bg); color: #fff; height: 100dvh; 
+            background: var(--bg); color: #fff; height: 100vh; height: 100dvh; 
             display: flex; flex-direction: column; overflow: hidden; 
             background-image: radial-gradient(circle at 50% 0%, #111a30 0%, #050914 100%);
         }
@@ -29,41 +28,53 @@
         header { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .logo { font-weight: 800; font-size: 1rem; letter-spacing: 1px; text-transform: uppercase; }
         .logo span { color: var(--primary); }
-        .key-btn { background: var(--surface); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 10px; cursor: pointer; }
 
-        #viewport { position: relative; height: 28vh; margin: 0 15px; border-radius: 24px; overflow: hidden; border: 1px solid var(--border); background: #000; flex-shrink: 0; }
+        #viewport { 
+            position: relative; height: 28dvh; margin: 0 15px; border-radius: 20px; 
+            overflow: hidden; border: 1px solid var(--border); background: #000; flex-shrink: 0; 
+        }
         video, #output-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; transform: scaleX(-1); }
         .face-guide { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .face-guide svg { width: 50%; height: 70%; opacity: 0.2; stroke: #fff; fill: none; transition: 0.3s; }
-        .face-guide.ready svg { stroke: var(--primary); opacity: 0.6; }
+        .face-guide.ready svg { stroke: var(--primary); opacity: 0.6; filter: drop-shadow(0 0 5px var(--primary)); }
 
-        .dashboard { flex: 1; padding: 12px 15px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .kpi-card { background: var(--surface); padding: 12px 5px; border-radius: 18px; border: 1px solid var(--border); text-align: center; }
+        .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px 15px; flex-shrink: 0; }
+        .kpi-card { background: var(--surface); padding: 12px 5px; border-radius: 14px; border: 1px solid var(--border); text-align: center; }
         .kpi-val { font-size: 1.1rem; font-weight: 800; color: #fff; display: block; }
-        .kpi-lab { font-size: 0.45rem; color: #8b9bb4; text-transform: uppercase; font-weight: 800; margin-top: 4px; }
+        .kpi-lab { font-size: 0.45rem; color: #8b9bb4; text-transform: uppercase; font-weight: 800; margin-top: 2px; }
 
-        .glass-panel { background: var(--surface); backdrop-filter: blur(20px); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); flex: 1; position: relative; }
-        .tabs { display: flex; background: rgba(0,0,0,0.4); padding: 4px; }
-        .tab { flex: 1; padding: 12px; border: none; background: transparent; color: #8b9bb4; font-size: 0.65rem; font-weight: 800; border-radius: 16px; text-transform: uppercase; }
+        .main-container { 
+            flex: 1; margin: 0 15px 10px 15px; background: var(--surface); 
+            border-radius: 24px; border: 1px solid var(--border); display: flex; 
+            flex-direction: column; overflow: hidden; position: relative;
+        }
+        .tabs { display: flex; background: rgba(0,0,0,0.4); padding: 5px; flex-shrink: 0; }
+        .tab { flex: 1; padding: 12px; border: none; background: transparent; color: #8b9bb4; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; border-radius: 18px; }
         .tab.active { background: var(--primary); color: #000; }
-        .tab:disabled { opacity: 0.2; }
 
-        #content { padding: 15px; }
-        .health-score-container { display: flex; align-items: center; gap: 16px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 16px;}
-        .score-circle { width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(var(--primary) calc(var(--score) * 1%), #111a30 0); display: flex; align-items: center; justify-content: center; position: relative; }
-        .score-circle::before { content: ""; position: absolute; inset: 4px; background: #0b1120; border-radius: 50%; }
-        .score-value { position: relative; z-index: 2; font-weight: 800; font-size: 1.1rem; color: #fff; }
+        #content-area { flex: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch; }
 
-        .routine-item { border-left: 3px solid var(--accent); padding-left: 12px; margin-bottom: 12px; background: linear-gradient(90deg, rgba(0, 255, 136, 0.05) 0%, transparent 100%); padding-top: 10px; padding-bottom: 10px; border-radius: 0 12px 12px 0; }
+        .diag-title { color: var(--primary); font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; }
+        .report-section { margin-bottom: 15px; padding-left: 12px; border-left: 2px solid var(--primary); }
+        .section-label { color: var(--primary); font-size: 0.6rem; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 3px;}
+        .section-text { font-size: 0.8rem; line-height: 1.5; color: #cbd5e1; }
 
-        .loader { position: absolute; inset: 0; background: rgba(5, 9, 20, 0.98); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        .routine-box { background: rgba(255,255,255,0.03); border-radius: 18px; padding: 15px; margin-bottom: 12px; border-left: 4px solid var(--accent); }
+        .mol-label { color: var(--primary); font-size: 0.7rem; font-weight: 700; display: block; margin: 5px 0; }
+
+        .loader { position: absolute; inset: 0; background: var(--bg); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
         .spinner { width: 35px; height: 35px; border: 3px solid rgba(0, 229, 255, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .bottom-bar { background: rgba(10, 15, 28, 0.98); border-top: 1px solid var(--border); padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 15px; flex-shrink: 0; z-index: 1000; }
-        .btn { border: none; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 52px; transition: 0.2s; }
-        .btn-main { flex: 1; background: #fff; color: #000; font-size: 0.8rem; text-transform: uppercase; }
+        .bottom-bar { 
+            background: rgba(10, 15, 28, 0.98); 
+            border-top: 1px solid var(--border); 
+            padding: 12px 20px calc(15px + env(safe-area-inset-bottom)); 
+            display: flex; gap: 15px; flex-shrink: 0; 
+            z-index: 1000;
+        }
+        .btn { border: none; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 54px; transition: 0.2s; }
+        .btn-main { flex: 1; background: #fff; color: #000; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .btn-main.ready { background: var(--primary); box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); }
         .btn-icon { width: 55px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border); border-radius: 18px; font-size: 1.3rem; }
         .btn:disabled { opacity: 0.2; }
@@ -75,44 +86,41 @@
 
     <header>
         <div class="logo">NEXUS <span>PRO</span></div>
-        <button class="key-btn" onclick="configureKey()">⚙️</button>
+        <button style="background:var(--surface); border:1px solid var(--border); color:white; padding:5px 10px; border-radius:10px; font-size:0.7rem;" onclick="setApiKey()">⚙️ CLÉ API</button>
     </header>
 
     <div id="viewport">
-        <div class="face-guide" id="face-guide"><svg viewBox="0 0 100 130"><ellipse cx="50" cy="65" rx="40" ry="55" stroke-dasharray="8 8"/></svg></div>
+        <div class="face-guide" id="guide"><svg viewBox="0 0 100 130"><ellipse cx="50" cy="65" rx="40" ry="55" stroke-dasharray="8 8"/></svg></div>
         <video id="webcam" autoplay playsinline muted></video>
         <canvas id="output-canvas"></canvas>
     </div>
 
-    <div class="dashboard">
-        <div class="kpi-row">
-            <div class="kpi-card"><span class="kpi-val" id="val-text">--</span><span class="kpi-lab">Texture</span></div>
-            <div class="kpi-card"><span class="kpi-val" id="val-ery">--</span><span class="kpi-lab">Inflamm.</span></div>
-            <div class="kpi-card"><span class="kpi-val" id="val-mel">--</span><span class="kpi-lab">Pigment</span></div>
-        </div>
+    <div class="kpi-row">
+        <div class="kpi-card"><span class="kpi-val" id="val-t">--</span><span class="kpi-lab">Texture</span></div>
+        <div class="kpi-card"><span class="kpi-val" id="val-e">--</span><span class="kpi-lab">Vasculaire</span></div>
+        <div class="kpi-card"><span class="kpi-val" id="val-m">--</span><span class="kpi-lab">Pigment</span></div>
+    </div>
 
-        <div class="glass-panel">
-            <div class="loader" id="loader">
-                <div class="spinner"></div>
-                <span id="load-msg" style="font-size: 0.6rem; color: var(--primary); margin-top: 10px; font-weight: 800; text-transform: uppercase;">Analyse en cours...</span>
-            </div>
-            <div class="tabs">
-                <button class="tab active" id="tab-diag" onclick="switchTab('diag')" disabled>Bilan</button>
-                <button class="tab" id="tab-routine" onclick="switchTab('routine')" disabled>Routine</button>
-            </div>
-            <div id="content">
-                <div style="text-align: center; color: #475569; padding-top: 30px;">
-                    <p style="font-size: 0.8rem;">Veuillez cliquer sur Démarrer.</p>
-                </div>
+    <div class="main-container">
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <span style="font-size: 0.6rem; color: var(--primary); margin-top: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Calculs Dermo-Cliniques...</span>
+        </div>
+        <div class="tabs">
+            <button class="tab active" id="t-diag" onclick="switchTab('diag')" disabled>Bilan Expert</button>
+            <button class="tab" id="t-rout" onclick="switchTab('routine')" disabled>Routine</button>
+        </div>
+        <div id="content-area">
+            <div style="text-align:center; padding-top: 40px; color:#475569;">
+                <p style="font-size:0.85rem;">Nexus Engine Platinum.<br>Appuyez sur Démarrer pour calibrer.</p>
             </div>
         </div>
-        <div style="height: 30px; flex-shrink: 0;"></div>
     </div>
 
     <div class="bottom-bar">
         <button class="btn btn-icon" onclick="location.reload()">🔄</button>
         <button class="btn btn-main" id="btn-scan" onclick="handleAction()" disabled>Démarrer</button>
-        <button class="btn btn-icon" id="btn-pdf" disabled onclick="exportToPDF()">📄</button>
+        <button class="btn btn-icon" id="btn-pdf" disabled onclick="exportPDF()">📄</button>
     </div>
 
     <canvas id="proc-canvas" class="hidden" width="512" height="512"></canvas>
@@ -120,27 +128,25 @@
     <script>
         const ui = {
             v: document.getElementById('webcam'),
-            canvas: document.getElementById('output-canvas'),
+            c: document.getElementById('output-canvas'),
             ctx: document.getElementById('output-canvas').getContext('2d'),
             proc: document.getElementById('proc-canvas'),
-            content: document.getElementById('content'),
+            area: document.getElementById('content-area'),
             loader: document.getElementById('loader'),
-            msg: document.getElementById('load-msg'),
             btnScan: document.getElementById('btn-scan'),
             btnPdf: document.getElementById('btn-pdf'),
-            tabDiag: document.getElementById('tab-diag'),
-            tabRoutine: document.getElementById('tab-routine'),
-            guide: document.getElementById('face-guide')
+            guide: document.getElementById('guide')
         };
 
-        let state = { landmarks: null, aiData: null, isRunning: false, isBusy: false };
+        let state = { landmarks: null, aiData: null, isRunning: false, isBusy: false, chart: null };
 
-        function configureKey() {
-            const k = prompt("Collez votre clé Mistral API :");
-            if (k) localStorage.setItem('nexus_mistral_key', k.trim());
+        function setApiKey() {
+            const k = prompt("Entrez votre clé Mistral API :");
+            if (k) localStorage.setItem('nexus_key', k.trim());
         }
 
-        async function init() {
+        // --- MOTEUR CAMERA MULTISUPPORT ---
+        async function initCamera() {
             const fm = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
             fm.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6 });
             
@@ -151,124 +157,173 @@
                 } else {
                     ui.guide.classList.remove('ready'); ui.btnScan.disabled = true; ui.btnScan.classList.remove('ready');
                 }
-                drawOverlay();
+                draw();
             });
 
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+                // Nettoyage caméra Samsung
+                if (ui.v.srcObject) ui.v.srcObject.getTracks().forEach(t => t.stop());
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+                });
                 ui.v.srcObject = stream;
-                ui.v.onloadedmetadata = () => ui.v.play();
                 
                 const cam = new Camera(ui.v, {
                     onFrame: async () => { if (!state.isBusy) await fm.send({image: ui.v}); },
                     width: 640, height: 480
                 });
                 await cam.start();
-                state.isRunning = true; ui.loader.style.display = 'none'; ui.btnScan.innerText = "Scanner";
-            } catch (e) {
-                alert("Erreur Caméra. Vérifiez les réglages.");
-            }
+                state.isRunning = true; ui.loader.style.display = 'none'; ui.btnScan.innerText = "Lancer Analyse";
+            } catch (e) { alert("Accès caméra requis."); }
         }
 
-        function handleAction() { if (!state.isRunning) init(); else analyze(); }
+        function handleAction() { if (!state.isRunning) initCamera(); else startAnalysis(); }
 
-        function drawOverlay() {
-            ui.canvas.width = ui.v.videoWidth; ui.canvas.height = ui.v.videoHeight;
-            ui.ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
+        function draw() {
+            ui.c.width = ui.v.videoWidth; ui.c.height = ui.v.videoHeight;
+            ui.ctx.clearRect(0,0,ui.c.width,ui.c.height);
             if (state.landmarks) {
-                ui.ctx.fillStyle = "rgba(0, 229, 255, 0.4)";
+                ui.ctx.fillStyle = "rgba(0,229,255,0.4)";
                 [10, 152, 234, 454].forEach(i => {
-                    const p = state.landmarks[i];
-                    ui.ctx.beginPath(); ui.ctx.arc(p.x * ui.canvas.width, p.y * ui.canvas.height, 3, 0, 7); ui.ctx.fill();
+                    const pt = state.landmarks[i];
+                    ui.ctx.beginPath(); ui.ctx.arc(pt.x * ui.c.width, pt.y * ui.c.height, 3, 0, 7); ui.ctx.fill();
                 });
             }
         }
 
-        async function analyze() {
-            const k = localStorage.getItem('nexus_mistral_key');
-            if (!k) return configureKey();
+        async function startAnalysis() {
+            const key = localStorage.getItem('nexus_key');
+            if (!key) return setApiKey();
 
             state.isBusy = true; ui.loader.style.display = 'flex';
             
             try {
+                // Biométrie V115 (Optimisation Performance)
                 const W = 512, H = Math.floor(512 * (ui.v.videoHeight / ui.v.videoWidth));
                 ui.proc.height = H;
                 const pCtx = ui.proc.getContext('2d');
                 pCtx.drawImage(ui.v, 0, 0, W, H);
                 const pix = pCtx.getImageData(0,0,W,H).data;
-                let r=0, g=0, b=0, vL=0, step=16;
+                let r=0, g=0, b=0, vL=0, step=16; 
                 for(let i=0; i<pix.length; i+=step) {
                     r+=pix[i]; g+=pix[i+1]; b+=pix[i+2];
                     if(i+step+4 < pix.length) vL += Math.abs(pix[i+1] - pix[i+5]);
                 }
                 const count = pix.length/step;
-                const m = { text:(vL/count*4).toFixed(1), ery:((r-g)/count*2.2).toFixed(1), mel:(100-(r+g+b)/(3*count)).toFixed(1) };
+                const m = { t:(vL/count*4).toFixed(1), e:((r-g)/count*2.2).toFixed(1), p:(100-(r+g+b)/(3*count)).toFixed(1) };
                 
-                document.getElementById('val-text').innerText = m.text;
-                document.getElementById('val-ery').innerText = m.ery;
-                document.getElementById('val-mel').innerText = m.mel;
+                document.getElementById('val-t').innerText = m.t;
+                document.getElementById('val-e').innerText = m.e;
+                document.getElementById('val-m').innerText = m.p;
 
                 const b64 = ui.proc.toDataURL('image/jpeg', 0.5);
+                
+                // PROMPT CONSORTIUM V115 (PubMed/INCI)
+                const prompt = `Agis comme un consortium : 1. Dermatologue Clinicien (PubMed/ICD-11), 2. Formulateur Moléculaire (INCI/CosIng).
+                Analyse : Relief ${m.t}Hz, Vasculaire ${m.e}, Pigment ${m.p}.
+                Rédige un diagnostic clinique complet et une routine moléculaire détaillée.
+                Réponds UNIQUEMENT en JSON :
+                {
+                  "score": 85,
+                  "title": "Diagnostic médical officiel",
+                  "analysis": "Paragraphe de synthèse clinique précise.",
+                  "sections": [
+                    {"label": "Kératinisation & Relief", "text": "Détails (min 30 mots)"},
+                    {"label": "Réactivité Vasculaire", "text": "Détails (min 30 mots)"},
+                    {"label": "Activité Mélanocytaire", "text": "Détails (min 30 mots)"}
+                  ],
+                  "routine": [
+                    {"step": "MATIN", "prod": "Soin", "inci": "Molécules clés %", "why": "Cible biologique"}
+                  ],
+                  "actes": ["Acte clinique 1"]
+                }`;
+
                 const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${k}` },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
                     body: JSON.stringify({
                         model: "pixtral-12b-2409",
-                        messages: [{ role: "user", content: [
-                            {type:"text", text:`Dermatologue & Chimiste. Analyse: Relief ${m.text}, Rougeur ${m.ery}, Taches ${m.mel}. Renvoie JSON STRICT: {"score":85, "title":"Diagnostic", "physio":"Description", "routine":[{"step":"Matin", "prod":"Produit", "why":"Cible"}]}`},
-                            {type:"image_url", image_url:{url:b64}}
-                        ] }],
+                        messages: [{ role: "user", content: [{type:"text", text:prompt}, {type:"image_url", image_url:{url:b64}}] }],
                         response_format: { type: "json_object" }
                     })
                 });
 
-                const d = await res.json();
-                state.aiData = JSON.parse(d.choices[0].message.content);
+                const data = await res.json();
+                state.aiData = JSON.parse(data.choices[0].message.content);
 
                 ui.loader.style.display = 'none';
-                ui.tabDiag.disabled = false; ui.tabRoutine.disabled = false;
+                document.getElementById('t-diag').disabled = false;
+                document.getElementById('t-rout').disabled = false;
                 switchTab('diag');
                 ui.btnPdf.disabled = false;
                 ui.btnScan.innerText = "Nouveau Scan";
+
             } catch (e) {
-                alert("Erreur IA. Vérifiez votre clé.");
-                ui.loader.style.display = 'none';
+                alert("Incident IA : " + e.message); ui.loader.style.display = 'none';
             } finally { state.isBusy = false; }
         }
 
         function switchTab(t) {
-            ui.tabDiag.classList.toggle('active', t === 'diag');
-            ui.tabRoutine.classList.toggle('active', t === 'routine');
+            document.getElementById('t-diag').classList.toggle('active', t === 'diag');
+            document.getElementById('t-rout').classList.toggle('active', t === 'routine');
+            render(t);
+        }
+
+        function render(mode) {
             if (!state.aiData) return;
-            if (t === 'diag') {
-                ui.content.innerHTML = `
-                    <div class="health-score-container" style="--score:${state.aiData.score};">
-                        <div class="score-circle"><div class="score-value">${state.aiData.score}</div></div>
-                        <div style="margin-left:15px;"><h4 style="font-size:0.85rem;">Santé Globale</h4><p style="font-size:0.6rem; color:#8b9bb4;">Analyse Multimodale</p></div>
+            const d = state.aiData;
+            if (mode === 'diag') {
+                ui.area.innerHTML = `
+                    <div style="text-align:center; margin-bottom:20px;">
+                        <span style="font-size:0.55rem; color:#8b9bb4; text-transform:uppercase;">Vitalité Clinique</span>
+                        <div style="font-size:2.8rem; font-weight:800; color:var(--primary);">${d.score}%</div>
                     </div>
-                    <h3 style="color:var(--primary); font-size:0.9rem;">${state.aiData.title}</h3>
-                    <p style="font-size:0.75rem; color:#d1d5db; margin-top:8px; line-height:1.5;">${state.aiData.physio}</p>
-                `;
+                    <div class="diag-title">${d.title}</div>
+                    <p class="section-text" style="margin-bottom:20px;">${d.analysis}</p>
+                    ${d.sections.map(s => `
+                        <div class="report-section">
+                            <span class="section-label">${s.label}</span>
+                            <p class="section-text">${s.text}</p>
+                        </div>
+                    `).join('')}
+                    <div style="margin-top:20px; padding:12px; background:rgba(0,229,255,0.05); border-radius:12px; font-size:0.8rem; border:1px solid rgba(0,229,255,0.1);">
+                        <strong style="color:var(--primary)">Actes préconisés :</strong> ${d.actes.join(' • ')}
+                    </div>`;
             } else {
-                ui.content.innerHTML = state.aiData.routine.map(r => `
-                    <div class="routine-item">
-                        <span style="font-size:0.55rem; color:var(--accent); font-weight:800;">${r.step}</span>
-                        <div style="font-weight:800; font-size:0.85rem; margin:4px 0; color:#fff;">${r.prod}</div>
+                ui.area.innerHTML = d.routine.map(r => `
+                    <div class="routine-box">
+                        <span style="color:var(--accent); font-size:0.55rem; font-weight:800; text-transform:uppercase;">${r.step}</span>
+                        <div style="font-weight:700; font-size:0.9rem; margin:3px 0;">${r.prod}</div>
+                        <span class="mol-label">🧪 INCI : ${r.inci}</span>
                         <p style="font-size:0.75rem; color:#94a3b8; line-height:1.4;">${r.why}</p>
                     </div>`).join('');
             }
         }
 
-        function exportToPDF() {
+        function exportPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text("BILAN NEXUS CLINICAL", 15, 20);
-            doc.text("Diagnostic : " + state.aiData.title, 15, 40);
+            const d = state.aiData;
+            doc.setFillColor(10, 15, 28); doc.rect(0, 0, 210, 45, 'F');
+            doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("BILAN CLINIQUE NEXUS", 15, 25);
+            doc.setTextColor(80, 80, 80); doc.setFontSize(10); doc.text("V115 PLATINUM CERTIFIED", 15, 33);
+            
+            doc.setTextColor(10, 15, 28); doc.setFontSize(14); doc.text("Diagnostic : " + d.title, 15, 60);
+            doc.setFontSize(10); doc.text(d.analysis, 15, 70, {maxWidth: 180});
+            
+            let y = 110;
+            d.sections.forEach(s => {
+                doc.setFont("helvetica", "bold"); doc.text(s.label, 15, y);
+                doc.setFont("helvetica", "normal"); doc.text(s.text, 15, y+5, {maxWidth: 180});
+                y += 25;
+            });
+
             if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) window.open(URL.createObjectURL(doc.output('blob')));
-            else doc.save("Nexus_Report.pdf");
+            else doc.save("Nexus_Platinum_Report.pdf");
         }
 
-        window.onload = () => { ui.btnScan.disabled = false; ui.btnScan.innerText = "Démarrer"; };
+        window.onload = () => { ui.btnScan.disabled = false; ui.btnScan.innerText = "Démarrer Nexus"; };
     </script>
 </body>
 </html>
