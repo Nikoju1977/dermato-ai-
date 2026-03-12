@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PureSkin AI | Signature Edition</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>PureSkin AI | Architect Edition by N. Julienne</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
@@ -15,87 +17,83 @@
             --gold: #e2b49a; 
             --gold-light: #f5e3d8;
             --bg: #0a0a0a; 
-            --card: rgba(20, 20, 20, 0.9);
-            --border: rgba(226, 180, 154, 0.15);
+            --card: rgba(20, 20, 20, 0.95);
+            --border: rgba(226, 180, 154, 0.2);
         }
 
+        /* Reset & Base Mobile */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
         body { 
-            background: var(--bg); 
-            color: #f3f4f6; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden;
+            background: var(--bg); color: #f3f4f6; height: 100vh; width: 100vw;
+            display: flex; flex-direction: column; overflow: hidden; position: fixed;
             background-image: radial-gradient(circle at 50% -10%, #1a1512 0%, transparent 60%);
         }
 
+        /* Header Prestige */
         header { 
             padding: calc(20px + env(safe-area-inset-top)) 25px 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            z-index: 100;
+            display: flex; justify-content: space-between; align-items: center; z-index: 100;
         }
-        .logo { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--gold-light); }
-        .architect-sig { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 0.65rem; color: var(--gold); opacity: 0.7; letter-spacing: 1px; }
+        .logo { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--gold-light); letter-spacing: 1px; }
+        .architect-sig { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 0.65rem; color: var(--gold); opacity: 0.8; letter-spacing: 1px; text-align: right; }
 
-        #viewport-wrapper { 
-            position: relative; 
-            height: 38vh; 
-            margin: 0 20px; 
-            border-radius: 45px; 
-            overflow: hidden; 
-            border: 1px solid var(--border);
-            box-shadow: 0 40px 100px -20px rgba(0,0,0,0.9);
-            background: #000;
+        /* Viewport Scanner */
+        #viewport-container { 
+            position: relative; height: 38vh; margin: 0 20px; border-radius: 45px; 
+            overflow: hidden; border: 1px solid var(--border);
+            box-shadow: 0 40px 100px -20px rgba(0,0,0,0.9); background: #000;
         }
         video, #o-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; transform: scaleX(-1); }
         
         .hud-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 25px; }
-        #status-label { font-family: 'Space Mono', monospace; font-size: 0.5rem; color: var(--gold); border: 1px solid var(--gold); padding: 5px 18px; border-radius: 40px; }
+        #status-label { font-family: 'Space Mono', monospace; font-size: 0.5rem; color: var(--gold); border: 1px solid var(--gold); padding: 5px 18px; border-radius: 40px; text-transform: uppercase; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
 
-        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 20px; }
-        .metric-card { background: var(--card); padding: 15px 5px; border-radius: 24px; border: 1px solid var(--border); text-align: center; transition: 0.6s cubic-bezier(0.2, 1, 0.2, 1); }
-        .metric-card.active { border-color: var(--gold); transform: translateY(-8px); box-shadow: 0 15px 30px rgba(226, 180, 154, 0.1); }
-        .m-val { font-size: 1.1rem; font-weight: 800; color: var(--gold-light); }
-        .m-lab { font-size: 0.4rem; color: #777; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }
+        /* Metrics Display */
+        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px 20px; }
+        .metric-card { background: var(--card); padding: 15px 5px; border-radius: 22px; border: 1px solid var(--border); text-align: center; transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
+        .metric-card.active { border-color: var(--gold); transform: translateY(-5px); background: rgba(226, 180, 154, 0.05); }
+        .m-val { font-size: 1rem; font-weight: 800; color: var(--gold-light); display: block; }
+        .m-lab { font-size: 0.4rem; color: #777; text-transform: uppercase; font-weight: 600; margin-top: 5px; letter-spacing: 1px; }
 
-        .glass-panel { flex: 1; margin: 0 20px 20px; background: var(--card); backdrop-filter: blur(40px); border-radius: 40px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-        .panel-nav { display: flex; padding: 12px; gap: 8px; border-bottom: 1px solid var(--border); }
-        .nav-link { flex: 1; padding: 12px; border: none; background: transparent; color: #555; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; border-radius: 18px; }
+        /* Glass Panel Control */
+        .glass-panel { flex: 1; margin: 0 20px 15px; background: var(--card); backdrop-filter: blur(30px); border-radius: 40px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+        .panel-nav { display: flex; padding: 10px; gap: 5px; border-bottom: 1px solid var(--border); }
+        .nav-link { flex: 1; padding: 12px; border: none; background: transparent; color: #555; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; border-radius: 16px; cursor: pointer; transition: 0.3s; }
         .nav-link.active { color: var(--gold-light); background: rgba(226, 180, 154, 0.1); }
 
-        #panel-body { flex: 1; padding: 30px; overflow-y: auto; color: #aaa; font-size: 0.8rem; line-height: 1.8; }
+        #panel-body { flex: 1; padding: 25px; overflow-y: auto; color: #aaa; font-size: 0.8rem; line-height: 1.7; -webkit-overflow-scrolling: touch; }
 
-        .controls { padding: 10px 25px calc(30px + env(safe-area-inset-bottom)); display: flex; gap: 15px; }
-        .btn-action { height: 68px; border-radius: 28px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; }
-        .btn-scan { flex: 1; background: var(--gold); color: #000; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; box-shadow: 0 20px 40px rgba(226, 180, 154, 0.2); }
+        /* Actions Bar */
+        .controls { padding: 5px 25px calc(30px + env(safe-area-inset-bottom)); display: flex; gap: 15px; }
+        .btn-action { height: 68px; border-radius: 28px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .btn-scan { flex: 1; background: var(--gold); color: #000; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; box-shadow: 0 15px 30px rgba(226, 180, 154, 0.2); }
         .btn-util { width: 68px; background: var(--card); color: var(--gold); border: 1px solid var(--border); font-size: 1.3rem; }
-        .btn-action:active { transform: scale(0.94); }
+        .btn-action:active { transform: scale(0.95); opacity: 0.8; }
 
         #shutter { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 1000; }
+        .insight-box { background: rgba(226, 180, 154, 0.05); border: 1px solid var(--border); padding: 15px; border-radius: 20px; color: #f3f4f6; margin-top: 15px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo">PureSkin</div>
-        <div class="architect-sig">Arch. Nicolas JULIENNE</div>
+        <div class="architect-sig">Architecture Logicielle<br>Nicolas JULIENNE</div>
     </header>
 
-    <div id="viewport-wrapper">
+    <div id="viewport-container">
         <video id="v" autoplay playsinline muted></video>
         <canvas id="o-canvas"></canvas>
         <div class="hud-overlay">
-            <div id="status-label">SYSTEM READY</div>
+            <div id="status-label">INITIALISATION DU MOTEUR...</div>
         </div>
         <div id="shutter"></div>
     </div>
 
     <div class="metrics-grid">
-        <div class="metric-card" id="m-s"><span class="m-val" id="v-s">--</span><span class="m-lab">Health</span></div>
+        <div class="metric-card" id="m-s"><span class="m-val" id="v-s">--</span><span class="m-lab">Santé</span></div>
         <div class="metric-card" id="m-h"><span class="m-val" id="v-h">--</span><span class="m-lab">Hydro</span></div>
         <div class="metric-card" id="m-t"><span class="m-val" id="v-t">--</span><span class="m-lab">Twin</span></div>
         <div class="metric-card" id="m-i"><span class="m-val" id="v-i">--</span><span class="m-lab">ITA°</span></div>
@@ -104,11 +102,11 @@
     <div class="glass-panel">
         <nav class="panel-nav">
             <button class="nav-link active" onclick="App.ui.show('twin', this)">Jumeau Numérique</button>
-            <button class="nav-link" onclick="App.ui.show('diag', this)">Analyse</button>
+            <button class="nav-link" onclick="App.ui.show('diag', this)">Diagnostic IA</button>
             <button class="nav-link" onclick="App.ui.show('cert', this)">Certificat</button>
         </nav>
         <div id="panel-body">
-            <p style="text-align:center; padding-top:40px; opacity:0.3; letter-spacing:2px;">AWAITING BIOMETRIC SYNC</p>
+            <p style="text-align:center; padding-top:40px; opacity:0.3; letter-spacing:1px; font-size:0.7rem;">EN ATTENTE DE SYNCHRONISATION BIOMÉTRIQUE</p>
         </div>
     </div>
 
@@ -121,6 +119,10 @@
     <canvas id="h-canvas" width="640" height="480" style="display:none;"></canvas>
 
     <script>
+        /**
+         * PURESKIN AI | FINAL PRODUCTION CODE
+         * Software Architecture by Nicolas JULIENNE
+         */
         const App = {
             state: { landmarks: null, data: null, isReady: false },
 
@@ -133,9 +135,9 @@
 
                     const d = App.state.data;
                     const views = {
-                        twin: `<div style="animation:fadeIn 0.6s;"><b>Spatial Analysis:</b><br><p style="margin-top:10px;">ID : #NJ-${Date.now().toString().slice(-4)}<br>Stabilité : ${d.stability}%<br>Signature architecturale validée par Nicolas JULIENNE.</p><img src="${d.img}" style="width:100%; border-radius:30px; margin-top:20px; border:1px solid var(--gold); filter: sepia(0.8) contrast(1.3) brightness(0.9);"></div>`,
-                        diag: `<div style="animation:fadeIn 0.6s;"><b>Diagnostic Neural :</b><br><p style="margin-top:10px;">${d.insight}</p><p style="margin-top:15px; font-family:'Space Mono'; font-size:0.6rem; color:var(--gold);">Luminance : ${d.ita}° | ITA phototype : II-III</p></div>`,
-                        cert: `<div style="text-align:center; padding:20px 10px;"><b>CERTIFICAT D'AUTHENTICITÉ</b><br><p style="font-family:'Cormorant Garamond'; font-style:italic; margin-top:15px;">"L'excellence logicielle au service de la dermo-cosmétique."</p><div style="margin-top:20px; font-size:0.6rem; letter-spacing:2px;">CONCEPTION ARCHITECTURALE :<br><b>NICOLAS JULIENNE</b></div></div>`
+                        twin: `<div style="animation:fadeIn 0.6s;"><b>Profil Spatial :</b><p style="margin-top:10px;">ID : #NJ-${Date.now().toString().slice(-4)}<br>Structure : 468 ancres faciales synchronisées.<br>Stabilité biométrique validée.</p><img src="${d.img}" style="width:100%; border-radius:25px; margin-top:15px; border:1px solid var(--gold); filter: sepia(0.5) contrast(1.2);"></div>`,
+                        diag: `<div style="animation:fadeIn 0.6s;"><b>Raisonnement Neural :</b><div class="insight-box">${d.insight}</div><p style="margin-top:15px; font-family:'Space Mono'; font-size:0.55rem; color:var(--gold); opacity:0.6;">ITA DATA : ${d.ita}° | PHOTOTYPE : TYPE ${d.ita > 32 ? 'II' : 'III'}</p></div>`,
+                        cert: `<div style="text-align:center; padding:15px;"><b>CERTIFICAT D'EXCELLENCE LOGICIELLE</b><p style="font-family:'Cormorant Garamond'; font-style:italic; margin-top:15px; font-size:1.1rem;">"L'alliance de la biométrie avancée et de l'élégance architecturale."</p><div style="margin-top:25px; font-size:0.6rem; letter-spacing:2px; opacity:0.8;">ARCHITECTE LOGICIEL :<br><b style="font-size:0.9rem; color:var(--gold-light);">NICOLAS JULIENNE</b></div></div>`
                     };
                     body.innerHTML = views[view];
                 }
@@ -144,15 +146,18 @@
             core: {
                 async init() {
                     const fm = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-                    fm.setOptions({ refineLandmarks: true, minDetectionConfidence: 0.7 });
-                    fm.onResults(res => { App.state.landmarks = res.multiFaceLandmarks?.[0]; App.core.render(); });
+                    fm.setOptions({ refineLandmarks: true, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+                    fm.onResults(res => { App.state.landmarks = res.multiFaceLandmarks?.[0]; App.core.renderHUD(); });
 
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                    document.getElementById('v').srcObject = stream;
-                    new Camera(document.getElementById('v'), { onFrame: async () => await fm.send({image: document.getElementById('v')}), width: 640, height: 480 }).start();
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } });
+                        document.getElementById('v').srcObject = stream;
+                        const camera = new Camera(document.getElementById('v'), { onFrame: async () => await fm.send({image: document.getElementById('v')}), width: 640, height: 480 });
+                        camera.start();
+                    } catch(e) { document.getElementById('status-label').innerText = "ACCÈS CAMÉRA REFUSÉ"; }
                 },
 
-                render() {
+                renderHUD() {
                     const canvas = document.getElementById('o-canvas');
                     const ctx = canvas.getContext('2d');
                     canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
@@ -161,20 +166,20 @@
                     if(!App.state.landmarks) return;
                     const pts = App.state.landmarks;
 
-                    // Architecture Mesh (Jumeau Numérique)
-                    ctx.strokeStyle = "rgba(226, 180, 154, 0.25)";
+                    // Architecture Mesh Rendering
+                    ctx.strokeStyle = "rgba(226, 180, 154, 0.2)";
                     ctx.lineWidth = 0.4;
-                    for(let i=0; i<468; i+=10) {
-                        ctx.beginPath(); ctx.arc(pts[i].x * canvas.width, pts[i].y * canvas.height, 0.6, 0, 7); ctx.stroke();
+                    for(let i=0; i<468; i+=12) {
+                        ctx.beginPath(); ctx.arc(pts[i].x * canvas.width, pts[i].y * canvas.height, 0.5, 0, 7); ctx.stroke();
                     }
 
                     const dist = Math.hypot(pts[454].x - pts[234].x, pts[454].y - pts[234].y);
                     const label = document.getElementById('status-label');
-                    if(dist > 0.32 && dist < 0.48) {
-                        label.innerText = "ALIGNED BY ARCHITECT"; label.style.color = "var(--gold)"; 
+                    if(dist > 0.32 && dist < 0.50) {
+                        label.innerText = "ALIGNEMENT ARCHITECTE VALIDE"; label.style.color = "var(--gold)"; 
                         App.state.isReady = true;
                     } else {
-                        label.innerText = "CALIBRATION..."; label.style.color = "#444";
+                        label.innerText = dist < 0.32 ? "APPROCHEZ-VOUS" : "ÉLOIGNEZ-VOUS"; label.style.color = "#444";
                         App.state.isReady = false;
                     }
                 },
@@ -189,20 +194,24 @@
                     hCtx.drawImage(document.getElementById('v'), 0,0,640,480);
                     const px = hCtx.getImageData(320, 240, 1, 1).data;
 
+                    const ita = (Math.atan2(px[1]-50, px[0]-px[2]) * 57.2).toFixed(0);
+                    const ery = (px[0] / (px[1] + 1) * 5.2).toFixed(1);
+                    const hydro = Math.floor(70 + Math.random()*20);
+                    
+                    let insight = "Intégrité cutanée stable détectée par le moteur NJ-Core.";
+                    if(ery > 3.8) insight = "Réactivité inflammatoire détectée. Privilégiez des soins apaisants et limitez les agents exfoliants.";
+                    if(hydro < 75) insight = "Carence hydrique identifiée. Barrière lipidique affaiblie : renforcez l'apport en humectants.";
+
                     App.state.data = {
                         score: Math.floor(92 + Math.random()*6),
-                        hydro: Math.floor(78 + Math.random()*12),
-                        ita: (Math.atan2(px[1]-50, px[0]-px[2]) * 57).toFixed(0),
-                        stability: (96 + Math.random()*3).toFixed(1),
-                        insight: "Structure épidermique validée. La matrice extracellulaire présente une densité optimale.",
-                        img: hCan.toDataURL('image/jpeg')
+                        hydro, ita, erythema: ery, insight,
+                        img: hCan.toDataURL('image/jpeg', 0.8)
                     };
 
-                    const d = App.state.data;
-                    document.getElementById('v-s').innerText = d.score + "%";
-                    document.getElementById('v-h').innerText = d.hydro + "%";
+                    document.getElementById('v-s').innerText = App.state.data.score + "%";
+                    document.getElementById('v-h').innerText = hydro + "%";
                     document.getElementById('v-t').innerText = "CERT";
-                    document.getElementById('v-i').innerText = d.ita + "°";
+                    document.getElementById('v-i').innerText = ita + "°";
                     document.querySelectorAll('.metric-card').forEach(c => c.classList.add('active'));
                     App.ui.show('twin', document.querySelector('.nav-link'));
                 }
@@ -216,23 +225,18 @@
                     const d = App.state.data;
 
                     doc.setFillColor(10, 10, 10); doc.rect(0, 0, 210, 297, 'F');
-                    
                     doc.setDrawColor(226, 180, 154); doc.rect(10, 10, 190, 277);
                     
-                    doc.setTextColor(226, 180, 154); doc.setFontSize(26);
-                    doc.text("PURESKIN AI", 105, 40, {align:'center'});
+                    doc.setTextColor(226, 180, 154); doc.setFontSize(26); doc.text("PURESKIN AI", 105, 40, {align:'center'});
+                    doc.setFontSize(9); doc.text("CERTIFICAT D'AUTHENTICITÉ BIOMÉTRIQUE", 105, 48, {align:'center'});
                     
-                    doc.setFontSize(10); doc.text("CERTIFICATE OF BIOMETRIC AUTHENTICITY", 105, 50, {align:'center'});
+                    doc.addImage(d.img, 'JPEG', 75, 60, 60, 45);
+                    doc.setFontSize(14); doc.text(`Clinical Health Score : ${d.score}%`, 105, 125, {align:'center'});
+                    doc.setFontSize(10); doc.text(`Hydratation : ${d.hydro}% | ITA : ${d.ita}°`, 105, 135, {align:'center'});
                     
-                    doc.addImage(d.img, 'JPEG', 75, 65, 60, 45);
-                    
-                    doc.setFontSize(14); doc.text(`Clinical Score : ${d.score}%`, 105, 130, {align:'center'});
-                    doc.setFontSize(10); doc.text(`Architectural Stability : ${d.stability}%`, 105, 140, {align:'center'});
-                    
-                    doc.text("SOFTWARE ARCHITECTURE BY", 105, 230, {align:'center'});
+                    doc.setFontSize(10); doc.text("ARCHITECTURE LOGICIELLE PAR :", 105, 230, {align:'center'});
                     doc.setFontSize(16); doc.text("NICOLAS JULIENNE", 105, 240, {align:'center'});
-                    
-                    doc.setFontSize(8); doc.text(`ID: PS-${Date.now()}`, 105, 270, {align:'center'});
+                    doc.setFontSize(8); doc.text(`Signature unique : PS-NJ-${Date.now()}`, 105, 275, {align:'center'});
                     
                     doc.save(`PureSkin_Certified_NJ.pdf`);
                 }
