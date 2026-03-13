@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DERMA LÉGENDE X-PRO | HEALTH TECH V7</title>
+    <title>DERMA LÉGENDE X-PRO | HEALTH TECH V8</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -55,7 +55,7 @@
 
 <section class="ui-panel">
     <div id="api-config">
-        <p style="font-family:'Orbitron'; font-size:11px; color:var(--neon); margin-bottom:10px;">AUTHENTIFICATION SATELLITE (GEMINI 1.5 PRO)</p>
+        <p style="font-family:'Orbitron'; font-size:11px; color:var(--neon); margin-bottom:10px;">AUTHENTIFICATION SATELLITE (GEMINI 1.5)</p>
         <input type="password" id="api-key-input" class="input-dark" placeholder="Collez votre clé API Google ici...">
         <button onclick="saveApiKey()" class="btn-core">Connecter le réseau neuronal</button>
     </div>
@@ -106,6 +106,7 @@
 </div>
 
 <script>
+    // --- GESTION DE LA CLÉ API (BYOK) ---
     let GEMINI_API_KEY = localStorage.getItem('derma_xpro_key') || "";
 
     function checkApiConfig() {
@@ -137,6 +138,7 @@
 
     checkApiConfig();
 
+    // --- ÉTAT GLOBAL ---
     const state = {
         metrics: { erythema: 0, texture: 0, final_score: 0 },
         landmarks: null,
@@ -148,6 +150,7 @@
     const canvas = document.getElementById('ar-canvas');
     const ctx = canvas.getContext('2d');
 
+    // --- MOTEUR VOCAL ---
     function speak(text) {
         if (!('speechSynthesis' in window)) return;
         window.speechSynthesis.cancel();
@@ -156,6 +159,7 @@
         window.speechSynthesis.speak(u);
     }
 
+    // --- INITIALISATION VISION ---
     async function initVision() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
@@ -182,6 +186,7 @@
         }
     }
 
+    // --- SÉQUENCE PRINCIPALE ---
     async function runDiagnostic() {
         if (!GEMINI_API_KEY) return alert("Veuillez configurer votre clé API.");
         
@@ -206,6 +211,7 @@
         }, 1500);
     }
 
+    // --- MOTEUR OPENCV ---
     async function extractBiomarkers() {
         canvas.width = 640; canvas.height = 480;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -232,61 +238,66 @@
         roi.delete(); lab.delete(); planes.delete(); gray.delete(); laplacian.delete(); mean.delete(); stddev.delete(); src.delete();
     }
 
+    // --- CERVEAU IA (V8 : Bypass Sécurité et Parseur Indestructible) ---
     async function getGeminiClinicalJSON() {
         speak("Analyse moléculaire par l'intelligence artificielle.");
         const base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
+        // Prompt ultra strict
         const prompt = `Tu es un dermatologue expert. Analyse cette peau.
         Marqueurs: Érythème (Rougeur): ${state.metrics.erythema}, Rugosité: ${state.metrics.texture}, Score Santé: ${state.metrics.final_score}%.
-        Structure exacte du JSON exigé :
+        Réponds UNIQUEMENT avec cet objet JSON, rien d'autre. Pas de blabla, pas de markdown :
         {
-            "diagnostic_vocal": "Phrase d'annonce courte",
-            "diagnostic_ecrit": "Explication détaillée de la peau",
-            "routine": { "matin": "Routine matin détaillée", "soir": "Routine soir détaillée" },
-            "ingredients_cles": ["nom_actif_1", "nom_actif_2"]
+            "diagnostic_vocal": "Phrase d'annonce",
+            "diagnostic_ecrit": "Explication de la peau",
+            "routine": { "matin": "Soin matin", "soir": "Soin soir" },
+            "ingredients_cles": ["actif 1", "actif 2"]
         }`;
 
         try {
-            // CORRECTION ULTIME : Utilisation du modèle PRO
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`, {
+            // Modèle standard, requête épurée sans les filtres restrictifs
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Image } } ] }],
-                    generationConfig: { 
-                        temperature: 0.1,
-                        responseMimeType: "application/json" 
-                    },
-                    safetySettings: [ 
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                    ]
+                    generationConfig: { temperature: 0.1 }
                 })
             });
 
             const data = await res.json();
 
-            if (!res.ok) throw new Error(data.error?.message || "Erreur API Google.");
+            if (!res.ok) throw new Error(data.error?.message || "Erreur de serveur Google.");
 
             let rawText = data.candidates[0].content.parts[0].text;
-            state.reportData = JSON.parse(rawText);
             
+            // Extracteur JSON chirurgical (anti-markdown, anti-texte parasite)
+            const startIndex = rawText.indexOf('{');
+            const endIndex = rawText.lastIndexOf('}');
+            
+            if (startIndex === -1 || endIndex === -1) {
+                throw new Error("L'IA n'a pas généré de données lisibles.");
+            }
+            
+            const cleanJsonString = rawText.substring(startIndex, endIndex + 1);
+            state.reportData = JSON.parse(cleanJsonString);
+            
+            // Affichage UI
             document.getElementById('diag-text').innerText = state.reportData.diagnostic_ecrit;
             document.getElementById('rout-matin').innerText = state.reportData.routine.matin;
             document.getElementById('rout-soir').innerText = state.reportData.routine.soir;
 
-            speak(state.reportData.diagnostic_vocal + " Compilation de l'ordonnance en cours.");
+            speak(state.reportData.diagnostic_vocal + " Je recherche vos produits dans la base de données.");
             await fetchRealProducts(state.reportData.ingredients_cles);
 
         } catch (err) {
             console.error("Crash IA:", err);
             document.getElementById('diag-text').innerHTML = `<span style="color:var(--crimson);">Erreur technique : ${err.message}</span>`;
-            speak("Erreur de communication avec le serveur Google.");
+            speak("Erreur de communication avec le réseau neuronal.");
         }
     }
 
+    // --- BASE DE DONNÉES COSMÉTIQUE ---
     async function fetchRealProducts(ingredients) {
         const productListDiv = document.getElementById('product-list');
         productListDiv.innerHTML = ""; 
@@ -332,6 +343,7 @@
         }
     }
 
+    // --- MOTEUR PDF ---
     function generatePrescriptionPDF() {
         if(!state.reportData) return;
 
