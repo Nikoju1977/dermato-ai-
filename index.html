@@ -4,227 +4,154 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>PureSkin AI Elite | Cabinet Nicolas Julienne</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
     <script async src="https://docs.opencv.org/4.5.4/opencv.js" onload="AppCore.onOpenCvReady()"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Plus+Jakarta+Sans:wght@200;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@300;400;700&display=swap" rel="stylesheet">
 
     <style>
-        :root { --gold: #c5a059; --bg: #050505; --surface: #0f0f0f; --border: rgba(197, 160, 89, 0.15); --safe-green: #2ecc71; --error-red: #e74c3c; }
+        :root { --gold: #c5a059; --bg: #050505; --surface: #0f0f0f; --border: rgba(197, 160, 89, 0.2); --green: #2ecc71; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        body { background: var(--bg); color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; padding-bottom: env(safe-area-inset-bottom); }
+        body { background: var(--bg); color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 
-        header { padding: max(45px, calc(20px + env(safe-area-inset-top))) 30px 20px; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
-        .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; letter-spacing: 3px; }
+        header { padding: max(40px, env(safe-area-inset-top)) 25px 15px; border-bottom: 0.5px solid var(--border); }
+        .logo { font-family: 'Playfair Display', serif; font-size: 1.1rem; letter-spacing: 2px; }
         .logo span { color: var(--gold); }
-        .architect { font-size: 0.5rem; text-transform: uppercase; letter-spacing: 5px; color: var(--gold); margin-top: 12px; opacity: 0.7; }
 
-        #viewport { position: relative; height: 40vh; margin: 10px 20px 0; border: 0.5px solid var(--border); background: #000; border-radius: 8px; overflow: hidden; }
-        video, #overlay-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
-        #overlay-canvas { z-index: 5; pointer-events: none; }
+        #viewport { position: relative; height: 38vh; margin: 10px; border-radius: 15px; overflow: hidden; background: #000; border: 0.5px solid var(--border); }
+        video, #overlay-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; }
         
-        .scan-laser { position: absolute; width: 100%; height: 2px; background: var(--gold); z-index: 15; box-shadow: 0 0 20px var(--gold); display: none; top: 0; }
+        .scan-laser { position: absolute; width: 100%; height: 3px; background: var(--gold); box-shadow: 0 0 15px var(--gold); display: none; z-index: 10; }
 
-        /* Tracking Indicators */
-        .track-status { position: absolute; top: 20px; left: 20px; z-index: 20; font-size: 0.5rem; text-transform: uppercase; letter-spacing: 2px; padding: 5px 10px; border-radius: 20px; background: rgba(0,0,0,0.6); border: 0.5px solid var(--border); }
-        .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; background: var(--error-red); }
-        .status-dot.active { background: var(--safe-green); box-shadow: 0 0 10px var(--safe-green); }
+        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); margin: 0 10px; }
+        .metric-card { background: var(--bg); padding: 15px 5px; text-align: center; }
+        .metric-val { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--gold); display: block; }
+        .metric-lab { font-size: 0.45rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
-        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); margin: 15px 20px 0; border: 0.5px solid var(--border); }
-        .metric-card { background: var(--bg); padding: 20px 5px; text-align: center; }
-        .metric-val { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--gold); }
-        .metric-lab { font-size: 0.4rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-top: 8px; font-weight: 700; }
+        .display-panel { flex: 1; background: var(--surface); margin-top: 10px; padding: 25px; overflow-y: auto; border-radius: 20px 20px 0 0; }
+        .expert-block { margin-bottom: 20px; border-left: 2px solid var(--gold); padding-left: 15px; animation: fadeIn 0.5s ease-out; }
+        .expert-block b { color: var(--gold); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+        .expert-block p { font-size: 0.85rem; line-height: 1.6; color: #ccc; margin-top: 5px; }
 
-        .analysis-card { flex: 1; background: var(--surface); display: flex; flex-direction: column; margin-top: 15px; overflow: hidden; position: relative; }
-        .nav-tabs { display: flex; border-bottom: 0.5px solid var(--border); background: #000; }
-        .nav-link { flex: 1; padding: 18px 0; border: none; background: transparent; color: #444; font-size: 0.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
-        .nav-link.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
+        .btn-main { margin: 15px; height: 65px; background: var(--gold); border: none; border-radius: 12px; color: #000; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.75rem; transition: 0.3s; }
+        .btn-main:disabled { background: #1a1a1a; color: #444; }
 
-        #display-area { flex: 1; overflow-y: auto; padding: 25px; line-height: 1.8; color: #bbb; font-size: 0.85rem; }
-        .expert-block { margin-bottom: 25px; border-left: 1px solid var(--gold); padding-left: 20px; }
-        .expert-block b { color: var(--gold); display: block; margin-bottom: 5px; font-family: 'Playfair Display', serif; }
+        #api-modal { position: fixed; inset: 0; background: #000; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-box { background: var(--surface); padding: 40px; border-radius: 20px; border: 0.5px solid var(--border); width: 100%; max-width: 400px; text-align: center; }
+        input { width: 100%; padding: 15px; background: #000; border: 0.5px solid var(--border); color: #fff; margin: 25px 0; border-radius: 8px; text-align: center; }
 
-        .footer-actions { padding: 15px 25px max(15px, calc(10px + env(safe-area-inset-bottom))); display: flex; gap: 15px; background: var(--bg); border-top: 0.5px solid var(--border); }
-        .btn-ui { border: 0.5px solid var(--border); background: transparent; color: #fff; display: flex; align-items: center; justify-content: center; height: 60px; border-radius: 4px; transition: 0.3s; }
-        .btn-main { flex: 1; background: var(--gold); color: #000; text-transform: uppercase; letter-spacing: 4px; font-weight: 700; font-size: 0.65rem; border: none; }
-        .btn-main:disabled { background: #1a1a1a; color: #444; border: 0.5px solid #333; }
-        .btn-icon { width: 60px; color: var(--gold); font-size: 1.2rem; }
-
-        .sys-loader { position: absolute; inset: 0; background: rgba(5,5,5,0.98); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        .spinner { width: 30px; height: 30px; border: 1px solid rgba(197, 160, 89, 0.1); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s infinite linear; }
-
-        #api-modal { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 30px; }
-        .modal-box { background: var(--surface); padding: 40px; width: 100%; max-width: 400px; border: 0.5px solid var(--border); text-align: center; }
-        .modal-input { width: 100%; background: #000; border: 0.5px solid var(--border); color: #fff; padding: 15px; margin: 25px 0; outline: none; text-align: center; letter-spacing: 2px; }
-        
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes laser { 0% { top: 0; } 100% { top: 100%; } }
-        .hidden { display: none !important; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div id="api-modal">
     <div class="modal-box">
-        <h2 style="font-family:'Playfair Display'; color:var(--gold); font-size: 1.5rem;">Système PureSkin</h2>
-        <p style="font-size:0.55rem; letter-spacing:3px; text-transform:uppercase; margin-top:10px; opacity:0.6;">Identification Google Cloud AI</p>
-        <input id="api-key-input" class="modal-input" type="password" placeholder="CLÉ API GEMINI">
-        <button class="btn-main" style="width:100%;" onclick="AppCore.saveApiKey()">Activer le Protocole</button>
-        <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--gold); font-size:0.55rem; display:block; margin-top:20px; text-decoration:none; opacity:0.5;">Générer une clé d'accès ↗</a>
+        <h2 class="logo">NICOLAS <span>JULIENNE</span></h2>
+        <p style="font-size: 0.5rem; letter-spacing: 2px; margin-top: 10px; opacity: 0.5;">BIOMETRIC ACCESS CONTROL</p>
+        <input id="api-key-input" type="password" placeholder="CLÉ API GEMINI 1.5">
+        <button class="btn-main" style="width:100%; margin:0;" onclick="AppCore.initApp()">ACTIVER LE SYSTÈME</button>
     </div>
 </div>
 
-<header>
-    <div class="logo">NICOLAS JULIENNE <span>LABS</span></div>
-    <div class="architect">Tracking: Bio-Active Precision V7.2</div>
-</header>
+<header><div class="logo">PURESKIN <span>AI ELITE</span></div></header>
 
 <div id="viewport">
-    <div class="track-status"><span id="status-dot" class="status-dot"></span> <span id="status-text">Face non détectée</span></div>
-    <div id="scan-laser" class="scan-laser"></div>
+    <div id="laser" class="scan-laser"></div>
     <video id="v" autoplay playsinline muted></video>
     <canvas id="overlay-canvas"></canvas>
 </div>
 
 <div class="dashboard">
-    <div class="metric-card"><span class="metric-val" id="val-score">--</span><span class="metric-lab">Pureté</span></div>
-    <div class="metric-card"><span class="metric-val" id="val-red">--</span><span class="metric-lab">Rougeurs</span></div>
-    <div class="metric-card"><span class="metric-val" id="val-tex">--</span><span class="metric-lab">Texture</span></div>
-    <div class="metric-card"><span class="metric-val" id="val-ita">--</span><span class="metric-lab">Éclat</span></div>
+    <div class="metric-card"><span class="metric-val" id="val-score">--</span><span class="metric-lab">Score</span></div>
+    <div class="metric-card"><span class="metric-val" id="val-hydra">--</span><span class="metric-lab">Hydra</span></div>
+    <div class="metric-card"><span class="metric-val" id="val-ery">--</span><span class="metric-lab">Rougeur</span></div>
+    <div class="metric-card"><span class="metric-val" id="val-fitz">--</span><span class="metric-lab">Type</span></div>
 </div>
 
-<div class="analysis-card">
-    <div class="sys-loader" id="loader">
-        <div class="spinner"></div>
-        <p style="margin-top:20px; color:var(--gold); letter-spacing:4px; font-size:0.45rem; text-transform:uppercase;">Calcul Biomtrique...</p>
-    </div>
-    <div class="nav-tabs">
-        <button class="nav-link active" onclick="AppCore.switchTab('diag')">Diagnostic</button>
-        <button class="nav-link" onclick="AppCore.switchTab('routine')">Rituel</button>
-        <button class="nav-link" onclick="AppCore.switchTab('history')">Archives</button>
-    </div>
-    <div id="display-area">
-        <div style="text-align:center; padding-top:40px; color:#333; font-size:0.55rem; letter-spacing:2px; text-transform:uppercase;">Alignement requis pour analyse</div>
-    </div>
+<div class="display-panel" id="display-area">
+    <p style="text-align:center; opacity:0.3; padding-top:40px; font-size:0.7rem; letter-spacing:1px;">EN ATTENTE D'ALIGNEMENT BIOMÉTRIQUE</p>
 </div>
 
-<div class="footer-actions">
-    <button class="btn-ui btn-icon" onclick="AppCore.toggleCamera()">🔄</button>
-    <button class="btn-ui btn-main" id="main-action" onclick="AppCore.runAnalysis()" disabled>Scanner le Visage</button>
-    <button class="btn-ui btn-icon" onclick="AppCore.exportPDF()">📄</button>
-</div>
+<button class="btn-main" id="main-btn" onclick="AppCore.runAnalysis()" disabled>Initialisation...</button>
 
 <canvas id="proc-canvas" style="display:none;"></canvas>
 
 <script>
 const AppCore = (function() {
     const STATE = {
-        apiKey: localStorage.getItem('NJ_GEMINI_KEY') || '',
+        apiKey: localStorage.getItem('NJ_KEY') || '',
         cvReady: false,
         landmarks: null,
         isAligned: false,
-        facing: 'user',
-        history: JSON.parse(localStorage.getItem('NJ_HIST') || '[]')
+        isScanning: false
     };
 
-    let faceMesh, animFrame;
     const dom = {
         v: document.getElementById('v'),
         o: document.getElementById('overlay-canvas'),
         p: document.getElementById('proc-canvas'),
+        btn: document.getElementById('main-btn'),
+        laser: document.getElementById('laser'),
         display: document.getElementById('display-area'),
-        loader: document.getElementById('loader'),
-        laser: document.getElementById('scan-laser'),
-        dot: document.getElementById('status-dot'),
-        stext: document.getElementById('status-text'),
-        btn: document.getElementById('main-action')
+        keyInput: document.getElementById('api-key-input')
     };
 
-    function onOpenCvReady() { STATE.cvReady = true; }
-
-    function saveApiKey() {
-        const val = document.getElementById('api-key-input').value.trim();
-        if (val) {
-            STATE.apiKey = val;
-            localStorage.setItem('NJ_GEMINI_KEY', val);
-            initApp();
+    // --- MOTEUR VOCAL (Optimisé iOS) ---
+    const Voice = {
+        synth: window.speechSynthesis,
+        speak(text) {
+            if (!text) return;
+            this.synth.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'fr-FR';
+            utter.rate = 0.9;
+            utter.pitch = 1.0;
+            this.synth.speak(utter);
         }
-    }
+    };
+
+    function onOpenCvReady() { STATE.cvReady = true; dom.btn.innerText = "Scanner le visage"; }
 
     async function initApp() {
-        if (!STATE.apiKey) return;
-        document.getElementById('api-modal').classList.add('hidden');
-        
-        faceMesh = new FaceMesh({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-        faceMesh.setOptions({
-            maxNumFaces: 1,
-            refineLandmarks: true,
-            minDetectionConfidence: 0.7,
-            minTrackingConfidence: 0.7
-        });
+        const key = dom.keyInput.value || STATE.apiKey;
+        if (!key) return alert("Clé API requise");
+        STATE.apiKey = key;
+        localStorage.setItem('NJ_KEY', key);
+        document.getElementById('api-modal').style.display = 'none';
 
-        faceMesh.onResults(results => {
-            STATE.landmarks = results.multiFaceLandmarks?.[0] || null;
-            checkTracking();
-            drawOverlay();
-        });
+        // Déclenchement audio initial pour Safari
+        Voice.speak(""); 
 
-        initCamera();
-    }
+        const faceMesh = new FaceMesh({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7 });
+        faceMesh.onResults(onResults);
 
-    async function initCamera() {
-        if (dom.v.srcObject) dom.v.srcObject.getTracks().forEach(t => t.stop());
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: STATE.facing, width: {ideal: 1280}, height: {ideal: 720} }
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'user', width: 1280, height: 720 } 
         });
         dom.v.srcObject = stream;
-        loop();
+
+        const process = async () => {
+            if (!STATE.isScanning) await faceMesh.send({image: dom.v});
+            requestAnimationFrame(process);
+        };
+        process();
     }
 
-    function loop() {
-        if (faceMesh && dom.v.readyState >= 2) faceMesh.send({image: dom.v});
-        animFrame = requestAnimationFrame(loop);
-    }
-
-    function checkTracking() {
+    function onResults(res) {
+        STATE.landmarks = res.multiFaceLandmarks?.[0];
         if (!STATE.landmarks) {
             STATE.isAligned = false;
-            dom.dot.classList.remove('active');
-            dom.stext.innerText = "Face non détectée";
-            dom.btn.disabled = true;
-            return;
-        }
-
-        // Calcul d'alignement (Simplifié pour la performance)
-        const nose = STATE.landmarks[1];
-        const leftEye = STATE.landmarks[33];
-        const rightEye = STATE.landmarks[263];
-        
-        // 1. Centrage horizontal (0.4 à 0.6)
-        const isCentered = nose.x > 0.4 && nose.x < 0.6;
-        // 2. Distance (Yeux assez écartés mais pas trop)
-        const eyeDist = Math.abs(rightEye.x - leftEye.x);
-        const isCorrectDist = eyeDist > 0.2 && eyeDist < 0.45;
-        // 3. Inclinaison (Yeux sur la même ligne Y)
-        const isLevel = Math.abs(leftEye.y - rightEye.y) < 0.05;
-
-        STATE.isAligned = isCentered && isCorrectDist && isLevel;
-        
-        if (STATE.isAligned) {
-            dom.dot.classList.add('active');
-            dom.stext.innerText = "Target Locked";
-            dom.btn.disabled = false;
         } else {
-            dom.dot.classList.remove('active');
-            dom.stext.innerText = isCentered ? "Ajustez la distance" : "Centrez votre visage";
-            dom.btn.disabled = true;
+            const nose = STATE.landmarks[1];
+            STATE.isAligned = nose.x > 0.4 && nose.x < 0.6 && nose.y > 0.3 && nose.y < 0.7;
         }
+        
+        dom.btn.disabled = !STATE.isAligned || STATE.isScanning;
+        drawOverlay();
     }
 
     function drawOverlay() {
@@ -232,167 +159,101 @@ const AppCore = (function() {
         const ctx = dom.o.getContext('2d');
         if (!STATE.landmarks) return;
 
-        const color = STATE.isAligned ? "rgba(46, 204, 113, 0.5)" : "rgba(197, 160, 89, 0.3)";
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-
-        // Dessin du "Viseur" de luxe
-        const w = dom.o.width; const h = dom.o.height;
-        ctx.strokeRect(w*0.2, h*0.15, w*0.6, h*0.7);
-        
-        // Points clés
-        [10, 152, 234, 454].forEach(idx => {
-            const p = STATE.landmarks[idx];
-            ctx.beginPath();
-            ctx.arc(p.x * w, p.y * h, 2, 0, Math.PI*2);
-            ctx.fillStyle = color;
-            ctx.fill();
-        });
+        ctx.strokeStyle = STATE.isAligned ? "#2ecc71" : "#c5a059";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.strokeRect(dom.o.width*0.2, dom.o.height*0.15, dom.o.width*0.6, dom.o.height*0.7);
     }
 
     async function runAnalysis() {
-        if (!STATE.isAligned) return;
-        dom.loader.style.display = 'flex';
+        if (!STATE.isAligned || STATE.isScanning) return;
+        
+        STATE.isScanning = true;
+        dom.btn.innerText = "Analyse en cours...";
         dom.laser.style.display = 'block';
-        dom.laser.style.animation = 'laser 2s infinite linear';
+        dom.laser.style.animation = 'scan 2s infinite linear';
+        Voice.speak("Analyse biométrique lancée. Veuillez rester immobile.");
 
         try {
             const metrics = await computeCV();
-            const aiReport = await fetchGemini(metrics);
-            STATE.analysis = { ...metrics, ai: aiReport };
+            const ai = await fetchGemini(metrics);
             
-            saveToHistory(metrics.score);
-            updateUI();
-            switchTab('diag');
+            // Mise à jour UI
+            document.getElementById('val-score').innerText = metrics.score + '%';
+            document.getElementById('val-hydra').innerText = ai.hydra + '%';
+            document.getElementById('val-ery').innerText = metrics.erythema;
+            document.getElementById('val-fitz').innerText = metrics.fitz;
+
+            dom.display.innerHTML = `
+                <div class="expert-block"><b>Diagnostic</b><p>${ai.diag}</p></div>
+                <div class="expert-block"><b>Rituel Matin</b><p>${ai.matin}</p></div>
+                <div class="expert-block"><b>Rituel Soir</b><p>${ai.soir}</p></div>
+            `;
+
+            Voice.speak(`Analyse terminée. Votre score est de ${metrics.score}%. ${ai.diag}`);
+
         } catch (e) {
-            alert("Erreur de protocole: " + e.message);
+            alert("Erreur: " + e.message);
         } finally {
-            dom.loader.style.display = 'none';
+            STATE.isScanning = false;
             dom.laser.style.display = 'none';
+            dom.btn.innerText = "Scanner le visage";
         }
     }
 
     async function computeCV() {
-        const pCtx = dom.p.getContext('2d');
+        const pCtx = dom.p.getContext('2d', { willReadFrequently: true });
         dom.p.width = dom.v.videoWidth; dom.p.height = dom.v.videoHeight;
         pCtx.drawImage(dom.v, 0, 0);
+        
+        const src = cv.imread(dom.p);
+        const pt = STATE.landmarks[234]; // Joue
+        const rect = new cv.Rect(pt.x * src.cols - 30, pt.y * src.rows - 30, 60, 60);
+        const roi = src.roi(rect);
 
-        let src = cv.imread(dom.p);
-        let tA = 0, tTex = 0, tL = 0;
-        const zones = [10, 234, 454, 152]; // Front, Joue G, Joue D, Menton
-
-        zones.forEach(idx => {
-            const p = STATE.landmarks[idx];
-            let rect = new cv.Rect(p.x * src.cols - 25, p.y * src.rows - 25, 50, 50);
-            let roi = src.roi(rect);
-            
-            let lab = new cv.Mat();
-            cv.cvtColor(roi, lab, cv.COLOR_RGBA2RGB);
-            cv.cvtColor(lab, lab, cv.COLOR_RGB2Lab);
-            let planes = new cv.MatVector();
-            cv.split(lab, planes);
-            
-            tL += cv.mean(planes.get(0))[0];
-            tA += (cv.mean(planes.get(1))[0] - 128);
-
-            let gray = new cv.Mat();
-            cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
-            let lap = new cv.Mat();
-            cv.Laplacian(gray, lap, cv.CV_8U);
-            tTex += cv.mean(lap)[0];
-
-            [roi, lab, planes, gray, lap].forEach(m => { if(m.delete) m.delete(); });
-        });
+        // Lab Color Space pour l'érythème
+        const lab = new cv.Mat();
+        cv.cvtColor(roi, lab, cv.COLOR_RGBA2RGB);
+        cv.cvtColor(lab, lab, cv.COLOR_RGB2Lab);
+        const mean = cv.mean(lab);
+        
+        const erythema = Math.round(mean[1] - 128);
+        const phototype = mean[0] > 160 ? "Claire" : "Mate";
+        
+        // Texture
+        const gray = new cv.Mat();
+        cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
+        const lap = new cv.Mat();
+        cv.Laplacian(gray, lap, cv.CV_8U);
+        const texture = Math.round(cv.mean(lap)[0] * 2);
 
         const res = {
-            redness: Math.round((tA/4) * 2.2),
-            texture: Math.round((tTex/4) * 4.5),
-            luminance: Math.round(tL/4),
-            img: dom.p.toDataURL('image/jpeg', 0.8)
+            score: 100 - (erythema + texture),
+            erythema,
+            fitz: phototype,
+            img: dom.p.toDataURL('image/jpeg', 0.6)
         };
-        res.score = Math.max(0, Math.min(100, 100 - (res.redness + res.texture/1.8)));
-        src.delete();
+
+        [src, roi, lab, gray, lap].forEach(m => m.delete());
         return res;
     }
 
     async function fetchGemini(m) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${STATE.apiKey}`;
-        const prompt = `En tant qu'expert de la Maison Nicolas Julienne, analyse ces data bio-visuelles : Score=${m.score}%, Rougeurs=${m.redness}, Relief=${m.texture}. 
-        Réponds en JSON : {"bilan": "court", "routine_matin": "actifs", "routine_soir": "actifs", "lifestyle": "conseil", "signature": "max 1 phrase"}`;
+        const prompt = `Expert Nicolas Julienne. Data: Score=${m.score}, Rougeur=${m.erythema}. Image fournie. Répondre uniquement en JSON: {"hydra": "0-100", "diag": "phrase courte", "matin": "actifs", "soir": "actifs"}`;
         
         const res = await fetch(url, {
             method: 'POST',
             body: JSON.stringify({
                 contents: [{ parts: [{text: prompt}, {inline_data: {mime_type: "image/jpeg", data: m.img.split(',')[1]}}] }],
-                generationConfig: { response_mime_type: "application/json", temperature: 0.3 }
+                generationConfig: { response_mime_type: "application/json", temperature: 0.1 }
             })
         });
         const data = await res.json();
         return JSON.parse(data.candidates[0].content.parts[0].text);
     }
 
-    function updateUI() {
-        const a = STATE.analysis;
-        document.getElementById('val-score').innerText = a.score + '%';
-        document.getElementById('val-red').innerText = a.redness;
-        document.getElementById('val-tex').innerText = a.texture;
-        document.getElementById('val-ita').innerText = a.luminance;
-    }
-
-    function switchTab(t) {
-        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-        if (!STATE.analysis && t !== 'history') return;
-
-        if (t === 'diag') {
-            const ai = STATE.analysis.ai;
-            dom.display.innerHTML = `<div class="expert-block"><b>Bilan Cellulaire</b><p>${ai.bilan}</p></div>
-                                    <div class="expert-block"><b>Signature</b><p>${ai.signature}</p></div>`;
-        } else if (t === 'routine') {
-            const ai = STATE.analysis.ai;
-            dom.display.innerHTML = `<div class="expert-block"><b>☀️ Matin</b><p>${ai.routine_matin}</p></div>
-                                    <div class="expert-block"><b>🌙 Soir</b><p>${ai.routine_soir}</p></div>
-                                    <div class="expert-block"><b>🌿 Lifestyle</b><p>${ai.lifestyle}</p></div>`;
-        } else if (t === 'history') {
-            renderHistory();
-        }
-    }
-
-    function renderHistory() {
-        dom.display.innerHTML = '<canvas id="histChart" style="max-height:180px;"></canvas>';
-        if (!STATE.history.length) return;
-        new Chart(document.getElementById('histChart'), {
-            type: 'line',
-            data: {
-                labels: STATE.history.map(h => h.date),
-                datasets: [{ data: STATE.history.map(h => h.score), borderColor: '#c5a059', tension: 0.4, fill: true, backgroundColor: 'rgba(197, 160, 89, 0.1)' }]
-            },
-            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
-        });
-    }
-
-    function saveToHistory(s) {
-        STATE.history.push({ date: new Date().toLocaleDateString('fr-FR', {day:'2-digit', month:'short'}), score: s });
-        if (STATE.history.length > 12) STATE.history.shift();
-        localStorage.setItem('NJ_HIST', JSON.stringify(STATE.history));
-    }
-
-    function toggleCamera() {
-        STATE.facing = STATE.facing === 'user' ? 'environment' : 'user';
-        initCamera();
-    }
-
-    function exportPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFontSize(20); doc.text("PURESKIN AI REPORT", 20, 20);
-        doc.setFontSize(12); doc.text(`Diagnostic du ${new Date().toLocaleDateString()}`, 20, 30);
-        doc.text(`Score de Pureté Global : ${STATE.analysis.score}%`, 20, 45);
-        doc.save(`PureSkin_${Date.now()}.pdf`);
-    }
-
-    window.addEventListener('DOMContentLoaded', () => { if (STATE.apiKey) initApp(); });
-
-    return { onOpenCvReady, saveApiKey, runAnalysis, switchTab, toggleCamera, exportPDF };
+    return { initApp, runAnalysis, onOpenCvReady };
 })();
 </script>
 </body>
