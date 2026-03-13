@@ -4,294 +4,403 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>PureSkin AI | Maison Nicolas Julienne</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script async src="https://docs.opencv.org/4.5.4/opencv.js" type="text/javascript" onload="AppCore.onOpenCvReady();"></script>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>PureSkin AI Elite | Nicolas Julienne Labs</title>
 
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script async src="https://docs.opencv.org/4.5.4/opencv.js" onload="AppCore.onOpenCvReady()"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Plus+Jakarta+Sans:wght@200;400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        :root { --gold: #c5a059; --bg: #050505; --surface: #0f0f0f; --border: rgba(197, 160, 89, 0.15); }
+        :root {
+            --gold: #c5a059;
+            --gold-dim: rgba(197, 160, 89, 0.15);
+            --bg: #050505;
+            --surface: #0f0f0f;
+            --border: rgba(197, 160, 89, 0.15);
+            --safe-green: #2ecc71;
+            --error-red: #e74c3c;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 
-        header { padding: 45px 30px 20px; border-bottom: 0.5px solid var(--border); }
-        .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; letter-spacing: 3px; font-weight: 400; }
+        body { 
+            background: var(--bg); 
+            color: #fff; 
+            height: 100dvh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* ─── UI COMPONENTS ─── */
+        header {
+            padding: max(45px, calc(20px + env(safe-area-inset-top))) 30px 20px;
+            border-bottom: 0.5px solid var(--border);
+            text-align: left;
+        }
+
+        .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; letter-spacing: 3px; }
         .logo span { color: var(--gold); }
-        .architect { font-size: 0.5rem; text-transform: uppercase; letter-spacing: 5px; color: var(--gold); margin-top: 12px; opacity: 0.7; font-weight: 600; }
-        
-        /* Emplacement Clé API Discret */
-        .api-panel { padding: 15px 30px; background: #000; border-bottom: 0.5px solid var(--border); display: flex; gap: 10px; align-items: center; transition: 0.5s; }
-        .api-panel input { flex: 1; background: transparent; border: 0.5px solid var(--border); padding: 10px; color: var(--gold); font-size: 0.6rem; letter-spacing: 2px; outline: none; border-radius: 2px; }
-        .api-panel button { background: var(--gold); color: #000; border: none; padding: 10px 15px; font-size: 0.5rem; font-weight: 800; text-transform: uppercase; cursor: pointer; letter-spacing: 1px; }
+        .architect { font-size: 0.5rem; text-transform: uppercase; letter-spacing: 5px; color: var(--gold); margin-top: 8px; opacity: 0.7; }
 
-        #viewport { position: relative; height: 32vh; margin: 20px; border: 0.5px solid var(--border); background: #000; border-radius: 4px; overflow: hidden; }
-        .reticle-scope { position: absolute; inset: 0; pointer-events: none; z-index: 10; border: 35px solid rgba(0,0,0,0.4); }
-        .reticle-scope::after { content: ''; position: absolute; top: 50%; left: 50%; width: 100px; height: 100px; border: 0.3px solid var(--gold); transform: translate(-50%, -50%); opacity: 0.3; }
+        #viewport {
+            position: relative;
+            height: 38vh;
+            margin: 15px 20px;
+            border: 0.5px solid var(--border);
+            background: #000;
+            border-radius: 4px;
+            overflow: hidden;
+        }
 
         video, #overlay-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; }
-        .scan-laser { position: absolute; width: 100%; height: 1px; background: var(--gold); z-index: 15; box-shadow: 0 0 15px var(--gold); display: none; }
-        
-        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); margin: 0 20px 20px; border: 0.5px solid var(--border); }
-        .metric-card { background: var(--bg); padding: 22px 5px; text-align: center; }
-        .metric-val { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--gold); }
-        .metric-lab { font-size: 0.4rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; font-weight: 700; }
+        #overlay-canvas { z-index: 5; pointer-events: none; }
 
-        .analysis-card { flex: 1; background: var(--surface); display: flex; flex-direction: column; border-top: 0.5px solid var(--border); overflow: hidden; }
-        .nav-tabs { display: flex; border-bottom: 0.5px solid var(--border); background: #000; }
-        .nav-link { flex: 1; padding: 20px 0; border: none; background: transparent; color: #444; font-size: 0.55rem; font-weight: 700; text-transform: uppercase; cursor: pointer; letter-spacing: 2px; transition: 0.4s; }
+        .scan-laser {
+            position: absolute; width: 100%; height: 2px;
+            background: var(--gold); z-index: 10;
+            box-shadow: 0 0 20px var(--gold);
+            display: none; top: 0;
+        }
+
+        .track-status {
+            position: absolute; top: 15px; left: 15px; z-index: 20;
+            font-size: 0.5rem; text-transform: uppercase; letter-spacing: 2px;
+            padding: 6px 12px; border-radius: 20px;
+            background: rgba(0,0,0,0.7); border: 0.5px solid var(--border);
+            display: flex; align-items: center;
+        }
+
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; background: var(--error-red); }
+        .status-dot.active { background: var(--safe-green); box-shadow: 0 0 10px var(--safe-green); }
+
+        /* ─── DASHBOARD ─── */
+        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); margin: 0 20px; }
+        .metric-card { background: var(--bg); padding: 15px 5px; text-align: center; }
+        .metric-val { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--gold); }
+        .metric-lab { font-size: 0.45rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }
+
+        /* ─── ANALYSIS AREA ─── */
+        .analysis-card { flex: 1; background: var(--surface); margin-top: 15px; display: flex; flex-direction: column; overflow: hidden; }
+        .nav-tabs { display: flex; border-bottom: 0.5px solid var(--border); }
+        .nav-link { 
+            flex: 1; padding: 15px 0; border: none; background: transparent; 
+            color: #555; font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+        }
         .nav-link.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
 
-        #display-area { flex: 1; overflow-y: auto; padding: 40px 25px; line-height: 1.9; color: #bbb; font-size: 0.85rem; }
-        .expert-block { margin-bottom: 40px; border-left: 1px solid var(--gold); padding-left: 25px; }
-        .expert-block b { color: var(--gold); font-family: 'Playfair Display', serif; font-size: 1.1rem; display: block; margin-bottom: 15px; font-weight: 400; }
+        #display-area { flex: 1; overflow-y: auto; padding: 20px; color: #ccc; font-size: 0.8rem; line-height: 1.6; }
+        .expert-block { margin-bottom: 20px; border-left: 2px solid var(--gold); padding-left: 15px; }
+        .expert-block b { color: var(--gold); display: block; margin-bottom: 5px; text-transform: uppercase; font-size: 0.65rem; }
 
-        .footer-actions { padding: 25px; display: flex; gap: 15px; background: var(--bg); border-top: 0.5px solid var(--border); }
-        .btn-ui { border: 0.5px solid var(--border); background: transparent; color: #fff; cursor: pointer; transition: 0.3s; height: 60px; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
-        .btn-main { flex: 1; background: var(--gold); color: #000; text-transform: uppercase; letter-spacing: 4px; font-weight: 700; font-size: 0.65rem; border: none; }
-        .btn-main:disabled { background: #222; color: #444; }
-        .btn-icon { width: 60px; color: var(--gold); font-size: 1.2rem; }
+        /* ─── FOOTER ─── */
+        .footer-actions { padding: 15px 20px; display: flex; gap: 12px; border-top: 0.5px solid var(--border); }
+        .btn-ui { height: 55px; border-radius: 4px; border: 0.5px solid var(--border); background: transparent; color: #fff; cursor: pointer; transition: 0.3s; }
+        .btn-main { flex: 1; background: var(--gold); color: #000; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; font-size: 0.7rem; border: none; }
+        .btn-main:disabled { background: #1a1a1a; color: #444; }
+        .btn-icon { width: 55px; color: var(--gold); font-size: 1.2rem; }
+
+        /* ─── MODALS & LOADERS ─── */
+        .sys-loader { position: absolute; inset: 0; background: rgba(5,5,5,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .spinner { width: 30px; height: 30px; border: 2px solid var(--gold-dim); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s infinite linear; }
         
-        .sys-loader { position: absolute; inset: 0; background: var(--bg); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        .spinner-lux { width: 30px; height: 30px; border: 1px solid rgba(197, 160, 89, 0.1); border-top-color: var(--gold); border-radius: 50%; animation: spin 1.2s infinite linear; }
+        #api-modal { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 30px; }
+        .modal-box { background: var(--surface); padding: 40px; width: 100%; max-width: 400px; border: 0.5px solid var(--border); text-align: center; }
+        .modal-input { width: 100%; background: #000; border: 0.5px solid var(--border); color: #fff; padding: 15px; margin: 20px 0; text-align: center; }
+
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes laserMove { 0% { top: 0; } 100% { top: 100%; } }
+        @keyframes laser { from { top: 0; } to { top: 100%; } }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo">NICOLAS JULIENNE <span>LABS</span></div>
-        <div class="architect">Protocol: Clinical Expertise V6.2</div>
-    </header>
-
-    <div class="api-panel" id="api-panel">
-        <input type="password" id="api-key-input" placeholder="CONFIGURATION CLÉ GEMINI">
-        <button onclick="AppCore.saveKey()">Lier</button>
+<div id="api-modal">
+    <div class="modal-box">
+        <h2 style="font-family:'Playfair Display'; color:var(--gold);">PURESKIN AI</h2>
+        <p style="font-size:0.6rem; letter-spacing:2px; margin-top:10px; opacity:0.6;">ACCÈS BIOMÉTRIQUE REQUIS</p>
+        <input id="api-key-input" class="modal-input" type="password" placeholder="CLÉ API GEMINI">
+        <button class="btn-ui btn-main" style="width:100%" onclick="AppCore.saveApiKey()">ACTIVER LE SYSTÈME</button>
     </div>
+</div>
 
-    <div id="viewport">
-        <div class="reticle-scope"></div>
-        <div id="scan-laser" class="scan-laser"></div>
-        <video id="v" class="mirror-mode" autoplay playsinline muted></video>
-        <canvas id="overlay-canvas" class="mirror-mode"></canvas>
+<header>
+    <div class="logo">NICOLAS JULIENNE <span>LABS</span></div>
+    <div class="architect">Bio-Precision Multi-Spectral V9.0</div>
+</header>
+
+<div id="viewport">
+    <div class="track-status">
+        <span id="status-dot" class="status-dot"></span>
+        <span id="status-text">Initialisation...</span>
     </div>
+    <div id="scan-laser" class="scan-laser"></div>
+    <video id="v" autoplay playsinline muted></video>
+    <canvas id="overlay-canvas"></canvas>
+</div>
 
-    <div class="dashboard">
-        <div class="metric-card"><span class="metric-val" id="val-score">--</span><span class="metric-lab">Pureté</span></div>
-        <div class="metric-card"><span class="metric-val" id="val-red">--</span><span class="metric-lab">Inflam.</span></div>
-        <div class="metric-card"><span class="metric-val" id="val-tex">--</span><span class="metric-lab">Texture</span></div>
-        <div class="metric-card"><span class="metric-val" id="val-ita">--</span><span class="metric-lab">Éclat</span></div>
+<div class="dashboard">
+    <div class="metric-card"><span class="metric-val" id="val-score">--</span><div class="metric-lab">Pureté</div></div>
+    <div class="metric-card"><span class="metric-val" id="val-red">--</span><div class="metric-lab">Rougeurs</div></div>
+    <div class="metric-card"><span class="metric-val" id="val-tex">--</span><div class="metric-lab">Texture</div></div>
+    <div class="metric-card"><span class="metric-val" id="val-ita">--</span><div class="metric-lab">Éclat</div></div>
+</div>
+
+<div class="analysis-card">
+    <div class="sys-loader" id="loader">
+        <div class="spinner"></div>
+        <p id="loader-text" style="margin-top:15px; font-size:0.5rem; letter-spacing:2px; color:var(--gold);">ANALYSE EN COURS</p>
     </div>
-
-    <div class="analysis-card">
-        <div class="sys-loader" id="loader">
-            <div class="spinner-lux"></div>
-            <p style="margin-top:25px; color:var(--gold); letter-spacing:5px; font-size:0.45rem; text-transform:uppercase;">Traitement Clinique</p>
+    <div class="nav-tabs">
+        <button class="nav-link active" onclick="AppCore.switchTab('diag')">Diagnostic</button>
+        <button class="nav-link" onclick="AppCore.switchTab('routine')">Rituel</button>
+        <button class="nav-link" onclick="AppCore.switchTab('history')">Archives</button>
+    </div>
+    <div id="display-area">
+        <div style="text-align:center; padding-top:40px; color:#444; font-size:0.6rem; letter-spacing:2px;">
+            VEUILLEZ ALIGNER VOTRE VISAGE POUR DÉBUTER
         </div>
-        <div class="nav-tabs">
-            <button class="nav-link active" onclick="AppCore.switchTab('lab')">Spectre</button>
-            <button class="nav-link" onclick="AppCore.switchTab('diag')">Bilan</button>
-            <button class="nav-link" onclick="AppCore.switchTab('routine')">Rituel</button>
-            <button class="nav-link" onclick="AppCore.switchTab('history')">Archives</button>
-        </div>
-        <div id="display-area">
-            <div style="text-align:center; padding-top:60px; color:#333; letter-spacing:2px; font-size:0.55rem; text-transform:uppercase;">
-                En attente de configuration
-            </div>
-        </div>
     </div>
+</div>
 
-    <div class="footer-actions">
-        <button class="btn-ui btn-icon" onclick="AppCore.clearKey()" title="Effacer Clé">🗑️</button>
-        <button class="btn-ui btn-main" id="main-action" onclick="AppCore.runAnalysis()" disabled>Lancer l'Expertise</button>
-        <button class="btn-ui btn-icon" onclick="AppCore.exportPDF()">📄</button>
-    </div>
+<div class="footer-actions">
+    <button class="btn-ui btn-icon" onclick="AppCore.toggleCamera()">🔄</button>
+    <button class="btn-ui btn-main" id="main-action" onclick="AppCore.runAnalysis()" disabled>LANCER LE SCAN</button>
+    <button class="btn-ui btn-icon" onclick="AppCore.exportPDF()">📄</button>
+</div>
 
-    <canvas id="proc-canvas" style="display:none;"></canvas>
+<canvas id="proc-canvas" style="display:none;"></canvas>
 
-    <script>
-        const AppCore = (function() {
-            const STORAGE_KEY = "JULIENNE_CABINET_KEY_V62";
-            const HIST_KEY = "JULIENNE_CABINET_HIST_V62";
-            let chartInstance = null;
+<script>
+const AppCore = (function() {
+    const STATE = {
+        apiKey: localStorage.getItem('NJ_GEMINI_KEY') || '',
+        cvReady: false,
+        landmarks: null,
+        isAligned: false,
+        facing: 'user',
+        analysis: null,
+        history: JSON.parse(localStorage.getItem('NJ_HIST') || '[]'),
+        processing: false
+    };
 
-            const state = { 
-                landmarks: null, cvReady: false, analysis: null, facing: 'user', 
-                audioUnlocked: false, history: JSON.parse(localStorage.getItem(HIST_KEY)) || [] 
-            };
+    let faceMesh, animFrame;
 
-            const dom = {
-                v: document.getElementById('v'),
-                o: document.getElementById('overlay-canvas'), oCtx: document.getElementById('overlay-canvas').getContext('2d'),
-                p: document.getElementById('proc-canvas'), pCtx: document.getElementById('proc-canvas').getContext('2d'),
-                loader: document.getElementById('loader'), mainBtn: document.getElementById('main-action'),
-                display: document.getElementById('display-area'), apiPanel: document.getElementById('api-panel'),
-                apiKeyInput: document.getElementById('api-key-input'),
-                kpi: { score: document.getElementById('val-score'), red: document.getElementById('val-red'), tex: document.getElementById('val-tex'), ita: document.getElementById('val-ita') }
-            };
+    const dom = {
+        v: document.getElementById('v'),
+        o: document.getElementById('overlay-canvas'),
+        p: document.getElementById('proc-canvas'),
+        display: document.getElementById('display-area'),
+        loader: document.getElementById('loader'),
+        loaderText: document.getElementById('loader-text'),
+        laser: document.getElementById('scan-laser'),
+        dot: document.getElementById('status-dot'),
+        stext: document.getElementById('status-text'),
+        btn: document.getElementById('main-action')
+    };
 
-            const faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-            faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.85, minTrackingConfidence: 0.85 });
-            faceMesh.onResults(res => { state.landmarks = res.multiFaceLandmarks?.[0] || null; drawHUD(); });
+    // ─── INITIALISATION ───
+    async function initApp() {
+        if (!STATE.apiKey) return;
+        document.getElementById('api-modal').classList.add('hidden');
+        
+        faceMesh = new FaceMesh({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7 });
+        faceMesh.onResults(onFaceResults);
 
-            async function onOpenCvReady() { 
-                state.cvReady = true; 
-                checkApiKey();
-                initCamera(); 
-            }
+        await initCamera();
+    }
 
-            function checkApiKey() {
-                const savedKey = localStorage.getItem(STORAGE_KEY);
-                if (savedKey) {
-                    dom.apiPanel.style.display = 'none';
-                    dom.mainBtn.disabled = false;
-                }
-            }
+    async function initCamera() {
+        if (dom.v.srcObject) dom.v.srcObject.getTracks().forEach(t => t.stop());
+        try {
+            const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: STATE.facing, width: 1280, height: 720 } });
+            dom.v.srcObject = s;
+            requestAnimationFrame(renderLoop);
+        } catch (e) { alert("Erreur Caméra: " + e.message); }
+    }
 
-            function saveKey() {
-                const key = dom.apiKeyInput.value.trim();
-                if (key.startsWith("AIza")) {
-                    localStorage.setItem(STORAGE_KEY, key);
-                    dom.apiPanel.style.display = 'none';
-                    dom.mainBtn.disabled = false;
-                    alert("Architecture liée avec succès.");
-                } else {
-                    alert("Format de clé invalide.");
-                }
-            }
+    function renderLoop() {
+        if (dom.v.readyState >= 2) faceMesh.send({ image: dom.v });
+        animFrame = requestAnimationFrame(renderLoop);
+    }
 
-            function clearKey() {
-                if(confirm("Délier la clé API ?")) {
-                    localStorage.removeItem(STORAGE_KEY);
-                    location.reload();
-                }
-            }
+    function onFaceResults(res) {
+        STATE.landmarks = res.multiFaceLandmarks?.[0] || null;
+        checkAlignment();
+        drawOverlay();
+    }
 
-            async function initCamera() {
-                if (dom.v.srcObject) dom.v.srcObject.getTracks().forEach(t => t.stop());
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: state.facing, width: {ideal: 1280}, height: {ideal: 720} } });
-                    dom.v.srcObject = stream;
-                    dom.v.onloadedmetadata = () => { dom.p.width = dom.v.videoWidth; dom.p.height = dom.v.videoHeight; loop(); };
-                } catch(e) { console.error("Caméra non accessible."); }
-            }
+    function checkAlignment() {
+        if (!STATE.landmarks) { STATE.isAligned = false; updateStatus("Face non détectée", false); return; }
+        const nose = STATE.landmarks[1];
+        const isCentered = nose.x > 0.4 && nose.x < 0.6;
+        STATE.isAligned = isCentered;
+        updateStatus(isCentered ? "Cible Verrouillée" : "Centrez votre visage", isCentered);
+        dom.btn.disabled = !isCentered || STATE.processing;
+    }
 
-            function loop() { if (state.cvReady) faceMesh.send({image: dom.v}); requestAnimationFrame(loop); }
+    function updateStatus(txt, active) {
+        dom.stext.innerText = txt;
+        dom.dot.className = 'status-dot' + (active ? ' active' : '');
+    }
 
-            function drawHUD() {
-                dom.o.width = dom.v.clientWidth; dom.o.height = dom.v.clientHeight;
-                if (!state.landmarks) return;
-                dom.oCtx.strokeStyle = "rgba(197, 160, 89, 0.25)"; dom.oCtx.lineWidth = 0.5;
-                [1, 10, 234, 454].forEach(idx => {
-                    const pt = state.landmarks[idx];
-                    dom.oCtx.beginPath(); dom.oCtx.arc(pt.x * dom.o.width, pt.y * dom.o.height, 1, 0, 2*Math.PI); dom.oCtx.stroke();
-                });
-            }
+    function drawOverlay() {
+        const ctx = dom.o.getContext('2d');
+        dom.o.width = dom.o.clientWidth; dom.o.height = dom.o.clientHeight;
+        ctx.clearRect(0,0,dom.o.width, dom.o.height);
+        if (!STATE.landmarks) return;
+        ctx.strokeStyle = STATE.isAligned ? 'rgba(46, 204, 113, 0.4)' : 'rgba(197, 160, 89, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(dom.o.width*0.2, dom.o.height*0.15, dom.o.width*0.6, dom.o.height*0.7);
+    }
 
-            async function runAnalysis() {
-                const key = localStorage.getItem(STORAGE_KEY);
-                if (!key) return alert("Veuillez configurer votre clé.");
-                if (!state.landmarks) return alert("Ajustez la position du visage.");
-                
-                if (!state.audioUnlocked) { window.speechSynthesis.speak(new SpeechSynthesisUtterance("")); state.audioUnlocked = true; }
+    // ─── ENGINE: OPENCV BIOMETRICS ───
+    async function computeCV() {
+        const pCtx = dom.p.getContext('2d');
+        dom.p.width = dom.v.videoWidth; dom.p.height = dom.v.videoHeight;
+        pCtx.drawImage(dom.v, 0, 0);
 
-                dom.loader.style.display = 'flex';
-                const laser = document.getElementById('scan-laser');
-                laser.style.display = 'block'; laser.style.animation = "laserMove 2.5s infinite linear";
-                
-                try {
-                    const m = await processVision();
-                    const ai = await fetchAI(m, key);
-                    state.analysis = { ...m, ai };
-                    saveHistory(m.score);
-                    refreshUI(); switchTab('diag');
-                    
-                    const voice = new SpeechSynthesisUtterance(ai.bilan.replace(/<[^>]*>?/gm, ''));
-                    voice.lang = 'fr-FR'; voice.rate = 0.85; window.speechSynthesis.speak(voice);
-                } catch(e) { alert("Erreur d'acquisition."); } 
-                finally { dom.loader.style.display = 'none'; laser.style.display = 'none'; }
-            }
+        let src = cv.imread(dom.p);
+        let res = { redness: 0, texture: 0, luminance: 0 };
+        const zones = [10, 234, 454, 152]; // Points stratégiques
 
-            async function processVision() {
-                dom.pCtx.drawImage(dom.v, 0, 0);
-                let src = cv.imread(dom.p);
-                let roi, lab, gray, gx, gy, planes;
-                try {
-                    const pt = state.landmarks[234];
-                    const s = 100;
-                    const x = Math.max(0, Math.min(pt.x * dom.p.width - s/2, dom.p.width - s));
-                    const y = Math.max(0, Math.min(pt.y * dom.p.height - s/2, dom.p.height - s));
-                    
-                    roi = src.roi(new cv.Rect(x, y, s, s));
-                    lab = new cv.Mat(); cv.cvtColor(roi, lab, cv.COLOR_RGBA2RGB); cv.cvtColor(lab, lab, cv.COLOR_RGB2Lab);
-                    planes = new cv.MatVector(); cv.split(lab, planes);
-                    let L = cv.mean(planes.get(0))[0], a = cv.mean(planes.get(1))[0] - 128;
+        zones.forEach(idx => {
+            const p = STATE.landmarks[idx];
+            const rx = Math.max(0, Math.min(Math.round(p.x * src.cols - 30), src.cols - 60));
+            const ry = Math.max(0, Math.min(Math.round(p.y * src.rows - 30), src.rows - 60));
+            let roi = src.roi(new cv.Rect(rx, ry, 60, 60));
 
-                    gray = new cv.Mat(); cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
-                    gx = new cv.Mat(); cv.Sobel(gray, gx, cv.CV_8U, 1, 0, 3);
-                    gy = new cv.Mat(); cv.Sobel(gray, gy, cv.CV_8U, 0, 1, 3);
-                    let tex = (cv.mean(gx)[0] + cv.mean(gy)[0]) / 2;
+            let lab = new cv.Mat();
+            cv.cvtColor(roi, lab, cv.COLOR_RGBA2RGB);
+            cv.cvtColor(lab, lab, cv.COLOR_RGB2Lab);
+            let planes = new cv.MatVector();
+            cv.split(lab, planes);
+            res.luminance += cv.mean(planes.get(0))[0];
+            res.redness += (cv.mean(planes.get(1))[0] - 128);
 
-                    return { 
-                        redness: Math.round(a * 2.2), texture: Math.round(tex * 4), 
-                        luminance: Math.round(L), score: Math.round(100 - (a*1.3 + tex/1.5)),
-                        img: dom.p.toDataURL('image/jpeg', 0.9) 
-                    };
-                } finally { [src, roi, lab, gray, gx, gy, planes].forEach(o => { if(o) o.delete(); }); }
-            }
+            let gray = new cv.Mat();
+            cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
+            let lap = new cv.Mat();
+            cv.Laplacian(gray, lap, cv.CV_8U);
+            res.texture += cv.mean(lap)[0];
 
-            async function fetchAI(m, key) {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-                const prompt = `Analyses Maison Nicolas Julienne. Score=${m.score}/100, Inflammation=${m.redness}, Texture Sobel=${m.texture}, Luminance L*=${m.luminance}. 
-                Rends un JSON STRICT : {
-                    "bilan": "Diagnostic cellulaire (barrière hydrolipidique, stress oxydatif)",
-                    "routine_matin": "Protocole diurne haute performance",
-                    "routine_soir": "Réparation nocturne",
-                    "lifestyle": "Sommeil, nutrition, hydratation",
-                    "signature": "Le conseil exclusif de l'architecte Nicolas Julienne"
-                }`;
-                const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: m.img.split(',')[1] } }] }], generationConfig: { responseMimeType: "application/json" } }) });
-                const json = await res.json();
-                return JSON.parse(json.candidates[0].content.parts[0].text);
-            }
+            [roi, lab, planes, gray, lap].forEach(m => m.delete());
+        });
+        src.delete();
 
-            function saveHistory(s) { 
-                state.history.push({ t: new Date().toLocaleDateString('fr-FR', {day:'2-digit', month:'short'}), s: s }); 
-                if(state.history.length > 15) state.history.shift(); 
-                localStorage.setItem(HIST_KEY, JSON.stringify(state.history)); 
-            }
-            
-            function refreshUI() { 
-                const d = state.analysis; 
-                dom.kpi.score.innerText = d.score + "%"; dom.kpi.red.innerText = d.redness; dom.kpi.tex.innerText = d.texture; dom.kpi.ita.innerText = d.luminance;
-            }
+        return {
+            redness: Math.round((res.redness/4)*2.5),
+            texture: Math.round((res.texture/4)*5),
+            luminance: Math.round(res.luminance/4),
+            img: dom.p.toDataURL('image/jpeg', 0.7),
+            score: Math.max(10, Math.min(99, 100 - (res.redness + res.texture/2)))
+        };
+    }
 
-            function switchTab(t) {
-                document.querySelectorAll('.nav-link').forEach(btn => btn.classList.toggle('active', btn.getAttribute('onclick').includes(t)));
-                if (t === 'history') { renderChart(); return; }
-                if (!state.analysis) return;
-                const ai = state.analysis.ai;
-                if (t === 'lab') dom.display.innerHTML = `<img src="${state.analysis.img}" style="width:100%; border:0.5px solid var(--gold); filter: contrast(1.1) brightness(1.05);">`;
-                else if (t === 'diag') dom.display.innerHTML = `<div class="expert-block"><b>Synthèse de l'Architecte</b><p>${ai.bilan}</p></div><div class="expert-block"><b>Conseil Signature</b><p>${ai.signature}</p></div>`;
-                else dom.display.innerHTML = `<div class="expert-block"><b>☀️ Matin</b>${ai.routine_matin}</div><div class="expert-block"><b>🌙 Soir</b>${ai.routine_soir}</div><div class="expert-block"><b>🌿 Lifestyle</b>${ai.lifestyle}</div>`;
-            }
+    // ─── CORE ACTION ───
+    async function runAnalysis() {
+        if (STATE.processing || !STATE.isAligned) return;
+        STATE.processing = true;
+        dom.loader.style.display = 'flex';
+        dom.laser.style.display = 'block';
+        dom.laser.style.animation = 'laser 2s infinite alternate';
 
-            function renderChart() {
-                dom.display.innerHTML = `<canvas id="historyChart"></canvas>`;
-                if (chartInstance) chartInstance.destroy();
-                chartInstance = new Chart(document.getElementById('historyChart'), { 
-                    type: 'line', 
-                    data: { labels: state.history.map(h => h.t), datasets: [{ data: state.history.map(h => h.s), borderColor: '#c5a059', borderWidth: 1, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: 'rgba(197, 160, 89, 0.05)' }] }, 
-                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } } 
-                });
-            }
+        try {
+            const metrics = await computeCV();
+            const report = await fetchGemini(metrics);
+            STATE.analysis = { ...metrics, ai: report };
+            saveToHistory(metrics.score);
+            updateUI();
+            switchTab('diag');
+        } catch (e) { alert(e.message); }
+        finally {
+            STATE.processing = false;
+            dom.loader.style.display = 'none';
+            dom.laser.style.display = 'none';
+        }
+    }
 
-            return { onOpenCvReady, saveKey, clearKey, runAnalysis, switchTab, toggleCamera: () => { state.facing = state.facing === 'user' ? 'environment' : 'user'; initCamera(); }, exportPDF: () => window.print(), shareScore: () => navigator.share({ title: 'Maison Nicolas Julienne', text: `Bilan PureSkin AI : ${state.analysis.score}%` }) };
-        })();
-    </script>
+    async function fetchGemini(m) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${STATE.apiKey}`;
+        const prompt = `Expert Dermato Nicolas Julienne. Analyse: Score=${m.score}%, Rougeur=${m.redness}, Texture=${m.texture}. Réponds en JSON : {"bilan": "...", "routine_matin": "...", "routine_soir": "...", "lifestyle": "...", "signature": "..."}`;
+        
+        const res = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: m.img.split(',')[1] } }] }]
+            })
+        });
+        const data = await res.json();
+        let txt = data.candidates[0].content.parts[0].text;
+        return JSON.parse(txt.replace(/```json|```/g, ''));
+    }
+
+    function updateUI() {
+        const a = STATE.analysis;
+        document.getElementById('val-score').innerText = a.score + '%';
+        document.getElementById('val-red').innerText = a.redness;
+        document.getElementById('val-tex').innerText = a.texture;
+        document.getElementById('val-ita').innerText = a.luminance;
+    }
+
+    function switchTab(t) {
+        const tabs = document.querySelectorAll('.nav-link');
+        tabs.forEach(btn => btn.classList.remove('active'));
+        event?.target?.classList?.add('active');
+
+        if (!STATE.analysis && t !== 'history') return;
+
+        if (t === 'diag') {
+            const ai = STATE.analysis.ai;
+            dom.display.innerHTML = `<div class="expert-block"><b>Diagnostic Cellulaire</b><p>${ai.bilan}</p></div>
+                                     <div class="expert-block"><b>Note de l'Expert</b><p><em>${ai.signature}</em></p></div>`;
+        } else if (t === 'routine') {
+            const ai = STATE.analysis.ai;
+            dom.display.innerHTML = `<div class="expert-block"><b>☀️ Matin</b><p>${ai.routine_matin}</p></div>
+                                     <div class="expert-block"><b>🌙 Soir</b><p>${ai.routine_soir}</p></div>`;
+        } else {
+            dom.display.innerHTML = `<p style="font-size:0.6rem; opacity:0.5; text-align:center;">Historique des 10 dernières sessions disponible dans la V10 Pro.</p>`;
+        }
+    }
+
+    function saveApiKey() {
+        const val = document.getElementById('api-key-input').value;
+        if (val) { STATE.apiKey = val; localStorage.setItem('NJ_GEMINI_KEY', val); initApp(); }
+    }
+
+    function saveToHistory(s) {
+        STATE.history.push({ date: new Date().toLocaleDateString(), score: s });
+        localStorage.setItem('NJ_HIST', JSON.stringify(STATE.history.slice(-10)));
+    }
+
+    function toggleCamera() {
+        STATE.facing = STATE.facing === 'user' ? 'environment' : 'user';
+        initCamera();
+    }
+
+    function exportPDF() {
+        if (!STATE.analysis) return;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(20); doc.setTextColor(197, 160, 89);
+        doc.text("RAPPORT PURESKIN AI ELITE", 20, 20);
+        doc.setFontSize(12); doc.setTextColor(100, 100, 100);
+        doc.text(`Score de Pureté: ${STATE.analysis.score}%`, 20, 40);
+        doc.text(doc.splitTextToSize(STATE.analysis.ai.bilan, 170), 20, 60);
+        doc.save("Diagnostic_NicolasJulienne.pdf");
+    }
+
+    return { onOpenCvReady: () => STATE.cvReady = true, saveApiKey, runAnalysis, switchTab, toggleCamera, exportPDF };
+})();
+
+window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('NJ_GEMINI_KEY')) AppCore.saveApiKey();
+});
+</script>
 </body>
 </html>
