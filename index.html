@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DERMA LÉGENDE X-PRO | HEALTH TECH V6</title>
+    <title>DERMA LÉGENDE X-PRO | HEALTH TECH V6.1</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -238,7 +238,7 @@
         roi.delete(); lab.delete(); planes.delete(); gray.delete(); laplacian.delete(); mean.delete(); stddev.delete(); src.delete();
     }
 
-    // --- CERVEAU IA (Le correctif Anti-Crash est ici) ---
+    // --- CERVEAU IA (Correction du point de terminaison) ---
     async function getGeminiClinicalJSON() {
         speak("Analyse moléculaire par l'intelligence artificielle.");
         const base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
@@ -247,23 +247,24 @@
         Marqueurs: Érythème (Rougeur): ${state.metrics.erythema}, Rugosité: ${state.metrics.texture}, Score Santé: ${state.metrics.final_score}%.
         Structure exacte du JSON exigé :
         {
-            "diagnostic_vocal": "Phrase d'annonce",
-            "diagnostic_ecrit": "Explication de la peau",
-            "routine": { "matin": "Routine matin", "soir": "Routine soir" },
+            "diagnostic_vocal": "Phrase d'annonce courte",
+            "diagnostic_ecrit": "Explication détaillée de la peau",
+            "routine": { "matin": "Routine matin détaillée", "soir": "Routine soir détaillée" },
             "ingredients_cles": ["nom_actif_1", "nom_actif_2"]
         }`;
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            // Modification ICI : Utilisation de gemini-1.5-flash-latest pour éviter l'erreur "not found"
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Image } } ] }],
                     generationConfig: { 
                         temperature: 0.1,
-                        responseMimeType: "application/json" // 🟢 LE CHEAT CODE JSON NATIF
+                        responseMimeType: "application/json" 
                     },
-                    safetySettings: [ // 🟢 LE CHEAT CODE ANTI-BLOCAGE MEDICAL/VISAGE
+                    safetySettings: [ 
                         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
                         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
                         { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
@@ -289,7 +290,7 @@
         } catch (err) {
             console.error("Crash IA:", err);
             document.getElementById('diag-text').innerHTML = `<span style="color:var(--crimson);">Erreur technique : ${err.message}</span>`;
-            speak("Erreur de communication avec le serveur.");
+            speak("Erreur de communication avec le serveur Google.");
         }
     }
 
@@ -335,7 +336,7 @@
             productListDiv.innerHTML = "<p style='color:#777; font-size:12px;'>Aucun produit spécifique trouvé dans la base de données ouverte.</p>";
         } else {
             speak("Votre protocole personnalisé a été généré avec succès. Vous pouvez le télécharger au format PDF.");
-            document.getElementById('pdf-btn').style.display = "block"; // Affiche le bouton PDF
+            document.getElementById('pdf-btn').style.display = "block";
         }
     }
 
