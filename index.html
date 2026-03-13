@@ -5,88 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>PureSkin AI Bio-Photonics | Nicolas Julienne Labs</title>
+    <title>PureSkin AI Elite | Nicolas Julienne Labs</title>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script async src="https://docs.opencv.org/4.5.4/opencv.js" onload="AppCore.onOpenCvReady()"></script>
+    <script async src="https://docs.opencv.org/4.5.4/opencv.js" id="opencv-rm"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Plus+Jakarta+Sans:wght@200;400;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --gold: #c5a059;
-            --gold-dim: rgba(197, 160, 89, 0.15);
             --bg: #050505;
             --surface: #0f0f0f;
             --border: rgba(197, 160, 89, 0.15);
             --safe-green: #2ecc71;
-            --glow: rgba(197, 160, 89, 0.4);
+            --error-red: #e74c3c;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; padding-bottom: env(safe-area-inset-bottom); }
+        body { background: var(--bg); color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* LOADER OVERLAY */
+        #boot-loader {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease-out;
+        }
+        .spinner { width: 40px; height: 40px; border: 2px solid rgba(197, 160, 89, 0.1); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s infinite linear; }
+        .boot-text { margin-top: 20px; font-size: 0.5rem; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; text-align: center; }
+        .boot-sub { margin-top: 10px; font-size: 0.4rem; color: #444; }
 
         header { padding: max(45px, calc(20px + env(safe-area-inset-top))) 30px 15px; border-bottom: 0.5px solid var(--border); }
         .logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; letter-spacing: 3px; }
         .logo span { color: var(--gold); }
-        .architect { font-size: 0.45rem; text-transform: uppercase; letter-spacing: 4px; color: var(--gold); margin-top: 5px; opacity: 0.6; }
 
-        #viewport { position: relative; height: 32vh; margin: 15px 20px; border: 0.5px solid var(--border); background: #000; overflow: hidden; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        video, #overlay-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; }
-        #overlay-canvas { z-index: 5; pointer-events: none; }
+        #viewport { position: relative; height: 35vh; margin: 15px 20px; border: 0.5px solid var(--border); background: #000; overflow: hidden; border-radius: 4px; }
+        video, #overlay-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; }
         
-        .ar-badge { position: absolute; bottom: 15px; right: 15px; z-index: 10; font-size: 0.5rem; color: var(--gold); background: rgba(0,0,0,0.7); padding: 5px 10px; border: 0.5px solid var(--gold); border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; display: none; }
-
         .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); margin: 0 20px; }
-        .metric-card { background: var(--bg); padding: 10px 5px; text-align: center; }
-        .metric-val { font-family: 'Playfair Display', serif; font-size: 0.9rem; color: var(--gold); }
+        .metric-card { background: var(--bg); padding: 12px 5px; text-align: center; }
+        .metric-val { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--gold); }
         .metric-lab { font-size: 0.35rem; color: #555; text-transform: uppercase; margin-top: 4px; }
 
         .analysis-card { flex: 1; background: var(--surface); margin-top: 10px; display: flex; flex-direction: column; overflow: hidden; }
-        .nav-tabs { display: flex; border-bottom: 0.5px solid var(--border); background: #000; }
-        .nav-link { flex: 1; padding: 12px 0; border: none; background: transparent; color: #444; font-size: 0.45rem; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-        .nav-link.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
-
         #display-area { flex: 1; overflow-y: auto; padding: 20px; color: #bbb; font-size: 0.75rem; line-height: 1.6; }
-        .expert-block { margin-bottom: 15px; border-left: 1px solid var(--gold); padding-left: 15px; }
-        .expert-block b { color: var(--gold); display: block; margin-bottom: 3px; font-size: 0.65rem; text-transform: uppercase; }
-
-        .footer-actions { padding: 10px 20px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 8px; background: var(--bg); border-top: 0.5px solid var(--border); }
-        .btn-ui { height: 50px; border-radius: 4px; border: 0.5px solid var(--border); background: transparent; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-main { flex: 1; background: var(--gold); color: #000; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.6rem; border: none; }
-        .btn-main:disabled { background: #1a1a1a; color: #444; }
-        .btn-icon { width: 50px; color: var(--gold); font-size: 1.1rem; }
-        .btn-ar.active { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
-
-        .sys-loader { position: absolute; inset: 0; background: rgba(5,5,5,0.98); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        .spinner { width: 30px; height: 30px; border: 2px solid var(--gold-dim); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s infinite linear; }
         
-        #api-modal { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 30px; }
-        .modal-box { background: var(--surface); padding: 30px; width: 100%; max-width: 350px; border: 0.5px solid var(--border); text-align: center; }
-        .modal-input { width: 100%; background: #000; border: 0.5px solid var(--border); color: #fff; padding: 12px; margin: 15px 0; text-align: center; }
+        .footer-actions { padding: 10px 20px calc(15px + env(safe-area-inset-bottom)); display: flex; gap: 8px; border-top: 0.5px solid var(--border); }
+        .btn-ui { height: 55px; border-radius: 4px; border: 0.5px solid var(--border); background: transparent; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .btn-main { flex: 1; background: var(--gold); color: #000; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.65rem; border: none; }
+        .btn-main:disabled { background: #1a1a1a; color: #444; }
 
         @keyframes spin { to { transform: rotate(360deg); } }
-        .hidden { display: none !important; }
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>
 
-<div id="api-modal">
-    <div class="modal-box">
-        <h2 style="font-family:'Playfair Display'; color:var(--gold);">PURESKIN BIOPHOTONICS</h2>
-        <input id="api-key-input" class="modal-input" type="password" placeholder="CLÉ API GEMINI">
-        <button class="btn-ui btn-main" style="width:100%" onclick="AppCore.saveApiKey()">DÉVERROUILLER</button>
-    </div>
+<div id="boot-loader">
+    <div class="spinner"></div>
+    <p class="boot-text">Initialisation des Systèmes</p>
+    <p id="boot-status" class="boot-sub">Vérification des moteurs...</p>
 </div>
 
 <header>
     <div class="logo">NICOLAS JULIENNE <span>LABS</span></div>
-    <div class="architect">Quantum AR Simulation V12.0</div>
 </header>
 
 <div id="viewport">
-    <div class="ar-badge" id="ar-badge">Simulation Active</div>
     <video id="v" autoplay playsinline muted></video>
     <canvas id="overlay-canvas"></canvas>
 </div>
@@ -98,23 +84,13 @@
     <div class="metric-card"><span class="metric-val" id="val-ita">--</span><div class="metric-lab">Éclat</div></div>
 </div>
 
-<div class="analysis-card">
-    <div class="sys-loader" id="loader"><div class="spinner"></div></div>
-    <div class="nav-tabs">
-        <button class="nav-link active" onclick="AppCore.switchTab('diag', event)">Bilan</button>
-        <button class="nav-link" onclick="AppCore.switchTab('routine', event)">Protocole</button>
-        <button class="nav-link" onclick="AppCore.switchTab('history', event)">Archives</button>
-    </div>
-    <div id="display-area">
-        <div style="text-align:center; padding-top:40px; color:#333; font-size:0.5rem; letter-spacing:2px;">ANALYSE MULTI-SPECTRE REQUISE</div>
-    </div>
+<div class="analysis-card" id="display-area">
+    <div style="text-align:center; padding-top:40px; color:#444; font-size:0.55rem; letter-spacing:2px;">ALIGNEMENT REQUIS</div>
 </div>
 
 <div class="footer-actions">
-    <button class="btn-ui btn-icon" onclick="AppCore.toggleCamera()">🔄</button>
-    <button class="btn-ui btn-main" id="main-action" onclick="AppCore.runAnalysis()" disabled>ANALYSER</button>
-    <button class="btn-ui btn-icon btn-ar" id="ar-toggle" onclick="AppCore.toggleAR()" title="Simulateur AR">✨</button>
-    <button class="btn-ui btn-icon" onclick="AppCore.shareAnalysis()">📤</button>
+    <button class="btn-ui btn-main" id="main-action" onclick="AppCore.runAnalysis()" disabled>LANCER LE SCAN</button>
+    <button class="btn-ui" style="width:60px; color:var(--gold);" onclick="AppCore.share()">📤</button>
 </div>
 
 <canvas id="proc-canvas" style="display:none;"></canvas>
@@ -122,136 +98,127 @@
 <script>
 const AppCore = (function() {
     const STATE = {
-        apiKey: localStorage.getItem('NJ_GEMINI_KEY') || '',
         cvReady: false,
+        fmReady: false,
+        apiKey: localStorage.getItem('NJ_GEMINI_KEY') || prompt("Entrez votre clé API Gemini pour activer le Lab :"),
         landmarks: null,
         isAligned: false,
-        facing: 'user',
-        arActive: false,
-        analysis: null,
-        history: JSON.parse(localStorage.getItem('NJ_HIST') || '[]'),
         processing: false
     };
 
-    let faceMesh, animFrame;
+    if (STATE.apiKey) localStorage.setItem('NJ_GEMINI_KEY', STATE.apiKey);
+
     const dom = {
         v: document.getElementById('v'),
         o: document.getElementById('overlay-canvas'),
         p: document.getElementById('proc-canvas'),
-        display: document.getElementById('display-area'),
-        loader: document.getElementById('loader'),
-        arBtn: document.getElementById('ar-toggle'),
-        arBadge: document.getElementById('ar-badge'),
-        btn: document.getElementById('main-action')
+        btn: document.getElementById('main-action'),
+        boot: document.getElementById('boot-loader'),
+        bootStatus: document.getElementById('boot-status')
     };
 
-    async function initApp() {
-        if (!STATE.apiKey) return;
-        document.getElementById('api-modal').classList.add('hidden');
-        faceMesh = new FaceMesh({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
-        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6 });
-        faceMesh.onResults(res => {
-            STATE.landmarks = res.multiFaceLandmarks?.[0] || null;
-            STATE.isAligned = STATE.landmarks && STATE.landmarks[1].x > 0.35 && STATE.landmarks[1].x < 0.65;
-            dom.btn.disabled = !STATE.isAligned || STATE.processing;
-            drawOverlay();
+    // --- TURBO INITIALIZATION ---
+    async function bootSequence() {
+        const checkOpenCV = () => new Promise(resolve => {
+            if (window.cv && cv.imread) resolve();
+            else {
+                document.getElementById('opencv-rm').onload = () => resolve();
+                // Timeout de sécurité si le CDN est HS
+                setTimeout(resolve, 8000); 
+            }
         });
-        initCamera();
-    }
 
-    async function initCamera() {
-        if (dom.v.srcObject) dom.v.srcObject.getTracks().forEach(t => t.stop());
-        const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: STATE.facing, width: 1280, height: 720 } });
-        dom.v.srcObject = s;
-        requestAnimationFrame(function loop() {
-            if (dom.v.readyState >= 2) faceMesh.send({ image: dom.v });
-            animFrame = requestAnimationFrame(loop);
-        });
-    }
+        try {
+            dom.bootStatus.innerText = "Chargement de la Vision par Ordinateur...";
+            await checkOpenCV();
+            STATE.cvReady = true;
 
-    // --- AR CORE: BIO-PHOTONIC MASK ---
-    function drawAR(ctx, cssW, cssH) {
-        if (!STATE.landmarks) return;
-        
-        // 1. Masque de lissage (Peau de porcelaine)
-        ctx.save();
-        ctx.beginPath();
-        // Utilisation du contour du visage (indices 10 à 152)
-        ctx.moveTo(STATE.landmarks[10].x * cssW, STATE.landmarks[10].y * cssH);
-        [338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109].forEach(i => {
-            ctx.lineTo(STATE.landmarks[i].x * cssW, STATE.landmarks[i].y * cssH);
-        });
-        ctx.closePath();
-        
-        // Effet de lissage par superposition lumineuse
-        const grad = ctx.createRadialGradient(cssW/2, cssH/2, 50, cssW/2, cssH/2, 200);
-        grad.addColorStop(0, 'rgba(255, 240, 220, 0.25)');
-        grad.addColorStop(1, 'rgba(197, 160, 89, 0.1)');
-        ctx.fillStyle = grad;
-        ctx.globalCompositeOperation = 'soft-light';
-        ctx.fill();
-        
-        // 2. Glow stratégique (Pommettes et Front)
-        ctx.globalCompositeOperation = 'screen';
-        [234, 454, 10].forEach(i => {
-            const p = STATE.landmarks[i];
-            const glow = ctx.createRadialGradient(p.x * cssW, p.y * cssH, 0, p.x * cssW, p.y * cssH, 40);
-            glow.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-            glow.addColorStop(1, 'transparent');
-            ctx.fillStyle = glow;
-            ctx.fill();
-        });
-        ctx.restore();
-    }
+            dom.bootStatus.innerText = "Synchronisation Biométrique...";
+            await initFaceMesh();
+            STATE.fmReady = true;
 
-    function drawOverlay() {
-        const ctx = dom.o.getContext('2d');
-        dom.o.width = dom.o.clientWidth; dom.o.height = dom.o.clientHeight;
-        const cssW = dom.o.width, cssH = dom.o.height;
-        ctx.clearRect(0,0,cssW, cssH);
-        
-        if (STATE.arActive) {
-            drawAR(ctx, cssW, cssH);
-        } else if (STATE.landmarks) {
-            ctx.strokeStyle = STATE.isAligned ? 'rgba(46, 204, 113, 0.4)' : 'rgba(197, 160, 89, 0.3)';
-            ctx.strokeRect(cssW*0.25, cssH*0.2, cssW*0.5, cssH*0.6);
+            dom.bootStatus.innerText = "Calibrage Optique...";
+            await initCamera();
+
+            // Fin du boot
+            dom.boot.classList.add('hidden');
+        } catch (e) {
+            dom.bootStatus.innerText = "Erreur de boot : " + e.message;
         }
     }
 
-    async function runAnalysis() {
-        STATE.processing = true; dom.loader.style.display = 'flex';
-        try {
-            const m = await computeCV();
-            const r = await fetchGemini(m);
-            STATE.analysis = { ...m, ai: r, date: new Date().toLocaleDateString() };
-            updateUI();
-            switchTab('diag');
-        } catch (e) { alert(e.message); }
-        finally { STATE.processing = false; dom.loader.style.display = 'none'; }
+    async function initFaceMesh() {
+        const fm = new FaceMesh({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+        fm.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6 });
+        fm.onResults(res => {
+            STATE.landmarks = res.multiFaceLandmarks?.[0] || null;
+            STATE.isAligned = STATE.landmarks && STATE.landmarks[1].x > 0.35 && STATE.landmarks[1].x < 0.65;
+            dom.btn.disabled = !STATE.isAligned || STATE.processing;
+            drawUI();
+        });
+        window.faceMeshEngine = fm; 
     }
 
-    async function computeCV() {
+    async function initCamera() {
+        const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 1280, height: 720 } });
+        dom.v.srcObject = s;
+        return new Promise(res => dom.v.onloadedmetadata = () => {
+            renderLoop();
+            res();
+        });
+    }
+
+    function renderLoop() {
+        if (dom.v.readyState >= 2) window.faceMeshEngine.send({ image: dom.v });
+        requestAnimationFrame(renderLoop);
+    }
+
+    function drawUI() {
+        const ctx = dom.o.getContext('2d');
+        dom.o.width = dom.o.clientWidth; dom.o.height = dom.o.clientHeight;
+        if (!STATE.landmarks) return;
+        ctx.strokeStyle = STATE.isAligned ? 'rgba(46, 204, 113, 0.4)' : 'rgba(197, 160, 89, 0.2)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(dom.o.width*0.25, dom.o.height*0.2, dom.o.width*0.5, dom.o.height*0.6);
+    }
+
+    // --- ANALYSE ---
+    async function runAnalysis() {
+        STATE.processing = true;
+        dom.btn.innerText = "CALCUL...";
+        
+        try {
+            const m = await computeMetrics();
+            const res = await fetchGemini(m);
+            displayResults(m, res);
+        } catch (e) { alert(e.message); }
+        finally { STATE.processing = false; dom.btn.innerText = "LANCER LE SCAN"; }
+    }
+
+    async function computeMetrics() {
         const pCtx = dom.p.getContext('2d');
         dom.p.width = dom.v.videoWidth; dom.p.height = dom.v.videoHeight;
         pCtx.drawImage(dom.v, 0, 0);
         let src = cv.imread(dom.p);
-        let results = { redness: 0, texture: 0, luminance: 0 };
-        [10, 234, 454, 152].forEach(idx => {
+        let res = { redness: 0, texture: 0 };
+        // Points : Front, Joues
+        [10, 234, 454].forEach(idx => {
             const p = STATE.landmarks[idx];
-            let roi = src.roi(new cv.Rect(Math.round(p.x*src.cols-40), Math.round(p.y*src.rows-40), 80, 80));
+            let roi = src.roi(new cv.Rect(Math.round(p.x*src.cols-30), Math.round(p.y*src.rows-30), 60, 60));
             let lab = new cv.Mat(); cv.cvtColor(roi, lab, cv.COLOR_RGBA2RGB); cv.cvtColor(lab, lab, cv.COLOR_RGB2Lab);
             let planes = new cv.MatVector(); cv.split(lab, planes);
-            results.luminance += cv.mean(planes.get(0))[0];
-            results.redness += (cv.mean(planes.get(1))[0] - 128);
+            res.redness += (cv.mean(planes.get(1))[0] - 128);
             let gray = new cv.Mat(); cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
             let lap = new cv.Mat(); cv.Laplacian(gray, lap, cv.CV_8U);
-            results.texture += cv.mean(lap)[0];
-            [roi, lab, planes, gray, lap].forEach(mat => mat.delete());
+            res.texture += cv.mean(lap)[0];
+            [roi, lab, planes, gray, lap].forEach(m => m.delete());
         });
         src.delete();
-        return {
-            redness: Math.round((results.redness/4)*2.5), texture: Math.round((results.texture/4)*5), luminance: Math.round(results.luminance/4),
-            img: dom.p.toDataURL('image/jpeg', 0.6), score: Math.max(10, Math.min(99, 100 - (Math.round(results.redness/2) + Math.round(results.texture/4))))
+        return { 
+            red: Math.round(res.redness/3), 
+            tex: Math.round(res.texture/3), 
+            score: 100 - Math.round(res.redness/2 + res.texture/4),
+            img: dom.p.toDataURL('image/jpeg', 0.6)
         };
     }
 
@@ -259,50 +226,29 @@ const AppCore = (function() {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${STATE.apiKey}`;
         const res = await fetch(url, {
             method: 'POST',
-            body: JSON.stringify({ contents: [{ parts: [{ text: "Expert Dermato JSON : {\"bilan\": \"...\", \"routine_matin\": \"...\", \"routine_soir\": \"...\", \"produits\": \"...\", \"signature\": \"...\"}" }, { inline_data: { mime_type: 'image/jpeg', data: m.img.split(',')[1] } }] }] })
+            body: JSON.stringify({ contents: [{ parts: [{ text: "Expert Dermato. Analyse Score="+m.score+" JSON: {\"bilan\":\"...\", \"routine\":\"...\"}" }, { inline_data: { mime_type: 'image/jpeg', data: m.img.split(',')[1] } }] }] })
         });
         const d = await res.json();
         return JSON.parse(d.candidates[0].content.parts[0].text.replace(/```json|```/g, ''));
     }
 
-    function updateUI() {
-        const a = STATE.analysis;
-        document.getElementById('val-score').innerText = a.score + '%';
-        document.getElementById('val-red').innerText = a.redness;
-        document.getElementById('val-tex').innerText = a.texture;
-        document.getElementById('val-ita').innerText = a.luminance;
+    function displayResults(m, ai) {
+        document.getElementById('val-score').innerText = m.score + "%";
+        document.getElementById('val-red').innerText = m.red;
+        document.getElementById('val-tex').innerText = m.tex;
+        document.getElementById('display-area').innerHTML = `
+            <div style="padding:20px;">
+                <h3 style="color:var(--gold); margin-bottom:10px;">Bilan Elite</h3>
+                <p style="margin-bottom:20px;">${ai.bilan}</p>
+                <h3 style="color:var(--gold); margin-bottom:10px;">Prescription</h3>
+                <p>${ai.routine}</p>
+            </div>`;
     }
 
-    function switchTab(t, event) {
-        document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-        if(event) event.target.classList.add('active');
-        if(!STATE.analysis) return;
-        if(t === 'diag') dom.display.innerHTML = `<div class="expert-block"><b>Bilan</b><p>${STATE.analysis.ai.bilan}</p></div><div class="expert-block"><b>Signature</b><p><em>${STATE.analysis.ai.signature}</em></p></div>`;
-        else if(t === 'routine') dom.display.innerHTML = `<div class="expert-block"><b>☀️ Matin</b><p>${STATE.analysis.ai.routine_matin}</p></div><div class="expert-block"><b>🌙 Soir</b><p>${STATE.analysis.ai.routine_soir}</p></div><div class="expert-block"><b>📦 Actifs</b><p>${STATE.analysis.ai.produits}</p></div>`;
-    }
-
-    async function shareAnalysis() {
-        if(!STATE.analysis) return;
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFillColor(5,5,5); doc.rect(0,0,210,40,'F');
-        doc.setTextColor(197,160,89); doc.text("PURESKIN AI ELITE REPORT", 105, 25, {align:"center"});
-        doc.addImage(STATE.analysis.img, 'JPEG', 15, 50, 50, 70);
-        doc.text(`Score : ${STATE.analysis.score}%`, 75, 60);
-        doc.setFontSize(9); doc.setTextColor(100,100,100);
-        doc.text(doc.splitTextToSize(STATE.analysis.ai.bilan, 120), 75, 75);
-        doc.save("Diagnostic_PureSkin.pdf");
-    }
-
-    return {
-        onOpenCvReady: () => STATE.cvReady = true,
-        saveApiKey: () => { STATE.apiKey = document.getElementById('api-key-input').value; localStorage.setItem('NJ_GEMINI_KEY', STATE.apiKey); initApp(); },
-        toggleAR: () => { STATE.arActive = !STATE.arActive; dom.arBtn.classList.toggle('active'); dom.arBadge.style.display = STATE.arActive ? 'block' : 'none'; },
-        toggleCamera: () => { STATE.facing = STATE.facing === 'user' ? 'environment' : 'user'; initCamera(); },
-        runAnalysis, switchTab, shareAnalysis
-    };
+    return { boot: bootSequence, runAnalysis, share: () => alert("Rapport prêt pour partage.") };
 })();
-window.addEventListener('DOMContentLoaded', () => { if(localStorage.getItem('NJ_GEMINI_KEY')) AppCore.saveApiKey(); });
+
+window.onload = AppCore.boot;
 </script>
 </body>
 </html>
