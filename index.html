@@ -3,29 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DERMA LÉGENDE X-PRO | MISTRAL AI V9</title>
+    <title>DERMA LÉGENDE X-PRO | MISTRAL V9.2</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script async src="https://docs.opencv.org/4.5.4/opencv.js" type="text/javascript" onload="onOpenCvReady();"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
 
     <style>
-        :root { --gold: #d4af37; --neon: #00f2ff; --crimson: #ff1f1f; --toxic: #39ff14; --bg: #050505; --surface: #0f0f0f; }
+        :root { --gold: #d4af37; --neon: #00f2ff; --toxic: #39ff14; --bg: #050505; --surface: #0f0f0f; }
         body { background: var(--bg); color: #fff; font-family: 'Rajdhani', sans-serif; margin: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
         #vision-sector { flex: 1; position: relative; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
         video, #ar-canvas { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         #ar-canvas { z-index: 5; visibility: hidden; }
         .ui-panel { background: var(--surface); padding: 20px; z-index: 20; border-top: 1px solid #333; }
         .btn-core { width: 100%; padding: 15px; background: none; border: 1px solid var(--gold); color: var(--gold); font-family: 'Orbitron'; font-size: 12px; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; transition: 0.3s; margin-bottom: 10px; }
-        .btn-core:disabled { border-color: #333; color: #555; cursor: not-allowed; }
+        .btn-core:disabled { border-color: #333; color: #555; }
         .input-dark { width: 100%; padding: 15px; box-sizing: border-box; background: #111; border: 1px solid #444; color: var(--neon); font-family: 'Orbitron'; margin-bottom: 15px; outline: none; }
         .overlay { position: fixed; inset: 0; background: rgba(5,5,5,0.98); z-index: 100; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
-        .report-box { background: #111; padding: 15px; border-left: 3px solid var(--gold); margin: 10px 0; font-size: 15px; line-height: 1.5; }
-        .product-card { display: flex; align-items: center; background: #1a1a1a; padding: 12px; margin-top: 10px; border-radius: 6px; border: 1px solid #333; }
-        .product-card img { width: 60px; height: 60px; object-fit: cover; margin-right: 15px; background: #fff; border-radius: 4px;}
+        .report-box { background: #111; padding: 15px; border-left: 3px solid var(--gold); margin: 10px 0; font-size: 15px; }
+        .product-card { display: flex; align-items: center; background: #1a1a1a; padding: 10px; margin-top: 10px; border-radius: 6px; border: 1px solid #333; }
+        .product-card img { width: 50px; height: 50px; object-fit: cover; margin-right: 15px; border-radius: 4px; background: #fff;}
         #boot-loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -34,7 +33,7 @@
 
 <div id="boot-loader">
     <div style="width:40px; height:40px; border:2px solid var(--gold); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
-    <p style="font-family:'Orbitron'; font-size:10px; color:var(--gold); margin-top:20px;">INIT_MISTRAL_ENGINE_V9...</p>
+    <p style="font-family:'Orbitron'; font-size:10px; color:var(--gold); margin-top:20px;">DEPLOYING_MISTRAL_V9.2...</p>
 </div>
 
 <section id="vision-sector">
@@ -48,32 +47,31 @@
         <input type="password" id="api-key-input" class="input-dark" placeholder="Clé API Mistral...">
         <button onclick="saveApiKey()" class="btn-core">Connecter Mistral</button>
     </div>
-
     <div id="main-controls" style="display: none;">
-        <button id="scan-btn" class="btn-core" disabled>Scanner Peau</button>
+        <button id="scan-btn" class="btn-core" disabled>Analyser Peau</button>
         <button onclick="resetApiKey()" class="btn-core" style="border-color:#333; color:#666; font-size:9px;">Réinitialiser Clé</button>
     </div>
 </section>
 
 <div id="results-overlay" class="overlay">
-    <h1 style="font-family:'Orbitron'; color:var(--gold); font-size:24px;">BILAN MISTRAL X-PRO</h1>
+    <h1 style="font-family:'Orbitron'; color:var(--gold); font-size:24px;">BILAN X-PRO</h1>
     <div id="ui-score" style="color:var(--toxic); font-weight:bold; font-size: 32px; margin-bottom:10px;">--%</div>
     
     <div class="report-box">
         <h3 style="color:var(--neon); font-family:'Orbitron'; font-size: 14px;">DIAGNOSTIC IA</h3>
-        <p id="diag-text" style="color: #ddd;">Analyse en cours...</p>
+        <p id="diag-text">Initialisation du rapport...</p>
     </div>
 
     <div class="report-box">
-        <h3 style="color:var(--toxic); font-family:'Orbitron'; font-size: 14px;">ROUTINE CONSEILLÉE</h3>
+        <h3 style="color:var(--toxic); font-family:'Orbitron'; font-size: 14px;">ROUTINE</h3>
         <p><strong>Matin :</strong> <span id="rout-matin">...</span></p>
         <p><strong>Soir :</strong> <span id="rout-soir">...</span></p>
     </div>
 
     <div id="product-list"></div>
 
-    <button onclick="generatePrescriptionPDF()" class="btn-core" id="pdf-btn" style="display:none; border-color:var(--toxic); color:var(--toxic); margin-top:15px;">PDF EXPERTISE</button>
-    <button onclick="location.reload()" class="btn-core" style="border-color:#555; margin-top:10px;">Nouveau Scan</button>
+    <button onclick="generatePDF()" class="btn-core" id="pdf-btn" style="display:none; border-color:var(--toxic); color:var(--toxic); margin-top:15px;">TÉLÉCHARGER PDF</button>
+    <button onclick="location.reload()" class="btn-core" style="border-color:#555; margin-top:10px;">RETOUR</button>
 </div>
 
 <script>
@@ -95,7 +93,7 @@
 
     checkApiConfig();
 
-    const state = { metrics: { erythema: 0, final_score: 0 }, landmarks: null, reportData: null, prescribedProducts: [] };
+    const state = { metrics: { erythema: 0, final_score: 0 }, landmarks: null, reportData: null };
     const video = document.getElementById('video');
     const canvas = document.getElementById('ar-canvas');
     const ctx = canvas.getContext('2d');
@@ -114,16 +112,16 @@
                 }
             });
             new Camera(video, { onFrame: async () => { await faceMesh.send({image: video}); }, width: 640, height: 480 }).start();
-        } catch (e) { alert("Caméra bloquée."); }
+        } catch (e) { alert("Accès caméra refusé."); }
     }
 
     async function runDiagnostic() {
-        document.getElementById('scan-btn').innerText = "ANALYSE MISTRAL...";
+        document.getElementById('scan-btn').innerText = "CALCULS EN COURS...";
         setTimeout(async () => {
             await extractBiomarkers();
             document.getElementById('results-overlay').style.display = "flex";
             await getMistralExpertise();
-        }, 1000);
+        }, 1200);
     }
 
     async function extractBiomarkers() {
@@ -143,7 +141,7 @@
 
     async function getMistralExpertise() {
         const base64Image = canvas.toDataURL('image/jpeg', 0.8);
-        const prompt = `Diagnostic Peau. Erythème: ${state.metrics.erythema}. Score: ${state.metrics.final_score}%. Réponds uniquement au format JSON : {"diagnostic_ecrit":"...","routine":{"matin":"...","soir":"..."},"ingredients_cles":["..."]}`;
+        const prompt = `Analyse derma pro. Erythème:${state.metrics.erythema}. Score:${state.metrics.final_score}%. Réponds uniquement en JSON: {"diagnostic_ecrit":"...","routine":{"matin":"...","soir":"..."},"ingredients_cles":["..."]}`;
 
         try {
             const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
@@ -152,53 +150,56 @@
                 body: JSON.stringify({
                     model: "pixtral-12b-2409",
                     messages: [
-                        {
-                            role: "user",
-                            content: [
-                                { type: "text", text: prompt },
-                                { type: "image_url", image_url: base64Image }
-                            ]
-                        }
+                        { role: "user", content: [
+                            { type: "text", text: prompt },
+                            { type: "image_url", image_url: base64Image }
+                        ]}
                     ],
                     response_format: { type: "json_object" }
                 })
             });
 
             const data = await res.json();
-            const raw = data.choices[0].message.content;
-            state.reportData = JSON.parse(raw);
+            
+            // PROTECTION ANTI-CRASH : Vérification stricte de l'objet de réponse
+            if (!data.choices || !data.choices[0]) {
+                if (data.error) throw new Error(data.error.message);
+                throw new Error("Réponse API invalide. Vérifiez vos crédits Mistral.");
+            }
+
+            state.reportData = JSON.parse(data.choices[0].message.content);
             
             document.getElementById('diag-text').innerText = state.reportData.diagnostic_ecrit;
             document.getElementById('rout-matin').innerText = state.reportData.routine.matin;
             document.getElementById('rout-soir').innerText = state.reportData.routine.soir;
             
-            await fetchRealProducts(state.reportData.ingredients_cles);
+            await fetchProducts(state.reportData.ingredients_cles);
         } catch (err) {
-            document.getElementById('diag-text').innerText = "Erreur Mistral AI : " + err.message;
+            document.getElementById('diag-text').innerHTML = `<span style="color:var(--crimson);">Erreur : ${err.message}</span>`;
         }
     }
 
-    async function fetchRealProducts(ings) {
+    async function fetchProducts(ings) {
+        const list = document.getElementById('product-list');
         for (let ing of ings.slice(0, 2)) {
             try {
-                const res = await fetch(`https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${ing}&json=1&page_size=1`);
-                const d = await res.json();
+                const r = await fetch(`https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${ing}&json=1&page_size=1`);
+                const d = await r.json();
                 if (d.products?.[0]) {
                     const p = d.products[0];
-                    state.prescribedProducts.push({ name: p.product_name, brand: p.brands, img: p.image_front_small_url });
-                    document.getElementById('product-list').innerHTML += `<div class="product-card"><img src="${p.image_front_small_url}"><div><b>${p.brands}</b><br>${p.product_name}</div></div>`;
+                    list.innerHTML += `<div class="product-card"><img src="${p.image_front_small_url || ''}"><div><b>${p.brands || 'Expert'}</b><br>${p.product_name}</div></div>`;
                 }
             } catch (e) {}
         }
         document.getElementById('pdf-btn').style.display = "block";
     }
 
-    function generatePrescriptionPDF() {
+    function generatePDF() {
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.text("DERMA LÉGENDE X-PRO - MISTRAL AI", 20, 20);
-        doc.text("Score: " + state.metrics.final_score + "%", 20, 30);
+        doc.setFontSize(20); doc.text("DERMA LÉGENDE X-PRO", 20, 20);
+        doc.setFontSize(12); doc.text("Score: " + state.metrics.final_score + "%", 20, 30);
         doc.text(doc.splitTextToSize(state.reportData.diagnostic_ecrit, 170), 20, 40);
-        doc.save("Expertise_Mistral.pdf");
+        doc.save("Expertise_Derma.pdf");
     }
 
     function onOpenCvReady() { initVision(); }
