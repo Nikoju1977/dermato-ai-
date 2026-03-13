@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DERMA LÉGENDE X-PRO | V30 FINAL</title>
+    <title>DERMA LÉGENDE X-PRO | EXPERT PDF</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -21,70 +21,53 @@
         body { 
             background: var(--bg); color: #fff; font-family: 'Rajdhani', sans-serif; 
             margin: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
-            -webkit-user-select: none; touch-action: manipulation;
         }
 
-        /* Interface Vision */
         #vision-sector { flex: 1; position: relative; overflow: hidden; background: #000; }
         video { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         #ar-canvas { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 5; pointer-events: none; transform: scaleX(-1); visibility: hidden; }
         
-        /* HUD UI Elements */
         .zone-marker {
             position: absolute; border: 1px solid var(--neon); background: rgba(0,242,255,0.05);
             pointer-events: none; z-index: 10; display: none; flex-direction: column; align-items: center;
-            box-shadow: 0 0 10px rgba(0,242,255,0.3);
         }
         .zone-label { font-family: 'Orbitron'; font-size: 8px; color: var(--neon); background: #000; padding: 2px 5px; margin-top: -18px; border: 1px solid var(--neon); }
 
-        /* Panel de Contrôle */
         .ui-panel { background: var(--surface); padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 20; border-top: 1px solid #333; }
         .agent-status { display: flex; gap: 10px; margin-bottom: 15px; }
-        .agent-box { flex: 1; padding: 12px; border: 1px solid #222; font-size: 9px; font-family: 'Orbitron'; color: #444; text-align: center; transition: 0.3s; }
-        .active-dermato { border-color: var(--crimson); color: var(--crimson); background: rgba(255,31,31,0.05); text-shadow: 0 0 5px var(--crimson); }
-        .active-cosmo { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.05); text-shadow: 0 0 5px var(--gold); }
+        .agent-box { flex: 1; padding: 12px; border: 1px solid #222; font-size: 9px; font-family: 'Orbitron'; color: #444; text-align: center; text-transform: uppercase; }
+        .active-dermato { border-color: var(--crimson); color: var(--crimson); background: rgba(255,31,31,0.05); }
+        .active-cosmo { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.05); }
 
         .btn-core {
-            width: 100%; padding: 20px; background: none; border: 1px solid var(--gold);
+            width: 100%; padding: 18px; background: none; border: 1px solid var(--gold);
             color: var(--gold); font-family: 'Orbitron'; font-size: 11px; cursor: pointer;
-            letter-spacing: 2px; text-transform: uppercase; transition: all 0.2s;
+            letter-spacing: 2px; text-transform: uppercase; outline: none;
         }
-        .btn-core:active { background: var(--gold); color: #000; transform: scale(0.98); }
-        .btn-core:disabled { opacity: 0.2; cursor: not-allowed; }
 
-        /* Overlay de Résultats */
-        .overlay { position: fixed; inset: 0; background: rgba(5,5,5,0.98); z-index: 100; display: none; flex-direction: column; padding: 40px 20px; overflow-y: auto; }
-        .routine-card { background: #111; padding: 20px; border-left: 4px solid var(--gold); margin-bottom: 20px; }
-        .step { margin-bottom: 15px; }
-        .step b { color: #fff; display: block; font-size: 15px; margin-bottom: 4px; }
-        .step p { color: #aaa; font-size: 12px; margin: 0; line-height: 1.4; }
-        .step small { color: var(--gold); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* Loading system */
+        .overlay { position: fixed; inset: 0; background: rgba(5,5,5,0.98); z-index: 100; display: none; flex-direction: column; padding: 30px 20px; overflow-y: auto; }
+        .report-box { background: #111; padding: 20px; border-left: 4px solid var(--gold); margin: 20px 0; line-height: 1.6; font-size: 14px; color: #ddd; }
+        
         #boot-loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .scan-line { position: absolute; width: 100%; height: 2px; background: var(--toxic); top: 0; z-index: 15; box-shadow: 0 0 20px var(--toxic); display: none; }
-        
-        @keyframes scanAnim {
-            0% { top: 0%; }
-            50% { top: 100%; }
-            100% { top: 0%; }
-        }
+        @keyframes scanMove { 0% { top: 0; } 100% { top: 100%; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div id="boot-loader">
-    <div style="width:50px; height:50px; border:3px solid var(--gold); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
-    <p id="boot-text" style="font-family:'Orbitron'; font-size:10px; color:var(--gold); margin-top:25px; letter-spacing:4px;">CHARGEMENT DES SYSTÈMES IA...</p>
+    <div style="width:40px; height:40px; border:2px solid var(--gold); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
+    <p style="font-family:'Orbitron'; font-size:10px; color:var(--gold); margin-top:20px; letter-spacing:2px;">INIT_XPRO_REPORT_ENGINE...</p>
 </div>
 
 <section id="vision-sector">
     <div id="scanner-line" class="scan-line"></div>
     <video id="video" playsinline muted autoplay></video>
     <canvas id="ar-canvas"></canvas>
-    
-    <div id="zone-t" class="zone-marker"><span class="zone-label">ANALYSE_T_ZONE</span></div>
-    <div id="zone-cheek" class="zone-marker"><span class="zone-label">ANALYSE_CAPILLAIRE</span></div>
+    <div id="z-front" class="zone-marker"><span class="zone-label">FRONT</span></div>
+    <div id="z-tzone" class="zone-marker"><span class="zone-label">ZONE_T</span></div>
+    <div id="z-joue" class="zone-marker"><span class="zone-label">JOUE</span></div>
 </section>
 
 <section class="ui-panel">
@@ -92,74 +75,65 @@
         <div id="box-dermato" class="agent-box">AGENT_DERMATO</div>
         <div id="box-cosmo" class="agent-box">AGENT_COSMO</div>
     </div>
-    <button id="scan-btn" class="btn-core" disabled>Initialisation Vidéo...</button>
+    <button id="scan-btn" class="btn-core" disabled>Initialisation...</button>
 </section>
 
 <div id="results-overlay" class="overlay">
-    <h2 style="font-family:'Orbitron'; color:var(--gold); font-size:18px; margin-bottom:5px;">EXPERTISE BIOMÉTRIQUE V30</h2>
-    <div id="score-block" style="margin-bottom:30px;">
-        <span id="res-score" style="font-family:'Orbitron'; font-size:50px; color:var(--toxic); font-weight:bold;">0%</span>
-        <div style="font-size:10px; color:#555; letter-spacing:2px;">SCORE DE VITALITÉ CELLULAIRE</div>
+    <h1 style="font-family:'Orbitron'; color:var(--gold); font-size:18px; letter-spacing:2px;">RAPPORT DERMA LÉGENDE X-PRO</h1>
+    <div style="margin: 15px 0;">
+        <span id="res-score" style="font-family:'Orbitron'; font-size:50px; color:var(--toxic);">--%</span>
+        <div style="font-size:10px; color:#555;">VITALITÉ CUTANÉE GLOBALE</div>
+    </div>
+    
+    <div id="mistral-report" class="report-box">
+        <p style="text-align:center;">Analyse intelligente en cours...</p>
     </div>
 
-    <div class="routine-card">
-        <div style="color:var(--gold); font-family:'Orbitron'; font-size:11px; margin-bottom:15px;">☀️ PROTOCOLE MATIN (PROTECTION)</div>
-        <div id="morning-list"></div>
-    </div>
-
-    <div class="routine-card" style="border-left-color:var(--neon);">
-        <div style="color:var(--neon); font-family:'Orbitron'; font-size:11px; margin-bottom:15px;">🌙 PROTOCOLE SOIR (RÉGÉNÉRATION)</div>
-        <div id="night-list"></div>
-    </div>
-
-    <button onclick="generatePDF()" class="btn-core" style="border-color:var(--toxic); color:var(--toxic); margin-bottom:10px;">Générer Rapport PDF</button>
-    <button onclick="location.reload()" class="btn-core" style="border-color:#333; color:#555;">Nouvelle Session</button>
+    <button onclick="generateExpertPDF()" class="btn-core" style="border-color:var(--toxic); color:var(--toxic); margin-bottom:10px;">Télécharger l'Expertise PDF</button>
+    <button onclick="location.reload()" class="btn-core" style="border-color:#333; color:#555;">Nouveau Diagnostic</button>
 </div>
 
 <script>
+    const MISTRAL_API_KEY = "TA_CLE_MISTRAL"; // <-- TA CLÉ MISTRAL ICI
+
     const state = {
-        metrics: { redness: 0, texture: 0, final: 0 },
-        isAudioUnlocked: false,
-        cvLoaded: false
+        metrics: { front: 0, cheeks: 0, tzone: 0, final: 0 },
+        landmarks: null,
+        audioUnlocked: false,
+        iaText: ""
     };
 
     const video = document.getElementById('video');
     const canvas = document.getElementById('ar-canvas');
     const ctx = canvas.getContext('2d');
 
-    // Synthèse Vocale avec déverrouillage forcé (iOS Safari compatibility)
     function agentSpeak(agent, message) {
         if (!('speechSynthesis' in window)) return;
         window.speechSynthesis.cancel();
-        const speech = new SpeechSynthesisUtterance(message);
-        speech.lang = 'fr-FR';
-        speech.rate = 1.0;
-        speech.pitch = (agent === 'dermato') ? 0.8 : 1.2;
-        window.speechSynthesis.speak(speech);
-
-        document.getElementById('box-dermato').className = 'agent-box ' + (agent === 'dermato' ? 'active-dermato' : '');
-        document.getElementById('box-cosmo').className = 'agent-box ' + (agent === 'cosmo' ? 'active-cosmo' : '');
+        const s = new SpeechSynthesisUtterance(message);
+        s.lang = 'fr-FR';
+        s.pitch = agent === 'dermato' ? 0.8 : 1.1;
+        window.speechSynthesis.speak(s);
+        document.getElementById('box-dermato').classList.toggle('active-dermato', agent === 'dermato');
+        document.getElementById('box-cosmo').classList.toggle('active-cosmo', agent === 'cosmo');
     }
 
-    // Initialisation Vision avec MediaPipe
-    async function startEngine() {
+    async function initVision() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
-            });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
             video.srcObject = stream;
-
+            
             const faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
             faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7 });
             
             faceMesh.onResults(results => {
                 if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                    const lm = results.multiFaceLandmarks[0];
-                    drawHUD(lm);
+                    state.landmarks = results.multiFaceLandmarks[0];
+                    updateHUD();
                     if(document.getElementById('boot-loader').style.display !== 'none') {
                         document.getElementById('boot-loader').style.display = 'none';
                         document.getElementById('scan-btn').disabled = false;
-                        document.getElementById('scan-btn').innerText = "Démarrer Bio-Scan";
+                        document.getElementById('scan-btn').innerText = "Démarrer Expertise";
                     }
                 }
             });
@@ -169,132 +143,145 @@
                 width: 1280, height: 720
             });
             camera.start();
-
-        } catch (e) {
-            document.getElementById('boot-text').innerText = "ERREUR CAMERA : VÉRIFIEZ LES PERMISSIONS";
-        }
+        } catch (e) { alert("Accès caméra requis."); }
     }
 
-    function drawHUD(lm) {
-        const update = (id, pt) => {
+    function updateHUD() {
+        const move = (id, pt) => {
             const el = document.getElementById(id);
             el.style.display = 'flex';
-            el.style.left = `${pt.x * 100}%`;
-            el.style.top = `${pt.y * 100}%`;
+            el.style.left = `${pt.x * 100}%`; el.style.top = `${pt.y * 100}%`;
         };
-        update('zone-t', lm[10]);
-        update('zone-cheek', lm[234]);
+        move('z-front', state.landmarks[10]);
+        move('z-joue', state.landmarks[234]);
+        move('z-tzone', state.landmarks[1]);
     }
 
-    // Moteur d'Analyse OpenCV (Calcul scientifique)
-    async function executeScan() {
-        // Déverrouillage audio au premier clic (Critique pour iOS)
-        if(!state.isAudioUnlocked) {
-            agentSpeak('dermato', "Système activé.");
-            state.isAudioUnlocked = true;
-        }
-
-        const scanner = document.getElementById('scanner-line');
-        document.getElementById('scan-btn').disabled = true;
-        scanner.style.display = "block";
-        scanner.style.animation = "scanAnim 2.5s infinite";
-
-        agentSpeak('dermato', "Scan multispectral des zones réactives. Analyse du gradient de mélanine.");
-
-        setTimeout(() => {
-            processAndShow();
-        }, 3000);
+    async function runDiagnostic() {
+        if(!state.audioUnlocked) { agentSpeak('dermato', "Lancement de la spectrométrie."); state.audioUnlocked = true; }
+        
+        const scanLine = document.getElementById('scanner-line');
+        scanLine.style.display = "block";
+        scanLine.style.animation = "scanMove 2.5s infinite linear";
+        
+        setTimeout(async () => {
+            await analyzeZones();
+            scanLine.style.display = "none";
+            document.getElementById('results-overlay').style.display = "flex";
+            await fetchMistralExpertise();
+        }, 2600);
     }
 
-    function processAndShow() {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+    async function analyzeZones() {
+        canvas.width = 640; canvas.height = 480;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        try {
-            let src = cv.imread(canvas);
+        let src = cv.imread(canvas);
+        
+        const getRedness = (pt) => {
+            let rect = new cv.Rect(Math.max(0, pt.x * canvas.width - 25), Math.max(0, pt.y * canvas.height - 25), 50, 50);
+            let roi = src.roi(rect);
             let lab = new cv.Mat();
-            cv.cvtColor(src, lab, cv.COLOR_RGBA2RGB);
+            cv.cvtColor(roi, lab, cv.COLOR_RGBA2RGB);
             cv.cvtColor(lab, lab, cv.COLOR_RGB2Lab);
-
-            // Extraction canal 'a' (Rougeur/Érythème)
             let planes = new cv.MatVector();
             cv.split(lab, planes);
-            let aChan = planes.get(1);
-            let redness = cv.mean(aChan)[0] - 128;
+            let val = Math.round(cv.mean(planes.get(1))[0] - 128);
+            roi.delete(); lab.delete(); planes.delete();
+            return val;
+        };
 
-            // Texture (Analyse des pores/ridules via Laplacian)
-            let gray = new cv.Mat();
-            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-            let lap = new cv.Mat();
-            cv.Laplacian(gray, lap, cv.CV_8U, 3);
-            let texture = cv.mean(lap)[0];
+        state.metrics.cheeks = getRedness(state.landmarks[234]);
+        state.metrics.front = getRedness(state.landmarks[10]);
+        state.metrics.tzone = getRedness(state.landmarks[1]);
+        state.metrics.final = Math.max(0, 100 - (state.metrics.cheeks * 2));
+        
+        document.getElementById('res-score').innerText = state.metrics.final + "%";
+        src.delete();
+    }
 
-            state.metrics.redness = Math.round(Math.max(0, redness * 2.5));
-            state.metrics.texture = Math.round(texture * 4);
-            state.metrics.final = 100 - (state.metrics.redness + (state.metrics.texture / 2));
-            
-            // Nettoyage mémoire OpenCV (Essentiel sur Android/iOS)
-            src.delete(); lab.delete(); planes.delete(); aChan.delete(); gray.delete(); lap.delete();
+    async function fetchMistralExpertise() {
+        agentSpeak('cosmo', "Génération du rapport multimodal par Mistral.");
+        const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
-            displayResults();
+        const prompt = `Expertise Derma X-PRO. Zones : Joues(Rougeur:${state.metrics.cheeks}), Front(Rougeur:${state.metrics.front}). 
+        1. Donne un diagnostic par zone. 
+        2. Routine MATIN et SOIR complète. 
+        3. Propose des produits précis (ex: Sérum Niacinamide, Crème Barrière) et EXPLIQUE pourquoi ils amélioreront la peau de cet utilisateur précisément. 
+        Format : Utilisez des balises <b> pour les titres.`;
+
+        try {
+            const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${MISTRAL_API_KEY}` },
+                body: JSON.stringify({
+                    model: "pixtral-12b-2409",
+                    messages: [{ role: "user", content: [
+                        { type: "text", text: prompt },
+                        { type: "image_url", image_url: `data:image/jpeg;base64,${base64}` }
+                    ]}]
+                })
+            });
+            const data = await res.json();
+            state.iaText = data.choices[0].message.content;
+            document.getElementById('mistral-report').innerHTML = state.iaText.replace(/\n/g, '<br>');
+            agentSpeak('cosmo', "Rapport d'expertise finalisé.");
         } catch (err) {
-            console.error(err);
-            state.metrics.final = 82; // Fallback
-            displayResults();
+            document.getElementById('mistral-report').innerText = "Erreur API.";
         }
     }
 
-    function displayResults() {
-        document.getElementById('scanner-line').style.display = "none";
-        document.getElementById('res-score').innerText = Math.max(0, Math.round(state.metrics.final)) + "%";
-        
-        const isReactive = state.metrics.redness > 18;
-        
-        const mList = isReactive ? [
-            {t: "Nettoyant Micellaire Apaisant", p: "VOS JOUES SONT RÉACTIVES. Ce produit élimine les impuretés sans perturber la barrière lipidique déjà fragilisée.", s: "ACTIF : Allantoïne + Eau Thermale"},
-            {t: "Sérum Barrière Pro", p: "POURQUOI : Votre score d'inflammation est élevé. Ce sérum 'pansement' renforce la cohésion cellulaire.", s: "ACTIF : Céramides NP + Panthénol"}
-        ] : [
-            {t: "Sérum Vitamine C Pure", p: "VOTRE PEAU EST STABLE. La vitamine C va stimuler la synthèse de collagène et bloquer l'oxydation quotidienne.", s: "ACTIF : Acide L-Ascorbique 15%"},
-            {t: "Fluide Hydratant Éclat", p: "POURQUOI : Maintient l'hydratation optimale détectée lors du scan.", s: "ACTIF : Acide Hyaluronique"}
-        ];
-
-        document.getElementById('morning-list').innerHTML = mList.map(item => `
-            <div class="step">
-                <small>${item.s}</small>
-                <b>${item.t}</b>
-                <p>${item.p}</p>
-            </div>
-        `).join('');
-
-        agentSpeak('cosmo', `Analyse complète. Vitalité cellulaire à ${Math.round(state.metrics.final)}%. Votre routine personnalisée est prête.`);
-        document.getElementById('results-overlay').style.display = "flex";
-    }
-
-    function generatePDF() {
+    /**
+     * GÉNÉRATION PDF EXPERT (jsPDF)
+     */
+    function generateExpertPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFontSize(22); doc.text("DERMA LÉGENDE X-PRO", 20, 20);
-        doc.setFontSize(14); doc.text("RAPPORT D'EXPERTISE BIOMÉTRIQUE", 20, 35);
-        doc.setFontSize(11);
-        doc.text(`Indice de Santé Globale : ${Math.round(state.metrics.final)}%`, 20, 50);
-        doc.text(`Score d'Érythème (Rougeur) : ${state.metrics.redness}`, 20, 60);
-        doc.text(`Indice de Micro-relief : ${state.metrics.texture}`, 20, 70);
-        doc.save("Diagnostic_DermaPro_XPRO.pdf");
+        const gold = [212, 175, 55];
+        
+        // Header
+        doc.setFillColor(15, 15, 15); doc.rect(0, 0, 210, 297, 'F');
+        doc.setTextColor(gold[0], gold[1], gold[2]);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(22);
+        doc.text("DERMA LÉGENDE X-PRO", 20, 25);
+        
+        doc.setTextColor(255, 255, 255); doc.setFontSize(10);
+        doc.text("RAPPORT D'EXPERTISE BIOMÉTRIQUE ET MOLÉCULAIRE", 20, 32);
+        doc.text(`DATE : ${new Date().toLocaleDateString()}`, 150, 25);
+
+        // Score Section
+        doc.setDrawColor(gold[0], gold[1], gold[2]); doc.line(20, 40, 190, 40);
+        doc.setFontSize(14); doc.text("SCORE DE SANTÉ : " + state.metrics.final + "%", 20, 52);
+        
+        // Barre de score visuelle
+        doc.setFillColor(40, 40, 40); doc.rect(100, 46, 80, 6, 'F');
+        const scoreWidth = (state.metrics.final / 100) * 80;
+        doc.setFillColor(57, 255, 20); doc.rect(100, 46, scoreWidth, 6, 'F');
+
+        // Analyse par Zones
+        doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFontSize(12);
+        doc.text("ANALYSE SEGMENTÉE", 20, 70);
+        doc.setTextColor(200, 200, 200); doc.setFontSize(10);
+        doc.text(`ZONE JOUES : Erythème ${state.metrics.cheeks}`, 25, 80);
+        doc.text(`ZONE FRONT : Erythème ${state.metrics.front}`, 25, 87);
+        doc.text(`ZONE T : Erythème ${state.metrics.tzone}`, 25, 94);
+
+        // IA Expertise
+        doc.setTextColor(gold[0], gold[1], gold[2]); doc.text("DIAGNOSTIC ET ROUTINE PERSONNALISÉE", 20, 110);
+        doc.setTextColor(255, 255, 255);
+        
+        const iaLines = doc.splitTextToSize(state.iaText.replace(/<b>|<\/b>/g, ""), 170);
+        doc.setFontSize(9);
+        doc.text(iaLines, 20, 120);
+
+        // Footer
+        doc.setTextColor(100, 100, 100); doc.setFontSize(8);
+        doc.text("Ce document est généré par une IA. Consultez un dermatologue pour un avis médical.", 20, 285);
+        
+        doc.save(`Expertise_DermaXPro_${Date.now()}.pdf`);
     }
 
-    function onOpenCvReady() {
-        state.cvLoaded = true;
-        document.getElementById('boot-text').innerText = "NOYAU IA PRÊT. CALIBRATION FLUX...";
-        startEngine();
-    }
-
-    document.getElementById('scan-btn').onclick = executeScan;
-
-    // Animation Spin
-    const styleSheet = document.createElement("style");
-    styleSheet.innerText = `@keyframes spin { to { transform: rotate(360deg); } }`;
-    document.head.appendChild(styleSheet);
+    function onOpenCvReady() { initVision(); }
+    document.getElementById('scan-btn').onclick = runDiagnostic;
 </script>
 </body>
 </html>
