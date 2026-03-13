@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DERMA LÉGENDE X-PRO | STABLE V8.1</title>
+    <title>DERMA LÉGENDE X-PRO | MISTRAL AI V9</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -26,8 +26,6 @@
         .report-box { background: #111; padding: 15px; border-left: 3px solid var(--gold); margin: 10px 0; font-size: 15px; line-height: 1.5; }
         .product-card { display: flex; align-items: center; background: #1a1a1a; padding: 12px; margin-top: 10px; border-radius: 6px; border: 1px solid #333; }
         .product-card img { width: 60px; height: 60px; object-fit: cover; margin-right: 15px; background: #fff; border-radius: 4px;}
-        .product-info { display: flex; flex-direction: column; }
-        .product-brand { font-size: 11px; color: var(--gold); font-family: 'Orbitron'; margin-bottom: 4px; }
         #boot-loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -36,7 +34,7 @@
 
 <div id="boot-loader">
     <div style="width:40px; height:40px; border:2px solid var(--gold); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
-    <p style="font-family:'Orbitron'; font-size:10px; color:var(--gold); margin-top:20px;">INIT_STABLE_V8.1...</p>
+    <p style="font-family:'Orbitron'; font-size:10px; color:var(--gold); margin-top:20px;">INIT_MISTRAL_ENGINE_V9...</p>
 </div>
 
 <section id="vision-sector">
@@ -46,9 +44,9 @@
 
 <section class="ui-panel">
     <div id="api-config">
-        <p style="font-family:'Orbitron'; font-size:11px; color:var(--neon); margin-bottom:10px;">AUTH_STABLE_PROTOCAL</p>
-        <input type="password" id="api-key-input" class="input-dark" placeholder="Clé API Gemini...">
-        <button onclick="saveApiKey()" class="btn-core">Connecter</button>
+        <p style="font-family:'Orbitron'; font-size:11px; color:var(--neon); margin-bottom:10px;">AUTH_MISTRAL_AI</p>
+        <input type="password" id="api-key-input" class="input-dark" placeholder="Clé API Mistral...">
+        <button onclick="saveApiKey()" class="btn-core">Connecter Mistral</button>
     </div>
 
     <div id="main-controls" style="display: none;">
@@ -58,18 +56,18 @@
 </section>
 
 <div id="results-overlay" class="overlay">
-    <h1 style="font-family:'Orbitron'; color:var(--gold); font-size:24px;">BILAN X-PRO</h1>
+    <h1 style="font-family:'Orbitron'; color:var(--gold); font-size:24px;">BILAN MISTRAL X-PRO</h1>
     <div id="ui-score" style="color:var(--toxic); font-weight:bold; font-size: 32px; margin-bottom:10px;">--%</div>
     
     <div class="report-box">
-        <h3 style="color:var(--neon); font-family:'Orbitron'; font-size: 14px;">DIAGNOSTIC</h3>
-        <p id="diag-text" style="color: #ddd;">Analyse...</p>
+        <h3 style="color:var(--neon); font-family:'Orbitron'; font-size: 14px;">DIAGNOSTIC IA</h3>
+        <p id="diag-text" style="color: #ddd;">Analyse en cours...</p>
     </div>
 
     <div class="report-box">
-        <h3 style="color:var(--toxic); font-family:'Orbitron'; font-size: 14px;">ROUTINE</h3>
-        <p><strong>AM :</strong> <span id="rout-matin">...</span></p>
-        <p><strong>PM :</strong> <span id="rout-soir">...</span></p>
+        <h3 style="color:var(--toxic); font-family:'Orbitron'; font-size: 14px;">ROUTINE CONSEILLÉE</h3>
+        <p><strong>Matin :</strong> <span id="rout-matin">...</span></p>
+        <p><strong>Soir :</strong> <span id="rout-soir">...</span></p>
     </div>
 
     <div id="product-list"></div>
@@ -79,10 +77,10 @@
 </div>
 
 <script>
-    let GEMINI_API_KEY = localStorage.getItem('derma_xpro_key') || "";
+    let MISTRAL_API_KEY = localStorage.getItem('derma_xpro_mistral_key') || "";
 
     function checkApiConfig() {
-        if (GEMINI_API_KEY) {
+        if (MISTRAL_API_KEY) {
             document.getElementById('api-config').style.display = 'none';
             document.getElementById('main-controls').style.display = 'block';
         }
@@ -90,14 +88,14 @@
 
     function saveApiKey() {
         const val = document.getElementById('api-key-input').value.trim();
-        if (val) { GEMINI_API_KEY = val; localStorage.setItem('derma_xpro_key', val); checkApiConfig(); }
+        if (val) { MISTRAL_API_KEY = val; localStorage.setItem('derma_xpro_mistral_key', val); checkApiConfig(); }
     }
 
-    function resetApiKey() { localStorage.removeItem('derma_xpro_key'); location.reload(); }
+    function resetApiKey() { localStorage.removeItem('derma_xpro_mistral_key'); location.reload(); }
 
     checkApiConfig();
 
-    const state = { metrics: { erythema: 0, texture: 0, final_score: 0 }, landmarks: null, reportData: null, prescribedProducts: [] };
+    const state = { metrics: { erythema: 0, final_score: 0 }, landmarks: null, reportData: null, prescribedProducts: [] };
     const video = document.getElementById('video');
     const canvas = document.getElementById('ar-canvas');
     const ctx = canvas.getContext('2d');
@@ -120,11 +118,11 @@
     }
 
     async function runDiagnostic() {
-        document.getElementById('scan-btn').innerText = "SCAN EN COURS...";
+        document.getElementById('scan-btn').innerText = "ANALYSE MISTRAL...";
         setTimeout(async () => {
             await extractBiomarkers();
             document.getElementById('results-overlay').style.display = "flex";
-            await getGeminiClinicalJSON();
+            await getMistralExpertise();
         }, 1000);
     }
 
@@ -143,22 +141,32 @@
         roi.delete(); lab.delete(); planes.delete(); src.delete();
     }
 
-    async function getGeminiClinicalJSON() {
-        const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-        const prompt = `Diagnostic Peau JSON : Erythème ${state.metrics.erythema}. Score ${state.metrics.final_score}%. Format: {"diagnostic_ecrit":"...","routine":{"matin":"...","soir":"..."},"ingredients_cles":["..."]}`;
+    async function getMistralExpertise() {
+        const base64Image = canvas.toDataURL('image/jpeg', 0.8);
+        const prompt = `Diagnostic Peau. Erythème: ${state.metrics.erythema}. Score: ${state.metrics.final_score}%. Réponds uniquement au format JSON : {"diagnostic_ecrit":"...","routine":{"matin":"...","soir":"..."},"ingredients_cles":["..."]}`;
 
         try {
-            // BRANCH STABLE v1
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64 } }] }] })
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${MISTRAL_API_KEY}` },
+                body: JSON.stringify({
+                    model: "pixtral-12b-2409",
+                    messages: [
+                        {
+                            role: "user",
+                            content: [
+                                { type: "text", text: prompt },
+                                { type: "image_url", image_url: base64Image }
+                            ]
+                        }
+                    ],
+                    response_format: { type: "json_object" }
+                })
             });
 
             const data = await res.json();
-            const raw = data.candidates[0].content.parts[0].text;
-            const clean = raw.substring(raw.indexOf('{'), raw.lastIndexOf('}') + 1);
-            state.reportData = JSON.parse(clean);
+            const raw = data.choices[0].message.content;
+            state.reportData = JSON.parse(raw);
             
             document.getElementById('diag-text').innerText = state.reportData.diagnostic_ecrit;
             document.getElementById('rout-matin').innerText = state.reportData.routine.matin;
@@ -166,7 +174,7 @@
             
             await fetchRealProducts(state.reportData.ingredients_cles);
         } catch (err) {
-            document.getElementById('diag-text').innerText = "Erreur API : " + err.message;
+            document.getElementById('diag-text').innerText = "Erreur Mistral AI : " + err.message;
         }
     }
 
@@ -187,10 +195,10 @@
 
     function generatePrescriptionPDF() {
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.text("DERMA LÉGENDE X-PRO - BILAN", 20, 20);
+        doc.text("DERMA LÉGENDE X-PRO - MISTRAL AI", 20, 20);
         doc.text("Score: " + state.metrics.final_score + "%", 20, 30);
         doc.text(doc.splitTextToSize(state.reportData.diagnostic_ecrit, 170), 20, 40);
-        doc.save("Bilan_Derma.pdf");
+        doc.save("Expertise_Mistral.pdf");
     }
 
     function onOpenCvReady() { initVision(); }
