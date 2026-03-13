@@ -3,280 +3,367 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>PureSkin AI Elite | V10.0</title>
+    <title>DERMA LÉGENDE X-PRO V4 | ULTIMATE EDITION</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
-    <script async src="https://docs.opencv.org/4.5.4/opencv.js" onload="AppCore.onOpenCvReady()"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script async src="https://docs.opencv.org/4.5.4/opencv.js" type="text/javascript" onload="onOpenCvReady();"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
 
     <style>
-        :root { --gold: #c5a059; --bg: #050505; --surface: #0f0f0f; --border: rgba(197, 160, 89, 0.2); --green: #2ecc71; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-
-        header { padding: max(45px, env(safe-area-inset-top)) 25px 15px; border-bottom: 0.5px solid var(--border); z-index: 10; }
-        .logo { font-family: 'Playfair Display', serif; font-size: 1.1rem; letter-spacing: 2px; }
-        .logo span { color: var(--gold); }
-
-        #viewport { position: relative; height: 40vh; margin: 10px; border-radius: 20px; overflow: hidden; background: #000; border: 0.5px solid var(--border); }
-        video, #overlay-canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+        :root { 
+            --gold: #d4af37; --neon: #00f2ff; --crimson: #ff1f1f; --toxic: #39ff14;
+            --bg: #050505; --surface: #0f0f0f;
+        }
+        body { background: var(--bg); color: #fff; font-family: 'Rajdhani', sans-serif; margin: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
         
-        .track-status { position: absolute; top: 15px; left: 15px; z-index: 20; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; padding: 6px 12px; border-radius: 20px; background: rgba(0,0,0,0.7); border: 0.5px solid var(--border); display: flex; align-items: center; }
-        .dot { width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; background: #e74c3c; transition: 0.3s; }
-        .dot.active { background: var(--green); box-shadow: 0 0 10px var(--green); }
+        #vision-sector { flex: 1; position: relative; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
+        video, #ar-canvas { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        #ar-canvas { z-index: 5; visibility: hidden; }
+        
+        .ui-panel { background: var(--surface); padding: 20px; z-index: 20; border-top: 1px solid #333; }
+        .btn-core { width: 100%; padding: 18px; background: none; border: 1px solid var(--gold); color: var(--gold); font-family: 'Orbitron'; font-size: 11px; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; transition: 0.3s; margin-bottom: 10px; }
+        .btn-core:disabled { border-color: #333; color: #555; cursor: not-allowed; }
+        .btn-toxic { border-color: var(--toxic); color: var(--toxic); }
 
-        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); margin: 0 10px; border-radius: 4px; overflow: hidden; }
-        .metric-card { background: var(--bg); padding: 15px 5px; text-align: center; }
-        .metric-val { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--gold); display: block; }
-        .metric-lab { font-size: 0.45rem; color: #666; text-transform: uppercase; margin-top: 4px; font-weight: 700; }
+        .overlay { position: fixed; inset: 0; background: rgba(5,5,5,0.98); z-index: 100; display: none; flex-direction: column; padding: 30px 20px; overflow-y: auto; }
+        .report-box { background: #111; padding: 15px; border-left: 4px solid var(--gold); margin: 10px 0; font-size: 14px; line-height: 1.5; }
+        .product-card { display: flex; align-items: center; background: #222; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #333; }
+        .product-card img { width: 50px; height: 50px; object-fit: contain; margin-right: 15px; background: #fff; border-radius: 4px;}
+        .product-info { display: flex; flex-direction: column; }
+        .product-brand { font-size: 10px; color: var(--gold); font-family: 'Orbitron'; }
+        .product-name { font-size: 14px; font-weight: bold; }
 
-        .display-panel { flex: 1; background: var(--surface); margin-top: 10px; padding: 25px; overflow-y: auto; border-radius: 25px 25px 0 0; border: 0.5px solid var(--border); }
-        .expert-block { margin-bottom: 20px; border-left: 2px solid var(--gold); padding-left: 15px; animation: slideIn 0.4s ease-out; }
-        .expert-block b { color: var(--gold); font-size: 0.65rem; text-transform: uppercase; }
-        .expert-block p { font-size: 0.85rem; line-height: 1.6; color: #bbb; margin-top: 4px; }
-
-        .footer-actions { padding: 15px 20px max(20px, env(safe-area-inset-bottom)); background: var(--bg); display: flex; gap: 10px; }
-        .btn-main { flex: 1; height: 60px; background: var(--gold); border: none; border-radius: 14px; color: #000; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.75rem; }
-        .btn-main:disabled { background: #1a1a1a; color: #444; }
-
-        #api-modal { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .modal-box { background: var(--surface); padding: 40px; border-radius: 20px; border: 0.5px solid var(--border); width: 100%; max-width: 380px; text-align: center; }
-        input { width: 100%; padding: 15px; background: #000; border: 0.5px solid var(--border); color: #fff; margin: 25px 0; border-radius: 10px; text-align: center; font-size: 1rem; }
-
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-        .scan-laser { position: absolute; width: 100%; height: 2px; background: var(--gold); z-index: 15; box-shadow: 0 0 15px var(--gold); display: none; top: 0; animation: laserMove 2s infinite linear; }
-        @keyframes laserMove { 0% { top: 0; } 100% { top: 100%; } }
+        #boot-loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div id="api-modal">
-    <div class="modal-box">
-        <h2 class="logo">NICOLAS <span>JULIENNE</span></h2>
-        <input id="api-key-input" type="password" placeholder="CLÉ API GEMINI">
-        <button class="btn-main" style="width:100%;" onclick="AppCore.initApp()">ACTIVER L'IA</button>
+<div id="boot-loader">
+    <div style="width:40px; height:40px; border:2px solid var(--gold); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
+    <p style="font-family:'Orbitron'; font-size:10px; color:var(--gold); margin-top:20px; letter-spacing: 2px;">INIT_SYSTEM_V4...</p>
+</div>
+
+<section id="vision-sector">
+    <video id="video" playsinline muted autoplay></video>
+    <canvas id="ar-canvas"></canvas>
+</section>
+
+<section class="ui-panel">
+    <p id="status-text" style="text-align:center; color:var(--neon); font-family:'Orbitron'; font-size:10px; margin-bottom:15px; letter-spacing: 1px;">EN ATTENTE DU FLUX OPTIQUE</p>
+    <button id="scan-btn" class="btn-core" disabled>Démarrer l'Analyse Clinique</button>
+</section>
+
+<div id="results-overlay" class="overlay">
+    <h1 style="font-family:'Orbitron'; color:var(--gold); font-size:22px; margin-bottom: 5px;">BILAN X-PRO</h1>
+    <div style="font-size: 12px; color: #888; margin-bottom: 20px;">Score de Vitalité Cutanée : <span id="ui-score" style="color:var(--toxic); font-weight:bold; font-size: 16px;">--%</span></div>
+    
+    <div class="report-box" id="clinical-assessment">
+        <h3 style="color:var(--neon); margin-top:0; font-family:'Orbitron'; font-size: 14px;">DIAGNOSTIC IA</h3>
+        <p id="diag-text" style="color: #ccc;">Analyse moléculaire en cours...</p>
+    </div>
+
+    <div class="report-box" id="clinical-routine">
+        <h3 style="color:var(--toxic); margin-top:0; font-family:'Orbitron'; font-size: 14px;">PROTOCOLE DE SOINS</h3>
+        <p><strong>Matin :</strong> <span id="rout-matin" style="color: #ccc;">...</span></p>
+        <p><strong>Soir :</strong> <span id="rout-soir" style="color: #ccc;">...</span></p>
+    </div>
+
+    <div class="report-box" id="clinical-products">
+        <h3 style="color:var(--gold); margin-top:0; font-family:'Orbitron'; font-size: 14px;">PRESCRIPTION (BASE MONDIALE)</h3>
+        <div id="product-list">
+            <p style="color:#777; font-size:12px; font-style:italic;">Recherche d'actifs correspondants...</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <button onclick="generatePrescriptionPDF()" class="btn-core btn-toxic">Télécharger l'Ordonnance PDF</button>
+        <button onclick="location.reload()" class="btn-core" style="border-color:#333; color:#777;">Nouvelle Consultation</button>
     </div>
 </div>
 
-<header><div class="logo">PURESKIN <span>AI ELITE</span></div></header>
-
-<div id="viewport">
-    <div class="track-status"><span id="status-dot" class="dot"></span> <span id="status-text">Recherche...</span></div>
-    <div id="laser" class="scan-laser"></div>
-    <video id="v" autoplay playsinline muted></video>
-    <canvas id="overlay-canvas"></canvas>
-</div>
-
-<div class="dashboard">
-    <div class="metric-card"><span class="metric-val" id="val-score">--</span><span class="metric-lab">Pureté</span></div>
-    <div class="metric-card"><span class="metric-val" id="val-hydra">--</span><span class="metric-lab">Hydra</span></div>
-    <div class="metric-card"><span class="metric-val" id="val-red">--</span><span class="metric-lab">Rougeur</span></div>
-    <div class="metric-card"><span class="metric-val" id="val-fitz">--</span><span class="metric-lab">Type</span></div>
-</div>
-
-<div class="display-panel" id="display-area">
-    <p style="text-align:center; opacity:0.3; padding-top:40px; font-size:0.7rem;">ALIGNEMENT BIOMÉTRIQUE REQUIS</p>
-</div>
-
-<div class="footer-actions">
-    <button class="btn-main" id="main-btn" onclick="AppCore.runAnalysis()" disabled>Scanner le visage</button>
-</div>
-
-<canvas id="proc-canvas" style="display:none;"></canvas>
-
 <script>
-const AppCore = (function() {
-    const STATE = {
-        apiKey: localStorage.getItem('NJ_KEY_V10') || '',
-        cvReady: false,
+    // ⚠️ SÉCURITÉ : À déplacer côté serveur (NodeJS/Vercel) avant mise en ligne publique !
+    const GEMINI_API_KEY = "TA_CLE_API_GEMINI_ICI";
+
+    // Gestionnaire d'état central (Single Source of Truth)
+    const state = {
+        metrics: { erythema: 0, texture: 0, final_score: 0 },
         landmarks: null,
-        isAligned: false,
-        isScanning: false
+        reportData: null, // Données JSON de Gemini
+        prescribedProducts: [] // Produits récupérés d'Open Beauty Facts
     };
 
-    const dom = {
-        v: document.getElementById('v'),
-        o: document.getElementById('overlay-canvas'),
-        p: document.getElementById('proc-canvas'),
-        btn: document.getElementById('main-btn'),
-        laser: document.getElementById('laser'),
-        dot: document.getElementById('status-dot'),
-        stext: document.getElementById('status-text'),
-        display: document.getElementById('display-area')
-    };
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('ar-canvas');
+    const ctx = canvas.getContext('2d');
 
-    const Voice = {
-        speak(t) {
-            window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(t);
-            u.lang = 'fr-FR'; u.rate = 0.9;
-            window.speechSynthesis.speak(u);
-        }
-    };
+    // === MODULE VOCAL ===
+    function speakClinicalReport(text) {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'fr-FR';
+        utterance.rate = 1.1; // Dynamique
+        utterance.pitch = 0.95; // Sérieux
+        window.speechSynthesis.speak(utterance);
+    }
 
-    function onOpenCvReady() { STATE.cvReady = true; console.log("CV Ready"); }
-
-    async function initApp() {
-        const key = document.getElementById('api-key-input').value || STATE.apiKey;
-        if (!key) return alert("Clé manquante");
-        STATE.apiKey = key;
-        localStorage.setItem('NJ_KEY_V10', key);
-        document.getElementById('api-modal').style.display = 'none';
-
-        // Safari Unblock
-        Voice.speak("");
-
-        const faceMesh = new FaceMesh({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-        faceMesh.setOptions({ 
-            maxNumFaces: 1, 
-            refineLandmarks: true, 
-            minDetectionConfidence: 0.5, // Seuil baissé pour basse lumière
-            minTrackingConfidence: 0.5 
-        });
-
-        faceMesh.onResults(res => {
-            STATE.landmarks = res.multiFaceLandmarks?.[0];
-            checkAlignment();
-            drawOverlay();
-        });
-
+    // === MODULE VISION (MediaPipe) ===
+    async function initVision() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'user', width: {ideal: 1280}, height: {ideal: 720} } 
-            });
-            dom.v.srcObject = stream;
-            const loop = async () => {
-                if(!STATE.isScanning) await faceMesh.send({image: dom.v});
-                requestAnimationFrame(loop);
-            };
-            loop();
-        } catch (e) { alert("Erreur Caméra : " + e.message); }
-    }
-
-    function checkAlignment() {
-        if (!STATE.landmarks) {
-            STATE.isAligned = false;
-            dom.dot.classList.remove('active');
-            dom.stext.innerText = "Face non détectée";
-            dom.btn.disabled = true;
-            return;
-        }
-
-        const nose = STATE.landmarks[1];
-        // Zone de détection plus large pour mobile
-        STATE.isAligned = nose.x > 0.35 && nose.x < 0.65 && nose.y > 0.3 && nose.y < 0.7;
-        
-        if (STATE.isAligned) {
-            dom.dot.classList.add('active');
-            dom.stext.innerText = "Cible Verrouillée";
-            dom.btn.disabled = false;
-        } else {
-            dom.dot.classList.remove('active');
-            dom.stext.innerText = "Alignez votre visage";
-            dom.btn.disabled = true;
-        }
-    }
-
-    function drawOverlay() {
-        dom.o.width = dom.v.clientWidth; dom.o.height = dom.v.clientHeight;
-        const ctx = dom.o.getContext('2d');
-        const color = STATE.isAligned ? "rgba(46, 204, 113, 0.6)" : "rgba(197, 160, 89, 0.3)";
-        
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        // Guide elliptique
-        ctx.ellipse(dom.o.width/2, dom.o.height/2.2, dom.o.width*0.32, dom.o.height*0.35, 0, 0, Math.PI*2);
-        ctx.stroke();
-
-        if (STATE.landmarks) {
-            ctx.fillStyle = color;
-            [1, 33, 263, 61, 291].forEach(i => {
-                const p = STATE.landmarks[i];
-                ctx.beginPath();
-                ctx.arc(p.x * dom.o.width, p.y * dom.o.height, 2, 0, Math.PI*2);
-                ctx.fill();
-            });
-        }
-    }
-
-    async function runAnalysis() {
-        if (!STATE.isAligned || STATE.isScanning) return;
-        STATE.isScanning = true;
-        dom.laser.style.display = 'block';
-        Voice.speak("Analyse biométrique en cours.");
-
-        try {
-            const metrics = await computeCV();
-            const ai = await fetchGemini(metrics);
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            video.srcObject = stream;
             
-            document.getElementById('val-score').innerText = metrics.score + '%';
-            document.getElementById('val-hydra').innerText = ai.hydra + '%';
-            document.getElementById('val-red').innerText = metrics.erythema;
-            document.getElementById('val-fitz').innerText = metrics.type;
+            const faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+            faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7 });
+            
+            faceMesh.onResults(results => {
+                if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                    state.landmarks = results.multiFaceLandmarks[0];
+                    if(document.getElementById('boot-loader').style.display !== 'none') {
+                        document.getElementById('boot-loader').style.display = 'none';
+                        document.getElementById('status-text').innerText = "PATIENT DÉTECTÉ. SYSTÈME PRÊT.";
+                        document.getElementById('scan-btn').disabled = false;
+                    }
+                }
+            });
 
-            dom.display.innerHTML = `
-                <div class="expert-block"><b>Diagnostic Cellulaire</b><p>${ai.diag}</p></div>
-                <div class="expert-block"><b>Protocole Matin</b><p>${ai.matin}</p></div>
-                <div class="expert-block"><b>Protocole Soir</b><p>${ai.soir}</p></div>
-            `;
-
-            Voice.speak("Analyse terminée. Votre score est de " + metrics.score + " pourcent. " + ai.diag);
-        } catch (e) { alert("Erreur : " + e.message); }
-        finally {
-            STATE.isScanning = false;
-            dom.laser.style.display = 'none';
-        }
+            const camera = new Camera(video, { onFrame: async () => { await faceMesh.send({image: video}); }, width: 640, height: 480 });
+            camera.start();
+        } catch (e) { alert("Accès caméra critique refusé."); }
     }
 
-    async function computeCV() {
-        const pCtx = dom.p.getContext('2d', {willReadFrequently: true});
-        dom.p.width = dom.v.videoWidth; dom.p.height = dom.v.videoHeight;
-        pCtx.drawImage(dom.v, 0, 0);
+    // === SÉQUENCE PRINCIPALE ===
+    async function runDiagnostic() {
+        document.getElementById('status-text').innerText = "EXTRACTION DES BIOMARQUEURS EN COURS...";
+        document.getElementById('scan-btn').disabled = true;
+        speakClinicalReport("Début de l'analyse biométrique. Restez immobile.");
         
-        const src = cv.imread(dom.p);
-        const pt = STATE.landmarks[234]; // Joue
-        const roiRect = new cv.Rect(pt.x * src.cols - 40, pt.y * src.rows - 40, 80, 80);
-        const roi = src.roi(roiRect);
+        // Simule le temps de calcul pour l'UX
+        setTimeout(async () => {
+            try {
+                await extractBiomarkers();
+                document.getElementById('results-overlay').style.display = "flex";
+                document.getElementById('ui-score').innerText = state.metrics.final_score.toFixed(0) + "%";
+                await getGeminiClinicalJSON();
+            } catch (err) {
+                console.error("Erreur critique pipeline:", err);
+                alert("Erreur lors de l'analyse. Vérifiez la console.");
+            }
+        }, 2000);
+    }
 
-        const lab = new cv.Mat();
+    // === MODULE OPENCV (Érythème & Texture) ===
+    async function extractBiomarkers() {
+        canvas.width = 640; canvas.height = 480;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        let src = cv.imread(canvas);
+        
+        // ROI (Region of Interest) sur la joue
+        let pt = state.landmarks[234]; 
+        let rect = new cv.Rect(Math.max(0, pt.x * canvas.width - 30), Math.max(0, pt.y * canvas.height - 30), 60, 60);
+        let roi = src.roi(rect);
+
+        // 1. Érythème (Canal A de Lab)
+        let lab = new cv.Mat(), planes = new cv.MatVector();
         cv.cvtColor(roi, lab, cv.COLOR_RGBA2RGB);
         cv.cvtColor(lab, lab, cv.COLOR_RGB2Lab);
-        const mean = cv.mean(lab);
+        cv.split(lab, planes);
+        state.metrics.erythema = Math.round(cv.mean(planes.get(1))[0] - 128); 
 
-        const erythema = Math.max(0, Math.round(mean[1] - 128));
-        const score = Math.max(0, 100 - (erythema * 2.5));
+        // 2. Rugosité (Variance du Laplacien)
+        let gray = new cv.Mat(), laplacian = new cv.Mat(), mean = new cv.Mat(), stddev = new cv.Mat();
+        cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
+        cv.Laplacian(gray, laplacian, cv.CV_64F);
+        cv.meanStdDev(laplacian, mean, stddev);
+        state.metrics.texture = Math.round(stddev.doubleAt(0, 0));
 
-        const res = {
-            score: Math.round(score),
-            erythema: erythema,
-            type: mean[0] > 150 ? "Clair" : "Mat",
-            img: dom.p.toDataURL('image/jpeg', 0.6)
-        };
-
-        [src, roi, lab].forEach(m => m.delete());
-        return res;
-    }
-
-    async function fetchGemini(m) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${STATE.apiKey}`;
-        const prompt = `Analyse dermatologique. Score=${m.score}%, Rougeur=${m.erythema}. Répondre en JSON uniquement: {"hydra": "0-100", "diag": "bilan court", "matin": "actifs", "soir": "actifs"}`;
+        // Algorithme de scoring PoC
+        state.metrics.final_score = Math.max(0, Math.min(100, 100 - (state.metrics.erythema * 1.5) - (state.metrics.texture / 2)));
         
-        const res = await fetch(url, {
-            method: 'POST',
-            body: JSON.stringify({
-                contents: [{ parts: [{text: prompt}, {inline_data: {mime_type: "image/jpeg", data: m.img.split(',')[1]}}] }],
-                generationConfig: { response_mime_type: "application/json", temperature: 0.2 }
-            })
-        });
-        const data = await res.json();
-        return JSON.parse(data.candidates[0].content.parts[0].text);
+        // Nettoyage agressif de la RAM (Prévention Memory Leaks)
+        roi.delete(); lab.delete(); planes.delete(); gray.delete(); laplacian.delete(); mean.delete(); stddev.delete(); src.delete();
     }
 
-    return { initApp, runAnalysis, onOpenCvReady };
-})();
+    // === MODULE IA (Gemini JSON Mode) ===
+    async function getGeminiClinicalJSON() {
+        speakClinicalReport("Fusion des données. Requête au réseau neuronal en cours.");
+        const base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+
+        const prompt = `Agis comme un dermatologue clinique. Analyse cette peau avec ces capteurs : Érythème (Rougeur LAB): ${state.metrics.erythema}, Rugosité (Laplacien): ${state.metrics.texture}, Score Global: ${state.metrics.final_score.toFixed(0)}%.
+        Tu DOIS répondre avec un JSON valide respectant STRICTEMENT ce format :
+        {
+            "diagnostic_vocal": "Phrase d'annonce empathique pour le patient.",
+            "diagnostic_ecrit": "Bilan clinique détaillé de l'état cutané.",
+            "routine": { "matin": "Routine matin", "soir": "Routine soir" },
+            "ingredients_cles": ["nom ingredient 1", "nom ingredient 2"]
+        }`;
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Image } } ] }],
+                    generationConfig: { temperature: 0.1 } // Bridage des hallucinations
+                })
+            });
+
+            const data = await res.json();
+            let rawText = data.candidates[0].content.parts[0].text;
+            
+            // Extracteur JSON Robuste (QA Approved)
+            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error("Format JSON non respecté par l'IA.");
+            
+            state.reportData = JSON.parse(jsonMatch[0]);
+            
+            // Remplissage UI
+            document.getElementById('diag-text').innerText = state.reportData.diagnostic_ecrit;
+            document.getElementById('rout-matin').innerText = state.reportData.routine.matin;
+            document.getElementById('rout-soir').innerText = state.reportData.routine.soir;
+
+            speakClinicalReport(state.reportData.diagnostic_vocal + " Compilation de l'ordonnance en cours.");
+            await fetchRealProducts(state.reportData.ingredients_cles);
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('diag-text').innerText = "Erreur de parsing IA. Relancez le scan.";
+            speakClinicalReport("Erreur de connexion avec le réseau neuronal.");
+        }
+    }
+
+    // === MODULE API (Open Beauty Facts) ===
+    async function fetchRealProducts(ingredients) {
+        const productListDiv = document.getElementById('product-list');
+        productListDiv.innerHTML = ""; 
+        state.prescribedProducts = []; // Reset
+
+        for (let ingredient of ingredients) {
+            try {
+                // Requête API OpenSource
+                const res = await fetch(`https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(ingredient)}&search_simple=1&action=process&json=1&page_size=1`);
+                const data = await res.json();
+
+                if (data.products && data.products.length > 0) {
+                    const product = data.products[0];
+                    const prodObj = {
+                        ingredient: ingredient,
+                        brand: product.brands || "Cosmétique",
+                        name: product.product_name || "Formule Active",
+                        img: product.image_front_small_url || "https://via.placeholder.com/50?text=+"
+                    };
+                    state.prescribedProducts.push(prodObj);
+
+                    productListDiv.innerHTML += `
+                        <div class="product-card">
+                            <img src="${prodObj.img}" alt="Produit">
+                            <div class="product-info">
+                                <span class="product-brand">CIBLE : ${prodObj.ingredient.toUpperCase()}</span>
+                                <span class="product-name">${prodObj.brand} - ${prodObj.name}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.warn("Échec API pour l'ingrédient :", ingredient);
+            }
+        }
+        
+        if (state.prescribedProducts.length === 0) {
+            productListDiv.innerHTML = "<p style='color:#777; font-size:12px;'>Aucun produit spécifique trouvé dans la base de données ouverte.</p>";
+        } else {
+            speakClinicalReport("L'ordonnance dermatologique est prête. Vous pouvez la télécharger au format PDF.");
+        }
+    }
+
+    // === MOTEUR PDF (jsPDF Upgrade) ===
+    function generatePrescriptionPDF() {
+        if(!state.reportData) return alert("Veuillez finaliser l'analyse d'abord.");
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const gold = [212, 175, 55];
+        const dark = [20, 20, 20];
+        
+        // --- En-tête ---
+        doc.setFillColor(dark[0], dark[1], dark[2]); 
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(gold[0], gold[1], gold[2]);
+        doc.setFont("helvetica", "bold"); 
+        doc.setFontSize(20);
+        doc.text("DERMA LÉGENDE X-PRO", 20, 20);
+        
+        doc.setTextColor(255, 255, 255); 
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        doc.text("ORDONNANCE & BILAN CLINIQUE IA", 20, 28);
+        doc.text(`Édité le : ${new Date().toLocaleDateString()}`, 150, 28);
+
+        // --- Bilan Biométrique ---
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(14); doc.setFont("helvetica", "bold");
+        doc.text(`SCORE DE VITALITÉ : ${state.metrics.final_score.toFixed(0)}%`, 20, 55);
+        
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        doc.text(`Indice d'Érythème (Rougeur) : ${state.metrics.erythema}`, 20, 65);
+        doc.text(`Indice de Rugosité (Laplacien) : ${state.metrics.texture}`, 20, 72);
+
+        // --- Diagnostic IA ---
+        doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFontSize(12); doc.setFont("helvetica", "bold");
+        doc.text("DIAGNOSTIC DERMATOLOGIQUE", 20, 85);
+        
+        doc.setTextColor(50, 50, 50); doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        const diagLines = doc.splitTextToSize(state.reportData.diagnostic_ecrit, 170);
+        doc.text(diagLines, 20, 93);
+
+        let currentY = 93 + (diagLines.length * 5) + 10;
+
+        // --- Routine ---
+        doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFontSize(12); doc.setFont("helvetica", "bold");
+        doc.text("PROTOCOLE DE SOINS", 20, currentY);
+        currentY += 8;
+        
+        doc.setTextColor(50, 50, 50); doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        const matinLines = doc.splitTextToSize(`MATIN : ${state.reportData.routine.matin}`, 170);
+        doc.text(matinLines, 20, currentY);
+        currentY += (matinLines.length * 5) + 5;
+        
+        const soirLines = doc.splitTextToSize(`SOIR : ${state.reportData.routine.soir}`, 170);
+        doc.text(soirLines, 20, currentY);
+        currentY += (soirLines.length * 5) + 15;
+
+        // --- Prescription Produits ---
+        doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFontSize(12); doc.setFont("helvetica", "bold");
+        doc.text("PRODUITS RECOMMANDÉS (Base OpenSource)", 20, currentY);
+        currentY += 10;
+
+        doc.setTextColor(50, 50, 50); doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        if(state.prescribedProducts.length > 0) {
+            state.prescribedProducts.forEach((prod) => {
+                doc.setFont("helvetica", "bold");
+                doc.text(`Actif : ${prod.ingredient.toUpperCase()}`, 25, currentY);
+                doc.setFont("helvetica", "normal");
+                doc.text(`> ${prod.brand} - ${prod.name}`, 30, currentY + 5);
+                currentY += 15;
+            });
+        } else {
+            doc.text("Aucun produit spécifique trouvé dans la base de données.", 20, currentY);
+        }
+
+        // --- Footer ---
+        doc.setTextColor(150, 150, 150); doc.setFontSize(8);
+        doc.text("Document généré par une Intelligence Artificielle (Gemini 1.5). Ne remplace pas un avis médical.", 20, 285);
+        
+        doc.save(`Ordonnance_DermaXPro_${Date.now()}.pdf`);
+    }
+
+    // Trigger OpenCV Load
+    function onOpenCvReady() { initVision(); }
+    document.getElementById('scan-btn').onclick = runDiagnostic;
 </script>
 </body>
 </html>
