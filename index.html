@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DERMA LÉGENDE X-PRO | HEALTH TECH V6.2</title>
+    <title>DERMA LÉGENDE X-PRO | HEALTH TECH V7</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -55,7 +55,7 @@
 
 <section class="ui-panel">
     <div id="api-config">
-        <p style="font-family:'Orbitron'; font-size:11px; color:var(--neon); margin-bottom:10px;">AUTHENTIFICATION SATELLITE (GEMINI 1.5)</p>
+        <p style="font-family:'Orbitron'; font-size:11px; color:var(--neon); margin-bottom:10px;">AUTHENTIFICATION SATELLITE (GEMINI 1.5 PRO)</p>
         <input type="password" id="api-key-input" class="input-dark" placeholder="Collez votre clé API Google ici...">
         <button onclick="saveApiKey()" class="btn-core">Connecter le réseau neuronal</button>
     </div>
@@ -247,8 +247,8 @@
         }`;
 
         try {
-            // CORRECTION ICI : Retour à gemini-1.5-flash standard
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            // CORRECTION ULTIME : Utilisation du modèle PRO
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
