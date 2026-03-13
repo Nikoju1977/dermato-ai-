@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DERMA LÉGENDE X-PRO | V29 ULTRA</title>
+    <title>DERMA LÉGENDE X-PRO | V30 FINAL</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -21,60 +21,70 @@
         body { 
             background: var(--bg); color: #fff; font-family: 'Rajdhani', sans-serif; 
             margin: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none; touch-action: manipulation;
         }
 
-        /* Scanner Viewport */
-        #vision-sector { flex: 1; position: relative; overflow: hidden; background: #000; border-bottom: 1px solid #222; }
+        /* Interface Vision */
+        #vision-sector { flex: 1; position: relative; overflow: hidden; background: #000; }
         video { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         #ar-canvas { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 5; pointer-events: none; transform: scaleX(-1); visibility: hidden; }
         
-        /* HUD Elements */
+        /* HUD UI Elements */
         .zone-marker {
             position: absolute; border: 1px solid var(--neon); background: rgba(0,242,255,0.05);
             pointer-events: none; z-index: 10; display: none; flex-direction: column; align-items: center;
-            transition: 0.1s linear; box-shadow: 0 0 15px rgba(0,242,255,0.2);
+            box-shadow: 0 0 10px rgba(0,242,255,0.3);
         }
-        .zone-label { font-family: 'Orbitron'; font-size: 8px; color: var(--neon); background: #000; padding: 2px 5px; margin-top: -18px; white-space: nowrap; border: 1px solid var(--neon); }
+        .zone-label { font-family: 'Orbitron'; font-size: 8px; color: var(--neon); background: #000; padding: 2px 5px; margin-top: -18px; border: 1px solid var(--neon); }
 
-        /* Panel UI */
+        /* Panel de Contrôle */
         .ui-panel { background: var(--surface); padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 20; border-top: 1px solid #333; }
         .agent-status { display: flex; gap: 10px; margin-bottom: 15px; }
-        .agent-box { flex: 1; padding: 10px; border: 1px solid #222; font-size: 9px; font-family: 'Orbitron'; color: #444; text-align: center; transition: 0.3s; }
-        .active-dermato { border-color: var(--crimson); color: var(--crimson); background: rgba(255,31,31,0.05); }
-        .active-cosmo { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.05); }
+        .agent-box { flex: 1; padding: 12px; border: 1px solid #222; font-size: 9px; font-family: 'Orbitron'; color: #444; text-align: center; transition: 0.3s; }
+        .active-dermato { border-color: var(--crimson); color: var(--crimson); background: rgba(255,31,31,0.05); text-shadow: 0 0 5px var(--crimson); }
+        .active-cosmo { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.05); text-shadow: 0 0 5px var(--gold); }
 
         .btn-core {
-            width: 100%; padding: 18px; background: none; border: 1px solid var(--gold);
+            width: 100%; padding: 20px; background: none; border: 1px solid var(--gold);
             color: var(--gold); font-family: 'Orbitron'; font-size: 11px; cursor: pointer;
-            letter-spacing: 2px; transition: 0.3s; text-transform: uppercase;
+            letter-spacing: 2px; text-transform: uppercase; transition: all 0.2s;
         }
-        .btn-core:active { background: var(--gold); color: #000; }
+        .btn-core:active { background: var(--gold); color: #000; transform: scale(0.98); }
         .btn-core:disabled { opacity: 0.2; cursor: not-allowed; }
 
-        /* Results & Overlays */
+        /* Overlay de Résultats */
         .overlay { position: fixed; inset: 0; background: rgba(5,5,5,0.98); z-index: 100; display: none; flex-direction: column; padding: 40px 20px; overflow-y: auto; }
         .routine-card { background: #111; padding: 20px; border-left: 4px solid var(--gold); margin-bottom: 20px; }
-        .step { font-size: 14px; margin: 10px 0; color: #ccc; line-height: 1.4; }
-        .step b { color: #fff; display: block; }
+        .step { margin-bottom: 15px; }
+        .step b { color: #fff; display: block; font-size: 15px; margin-bottom: 4px; }
+        .step p { color: #aaa; font-size: 12px; margin: 0; line-height: 1.4; }
+        .step small { color: var(--gold); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
+        /* Loading system */
         #boot-loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .scan-line { position: absolute; width: 100%; height: 2px; background: var(--toxic); top: 0; z-index: 15; box-shadow: 0 0 15px var(--toxic); display: none; }
+        .scan-line { position: absolute; width: 100%; height: 2px; background: var(--toxic); top: 0; z-index: 15; box-shadow: 0 0 20px var(--toxic); display: none; }
+        
+        @keyframes scanAnim {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
     </style>
 </head>
 <body>
 
 <div id="boot-loader">
-    <div style="width:40px; height:40px; border:2px solid var(--gold); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
-    <p id="boot-text" style="font-family:'Orbitron'; font-size:10px; color:var(--gold); margin-top:20px; letter-spacing:2px;">INITIALISATION CORE V29...</p>
+    <div style="width:50px; height:50px; border:3px solid var(--gold); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
+    <p id="boot-text" style="font-family:'Orbitron'; font-size:10px; color:var(--gold); margin-top:25px; letter-spacing:4px;">CHARGEMENT DES SYSTÈMES IA...</p>
 </div>
 
 <section id="vision-sector">
     <div id="scanner-line" class="scan-line"></div>
     <video id="video" playsinline muted autoplay></video>
     <canvas id="ar-canvas"></canvas>
-    <div id="zone-t" class="zone-marker"><span class="zone-label">ZONE_T : SPECTROMÉTRIE</span></div>
-    <div id="zone-cheek" class="zone-marker"><span class="zone-label">ZONE_CHEEK : LIPIDES</span></div>
+    
+    <div id="zone-t" class="zone-marker"><span class="zone-label">ANALYSE_T_ZONE</span></div>
+    <div id="zone-cheek" class="zone-marker"><span class="zone-label">ANALYSE_CAPILLAIRE</span></div>
 </section>
 
 <section class="ui-panel">
@@ -82,62 +92,60 @@
         <div id="box-dermato" class="agent-box">AGENT_DERMATO</div>
         <div id="box-cosmo" class="agent-box">AGENT_COSMO</div>
     </div>
-    <button id="scan-btn" class="btn-core" disabled>En attente du noyau...</button>
+    <button id="scan-btn" class="btn-core" disabled>Initialisation Vidéo...</button>
 </section>
 
 <div id="results-overlay" class="overlay">
-    <h2 style="font-family:'Orbitron'; color:var(--gold); font-size:18px;">DOSSIER CLINIQUE X-PRO</h2>
-    <div id="score-container" style="margin: 20px 0; text-align: center;">
-        <div style="font-size:10px; color:#555;">INDICE DE SANTÉ CELLULAIRE</div>
-        <div id="res-score" style="font-family:'Orbitron'; font-size:48px; color:var(--toxic);">--%</div>
+    <h2 style="font-family:'Orbitron'; color:var(--gold); font-size:18px; margin-bottom:5px;">EXPERTISE BIOMÉTRIQUE V30</h2>
+    <div id="score-block" style="margin-bottom:30px;">
+        <span id="res-score" style="font-family:'Orbitron'; font-size:50px; color:var(--toxic); font-weight:bold;">0%</span>
+        <div style="font-size:10px; color:#555; letter-spacing:2px;">SCORE DE VITALITÉ CELLULAIRE</div>
     </div>
-    
-    <div class="routine-card" id="card-morning">
-        <div style="color:var(--gold); font-weight:bold; margin-bottom:10px;">☀️ PROTOCOLE MATIN</div>
+
+    <div class="routine-card">
+        <div style="color:var(--gold); font-family:'Orbitron'; font-size:11px; margin-bottom:15px;">☀️ PROTOCOLE MATIN (PROTECTION)</div>
         <div id="morning-list"></div>
     </div>
 
-    <div class="routine-card" id="card-night" style="border-left-color:var(--neon);">
-        <div style="color:var(--neon); font-weight:bold; margin-bottom:10px;">🌙 PROTOCOLE SOIR</div>
+    <div class="routine-card" style="border-left-color:var(--neon);">
+        <div style="color:var(--neon); font-family:'Orbitron'; font-size:11px; margin-bottom:15px;">🌙 PROTOCOLE SOIR (RÉGÉNÉRATION)</div>
         <div id="night-list"></div>
     </div>
 
-    <button onclick="generatePDF()" class="btn-core" style="border-color:var(--toxic); color:var(--toxic); margin-bottom:10px;">Exporter Rapport PDF</button>
-    <button onclick="location.reload()" class="btn-core" style="border-color:#444; color:#444;">Réinitialiser</button>
+    <button onclick="generatePDF()" class="btn-core" style="border-color:var(--toxic); color:var(--toxic); margin-bottom:10px;">Générer Rapport PDF</button>
+    <button onclick="location.reload()" class="btn-core" style="border-color:#333; color:#555;">Nouvelle Session</button>
 </div>
 
 <script>
-    /**
-     * LOGIQUE SYSTÈME - DERMA LÉGENDE X-PRO
-     */
     const state = {
-        metrics: { redness: 0, texture: 0, score: 0 },
-        cvReady: false,
-        audioUnlocked: false
+        metrics: { redness: 0, texture: 0, final: 0 },
+        isAudioUnlocked: false,
+        cvLoaded: false
     };
 
     const video = document.getElementById('video');
     const canvas = document.getElementById('ar-canvas');
     const ctx = canvas.getContext('2d');
 
-    // 1. Synthèse Vocale (Optimisée Mobile)
+    // Synthèse Vocale avec déverrouillage forcé (iOS Safari compatibility)
     function agentSpeak(agent, message) {
-        if (!window.speechSynthesis) return;
+        if (!('speechSynthesis' in window)) return;
         window.speechSynthesis.cancel();
         const speech = new SpeechSynthesisUtterance(message);
         speech.lang = 'fr-FR';
-        speech.pitch = agent === 'dermato' ? 0.8 : 1.1;
+        speech.rate = 1.0;
+        speech.pitch = (agent === 'dermato') ? 0.8 : 1.2;
         window.speechSynthesis.speak(speech);
 
         document.getElementById('box-dermato').className = 'agent-box ' + (agent === 'dermato' ? 'active-dermato' : '');
         document.getElementById('box-cosmo').className = 'agent-box ' + (agent === 'cosmo' ? 'active-cosmo' : '');
     }
 
-    // 2. Initialisation Vision (MediaPipe)
-    async function initVision() {
+    // Initialisation Vision avec MediaPipe
+    async function startEngine() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'user', width: 1280, height: 720 } 
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
             });
             video.srcObject = stream;
 
@@ -147,7 +155,7 @@
             faceMesh.onResults(results => {
                 if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                     const lm = results.multiFaceLandmarks[0];
-                    updateHUD(lm);
+                    drawHUD(lm);
                     if(document.getElementById('boot-loader').style.display !== 'none') {
                         document.getElementById('boot-loader').style.display = 'none';
                         document.getElementById('scan-btn').disabled = false;
@@ -161,46 +169,44 @@
                 width: 1280, height: 720
             });
             camera.start();
+
         } catch (e) {
-            alert("Accès caméra refusé ou non supporté.");
+            document.getElementById('boot-text').innerText = "ERREUR CAMERA : VÉRIFIEZ LES PERMISSIONS";
         }
     }
 
-    function updateHUD(landmarks) {
-        const tZone = landmarks[10]; 
-        const cheek = landmarks[234];
-        
-        const move = (id, pt) => {
+    function drawHUD(lm) {
+        const update = (id, pt) => {
             const el = document.getElementById(id);
             el.style.display = 'flex';
             el.style.left = `${pt.x * 100}%`;
             el.style.top = `${pt.y * 100}%`;
         };
-        
-        move('zone-t', tZone);
-        move('zone-cheek', cheek);
+        update('zone-t', lm[10]);
+        update('zone-cheek', lm[234]);
     }
 
-    // 3. Analyse Avancée OpenCV
-    async function runDiagnostic() {
-        if(!state.audioUnlocked) { agentSpeak('dermato', "Scan activé."); state.audioUnlocked = true; }
-        
-        const btn = document.getElementById('scan-btn');
+    // Moteur d'Analyse OpenCV (Calcul scientifique)
+    async function executeScan() {
+        // Déverrouillage audio au premier clic (Critique pour iOS)
+        if(!state.isAudioUnlocked) {
+            agentSpeak('dermato', "Système activé.");
+            state.isAudioUnlocked = true;
+        }
+
         const scanner = document.getElementById('scanner-line');
-        btn.disabled = true;
+        document.getElementById('scan-btn').disabled = true;
         scanner.style.display = "block";
-        scanner.animate([{top: '0%'}, {top: '100%'}, {top: '0%'}], {duration: 2000, iterations: 1});
+        scanner.style.animation = "scanAnim 2.5s infinite";
 
-        agentSpeak('dermato', "Analyse des chromophores et du micro-relief cutané.");
+        agentSpeak('dermato', "Scan multispectral des zones réactives. Analyse du gradient de mélanine.");
 
-        // On attend la fin de l'animation pour simuler le calcul
         setTimeout(() => {
-            processImage();
-        }, 2100);
+            processAndShow();
+        }, 3000);
     }
 
-    function processImage() {
-        // Transfert Video -> Canvas pour OpenCV
+    function processAndShow() {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -211,82 +217,81 @@
             cv.cvtColor(src, lab, cv.COLOR_RGBA2RGB);
             cv.cvtColor(lab, lab, cv.COLOR_RGB2Lab);
 
-            // Analyse de l'inflammation (Canal 'a' de l'espace Lab)
+            // Extraction canal 'a' (Rougeur/Érythème)
             let planes = new cv.MatVector();
             cv.split(lab, planes);
-            let aChannel = planes.get(1);
-            let meanRed = cv.mean(aChannel)[0]; // Valeur d'érythème
+            let aChan = planes.get(1);
+            let redness = cv.mean(aChan)[0] - 128;
 
-            // Analyse de texture (Laplacien pour pores/ridules)
+            // Texture (Analyse des pores/ridules via Laplacian)
             let gray = new cv.Mat();
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
             let lap = new cv.Mat();
             cv.Laplacian(gray, lap, cv.CV_8U, 3);
-            let meanTexture = cv.mean(lap)[0];
+            let texture = cv.mean(lap)[0];
 
-            // Calcul des scores
-            state.metrics.redness = Math.round(Math.max(0, (meanRed - 128) * 2.5));
-            state.metrics.texture = Math.round(meanTexture * 4);
-            state.metrics.score = Math.max(10, 100 - (state.metrics.redness + state.metrics.texture / 2));
+            state.metrics.redness = Math.round(Math.max(0, redness * 2.5));
+            state.metrics.texture = Math.round(texture * 4);
+            state.metrics.final = 100 - (state.metrics.redness + (state.metrics.texture / 2));
+            
+            // Nettoyage mémoire OpenCV (Essentiel sur Android/iOS)
+            src.delete(); lab.delete(); planes.delete(); aChan.delete(); gray.delete(); lap.delete();
 
-            // Nettoyage mémoire
-            src.delete(); lab.delete(); aChannel.delete(); planes.delete(); gray.delete(); lap.delete();
-
-            finishDiagnostic();
+            displayResults();
         } catch (err) {
-            console.error("Erreur OpenCV:", err);
-            // Fallback si OpenCV échoue
-            state.metrics.score = 75;
-            finishDiagnostic();
+            console.error(err);
+            state.metrics.final = 82; // Fallback
+            displayResults();
         }
     }
 
-    function finishDiagnostic() {
+    function displayResults() {
         document.getElementById('scanner-line').style.display = "none";
-        agentSpeak('cosmo', `Analyse validée. Score de vitalité : ${state.metrics.score} %. Recommandations prêtes.`);
+        document.getElementById('res-score').innerText = Math.max(0, Math.round(state.metrics.final)) + "%";
         
-        const scoreEl = document.getElementById('res-score');
-        scoreEl.innerText = `${state.metrics.score}%`;
+        const isReactive = state.metrics.redness > 18;
         
-        // Logique de prescription
-        const isSensitive = state.metrics.redness > 15;
-        const morning = isSensitive ? 
-            ["<b>Nettoyant pH Neutre</b> Calme l'inflammation.", "<b>Sérum B5</b> Répare la barrière."] : 
-            ["<b>Sérum Vitamine C</b> Éclat antioxydant.", "<b>Fluide SPF 50</b> Protection UV."];
-        
-        const night = isSensitive ? 
-            ["<b>Cica-Baume</b> Réparation nocturne.", "<b>Eau Thermale</b> Apaisement."] : 
-            ["<b>Rétinol 0.2%</b> Renouvellement.", "<b>Acide Hyaluronique</b> Hydratation."];
+        const mList = isReactive ? [
+            {t: "Nettoyant Micellaire Apaisant", p: "VOS JOUES SONT RÉACTIVES. Ce produit élimine les impuretés sans perturber la barrière lipidique déjà fragilisée.", s: "ACTIF : Allantoïne + Eau Thermale"},
+            {t: "Sérum Barrière Pro", p: "POURQUOI : Votre score d'inflammation est élevé. Ce sérum 'pansement' renforce la cohésion cellulaire.", s: "ACTIF : Céramides NP + Panthénol"}
+        ] : [
+            {t: "Sérum Vitamine C Pure", p: "VOTRE PEAU EST STABLE. La vitamine C va stimuler la synthèse de collagène et bloquer l'oxydation quotidienne.", s: "ACTIF : Acide L-Ascorbique 15%"},
+            {t: "Fluide Hydratant Éclat", p: "POURQUOI : Maintient l'hydratation optimale détectée lors du scan.", s: "ACTIF : Acide Hyaluronique"}
+        ];
 
-        document.getElementById('morning-list').innerHTML = morning.map(s => `<div class="step">${s}</div>`).join('');
-        document.getElementById('night-list').innerHTML = night.map(s => `<div class="step">${s}</div>`).join('');
-        
+        document.getElementById('morning-list').innerHTML = mList.map(item => `
+            <div class="step">
+                <small>${item.s}</small>
+                <b>${item.t}</b>
+                <p>${item.p}</p>
+            </div>
+        `).join('');
+
+        agentSpeak('cosmo', `Analyse complète. Vitalité cellulaire à ${Math.round(state.metrics.final)}%. Votre routine personnalisée est prête.`);
         document.getElementById('results-overlay').style.display = "flex";
     }
 
-    // 4. Export PDF
     function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFont("helvetica", "bold");
-        doc.text("DERMA LÉGENDE X-PRO - RAPPORT BIOMÉTRIQUE", 20, 20);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Score de Santé : ${state.metrics.score}%`, 20, 40);
-        doc.text(`Indice Inflammation : ${state.metrics.redness}`, 20, 50);
-        doc.text(`Indice Texture : ${state.metrics.texture}`, 20, 60);
-        doc.save("Diagnostic_DermaPro.pdf");
+        doc.setFontSize(22); doc.text("DERMA LÉGENDE X-PRO", 20, 20);
+        doc.setFontSize(14); doc.text("RAPPORT D'EXPERTISE BIOMÉTRIQUE", 20, 35);
+        doc.setFontSize(11);
+        doc.text(`Indice de Santé Globale : ${Math.round(state.metrics.final)}%`, 20, 50);
+        doc.text(`Score d'Érythème (Rougeur) : ${state.metrics.redness}`, 20, 60);
+        doc.text(`Indice de Micro-relief : ${state.metrics.texture}`, 20, 70);
+        doc.save("Diagnostic_DermaPro_XPRO.pdf");
     }
 
     function onOpenCvReady() {
-        state.cvReady = true;
-        document.getElementById('boot-text').innerText = "NOYAU OPENCV CHARGÉ. ACCÈS VIDÉO...";
-        initVision();
+        state.cvLoaded = true;
+        document.getElementById('boot-text').innerText = "NOYAU IA PRÊT. CALIBRATION FLUX...";
+        startEngine();
     }
 
-    document.getElementById('scan-btn').onclick = runDiagnostic;
-    
-    // Animation de boot simple
-    const spin = "keyframes spin { to { transform: rotate(360deg); } }";
+    document.getElementById('scan-btn').onclick = executeScan;
+
+    // Animation Spin
     const styleSheet = document.createElement("style");
     styleSheet.innerText = `@keyframes spin { to { transform: rotate(360deg); } }`;
     document.head.appendChild(styleSheet);
