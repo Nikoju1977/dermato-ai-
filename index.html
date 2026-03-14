@@ -4,26 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="author" content="Nicolas JULIENNE">
-    <meta name="description" content="DERMA X-PRO — Intelligence Artificielle Biométrique cutanée.">
     <meta name="theme-color" content="#0A0A0C">
-    <title>DERMA X-PRO | by Nicolas JULIENNE</title>
-
-    <script async src="[https://docs.opencv.org/4.5.4/opencv.js](https://docs.opencv.org/4.5.4/opencv.js)" onload="onOpenCvReady()"></script>
-    <script src="[https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js](https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js)" crossorigin="anonymous"></script>
-    <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js](https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js)"></script>
-    <link href="[https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap](https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap)" rel="stylesheet">
-
+    <title>DERMA X-PRO | APEX V14.6</title>
+    
+    <script async src="https://docs.opencv.org/4.5.4/opencv.js" onload="onOpenCvReady()"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --champagne: #D4AF37;
             --platinum: #E5E4E2;
             --onyx: #0A0A0C;
-            --glass: rgba(15,15,18,0.9);
-            --border: rgba(212,175,55,0.2);
+            --glass: rgba(15,15,18,0.95);
+            --border: rgba(212,175,55,0.25);
             --danger: #FF4D4D;
+            --success: #4CAF7D;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background: var(--onyx);
@@ -31,342 +30,622 @@
             font-family: 'Rajdhani', sans-serif;
             min-height: 100dvh;
             overflow-x: hidden;
-            -webkit-text-size-adjust: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* HEADER */
+        /* ═══ HEADER ═══ */
         header {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            padding: 15px 20px; border-bottom: 1px solid var(--border);
-            background: #000; position: sticky; top: 0; z-index: 100;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 1px solid var(--border);
+            background: #000;
+            z-index: 100;
         }
-        .logo { font-family: 'Orbitron'; color: var(--champagne); font-size: 1rem; letter-spacing: 2px; }
-        .arch { text-align: right; font-family: 'Orbitron'; font-size: 0.5rem; color: #555; }
-        .arch span { color: var(--platinum); font-size: 0.6rem; display: block; }
+        .brand-name { font-family: 'Orbitron'; color: var(--champagne); font-size: 1.1rem; letter-spacing: 2px; }
+        .architect { text-align: right; font-family: 'Orbitron'; font-size: 0.5rem; color: #555; }
+        .architect span { color: var(--platinum); font-size: 0.65rem; display: block; margin-top: 2px; }
 
-        /* VISION */
-        #vision-sector { position: relative; height: 45vh; background: #000; overflow: hidden; }
+        /* ═══ VISION SECTOR ═══ */
+        #vision-container {
+            position: relative;
+            height: 42vh;
+            background: #000;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
         #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        #face-canvas { position: absolute; inset: 0; z-index: 5; transform: scaleX(-1); pointer-events: none; }
-
-        #lux-meter {
+        #overlay-canvas {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            transform: scaleX(-1); pointer-events: none; z-index: 5;
+        }
+        #lux-widget {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            width: 80%; max-width: 300px; padding: 10px; background: var(--glass);
-            border: 1px solid var(--border); border-radius: 4px; z-index: 10;
+            width: 75%; max-width: 280px; padding: 12px;
+            background: var(--glass); border: 1px solid var(--border);
+            border-radius: 4px; z-index: 10;
         }
-        .lux-header { display: flex; justify-content: space-between; font-family: 'Orbitron'; font-size: 0.5rem; color: #666; margin-bottom: 5px; }
-        .lux-bar { width: 100%; height: 2px; background: rgba(255,255,255,0.1); }
-        .lux-fill { height: 100%; width: 0%; transition: 0.3s; background: var(--champagne); }
+        .lux-info { display: flex; justify-content: space-between; font-family: 'Orbitron'; font-size: 0.55rem; color: #777; margin-bottom: 6px; }
+        .lux-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.05); }
+        #lux-fill { height: 100%; width: 0%; transition: 0.4s ease; background: var(--champagne); }
 
-        /* DASHBOARD */
+        /* ═══ DASHBOARD ═══ */
         .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--border); gap: 1px; }
-        .stat { background: var(--onyx); padding: 15px 5px; text-align: center; }
-        .stat-v { font-family: 'Orbitron'; font-size: 0.9rem; color: var(--champagne); }
-        .stat-l { font-size: 0.5rem; color: #555; margin-top: 4px; letter-spacing: 1px; }
+        .stat-card { background: var(--onyx); padding: 18px 5px; text-align: center; }
+        .stat-val { font-family: 'Orbitron'; font-size: 1rem; color: var(--champagne); font-weight: 700; }
+        .stat-lbl { font-size: 0.5rem; color: #555; letter-spacing: 1px; margin-top: 5px; text-transform: uppercase; }
 
-        /* ACTIONS */
-        .actions { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        input { 
-            background: #0e0e10; border: 1px solid #1a1a1c; padding: 14px; 
-            color: var(--champagne); font-family: 'Orbitron'; font-size: 0.6rem; outline: none;
+        /* ═══ CONTROLS ═══ */
+        .ui-panel { padding: 25px 20px; flex-grow: 1; display: flex; flex-direction: column; gap: 12px; }
+        input {
+            background: #0e0e10; border: 1px solid #1a1a1c; padding: 14px;
+            color: var(--champagne); font-family: 'Orbitron'; font-size: 0.65rem;
+            outline: none; transition: 0.3s; -webkit-appearance: none; border-radius: 0;
         }
-        .btn {
+        input:focus { border-color: var(--champagne); }
+        .btn-main {
             background: transparent; border: 1px solid var(--champagne); color: var(--champagne);
-            padding: 16px; font-family: 'Orbitron'; font-size: 0.7rem; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+            padding: 18px; font-family: 'Orbitron'; font-size: 0.8rem;
+            cursor: pointer; letter-spacing: 2px; text-transform: uppercase;
+            transition: 0.3s; -webkit-tap-highlight-color: transparent;
         }
-        .btn:disabled { border-color: #222; color: #333; }
-        .btn-alt { border-color: #333; color: #555; font-size: 0.6rem; }
+        .btn-main:active:not(:disabled) { background: var(--champagne); color: #000; }
+        .btn-main:disabled { border-color: #222; color: #333; cursor: not-allowed; }
+        .btn-sub { border-color: #333; color: #666; font-size: 0.65rem; padding: 12px; }
 
-        /* OVERLAY */
-        .overlay {
+        /* ═══ OVERLAYS ═══ */
+        .full-overlay {
             position: fixed; inset: 0; background: var(--onyx); z-index: 2000;
-            display: none; flex-direction: column; padding: 30px 20px; overflow-y: auto;
+            display: none; flex-direction: column; padding: 30px 20px;
+            padding-bottom: max(30px, env(safe-area-inset-bottom)); overflow-y: auto;
         }
-        .overlay.active { display: flex; }
-        .overlay-title { font-family: 'Orbitron'; color: var(--champagne); text-align: center; margin-bottom: 20px; }
-        #ai-report { line-height: 1.6; color: #ccc; font-size: 0.9rem; }
+        .full-overlay.active { display: flex; }
+        .report-title { font-family: 'Orbitron'; color: var(--champagne); text-align: center; margin-bottom: 25px; letter-spacing: 2px; }
+        #ai-report-body { line-height: 1.7; color: #CCC; font-size: 0.95rem; max-width: 600px; margin: 0 auto; }
+        #stream-progress { font-family: 'Orbitron'; font-size: 0.55rem; color: #444; text-align: right; max-width: 600px; margin: 0 auto 8px; min-height: 1em; }
 
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        /* ═══ HISTORY CHART ═══ */
+        #historyChartCanvas { display: block; }
+
         #toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--danger); padding: 10px 20px; border-radius: 20px; font-size: 0.7rem; display: none; z-index: 9999;
+            color: #fff; padding: 12px 25px; border-radius: 30px;
+            font-size: 0.7rem; font-family: 'Orbitron'; display: none;
+            z-index: 5000; white-space: nowrap; transition: background 0.2s;
         }
+        #toast.toast-error { background: var(--danger); }
+        #toast.toast-success { background: var(--success); }
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .analyzing { animation: pulse 1.5s infinite; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">DERMA X-PRO</div>
-        <div class="arch">Architecte Logiciel<span>Nicolas JULIENNE</span></div>
+        <div class="brand-name">DERMA X-PRO</div>
+        <div class="architect">Architecte Logiciel<span>NICOLAS JULIENNE</span></div>
     </header>
 
     <main>
-        <section id="vision-sector">
-            <div id="lux-meter">
-                <div class="lux-header"><span>PHOTOMÉTRIE</span><span id="lux-text">CALIBRATION...</span></div>
-                <div class="lux-bar"><div class="lux-fill" id="lux-fill"></div></div>
+        <section id="vision-container">
+            <div id="lux-widget">
+                <div class="lux-info"><span>LUMINOSITÉ</span><span id="lux-status">CALIBRATION...</span></div>
+                <div class="lux-bar"><div id="lux-fill"></div></div>
             </div>
             <video id="video" playsinline muted autoplay></video>
-            <canvas id="face-canvas"></canvas>
+            <canvas id="overlay-canvas"></canvas>
         </section>
 
         <section class="dashboard">
-            <div class="stat"><div class="stat-v" id="v-ita">--</div><div class="stat-l">ITA</div></div>
-            <div class="stat"><div class="stat-v" id="v-glow">--</div><div class="stat-l">GLOW</div></div>
-            <div class="stat"><div class="stat-v" id="v-tex">--</div><div class="stat-l">TEXTURE</div></div>
-            <div class="stat"><div class="stat-v" id="v-uni">--</div><div class="stat-l">UNIFORM</div></div>
+            <div class="stat-card"><div class="stat-val" id="d-ita">--</div><div class="stat-lbl">ITA INDEX</div></div>
+            <div class="stat-card"><div class="stat-val" id="d-glow">--</div><div class="stat-lbl">RADIANCE</div></div>
+            <div class="stat-card"><div class="stat-val" id="d-tex">--</div><div class="stat-lbl">TEXTURE</div></div>
+            <div class="stat-card"><div class="stat-val" id="d-uni">--</div><div class="stat-lbl">HOMOGÉNÉITÉ</div></div>
         </section>
 
-        <section class="actions">
-            <input type="password" id="api-key" placeholder="CLÉ MISTRAL API">
-            <button id="main-btn" class="btn" onclick="runAnalysis()" disabled>LUMINOSITÉ REQUISE</button>
-            <button class="btn btn-alt" onclick="showHistory()">HISTORIQUE</button>
+        <section class="ui-panel">
+            <input type="password" id="api-key" placeholder="CLÉ MISTRAL API" autocomplete="off">
+            <button id="cta-btn" class="btn-main" onclick="initDeepAnalysis()" disabled>LUMINOSITÉ REQUISE</button>
+            <button class="btn-main btn-sub" onclick="openHistory()">HISTORIQUE CHRONOS</button>
         </section>
     </main>
 
-    <div id="results-layer" class="overlay">
-        <h2 class="overlay-title">BILAN DERMATOLOGIQUE</h2>
-        <div id="ai-report"></div>
-        <div style="margin-top:30px; display:flex; flex-direction:column; gap:10px;">
-            <button class="btn" style="background:var(--champagne); color:#000;" onclick="downloadPDF()">EXPORTER PDF</button>
-            <button class="btn btn-alt" onclick="location.reload()">NOUVEL SCANN</button>
+    <div id="results-layer" class="full-overlay">
+        <h2 class="report-title">BILAN CLINIQUE</h2>
+        <div id="stream-progress"></div>
+        <div id="ai-report-body"></div>
+        <div style="margin-top:40px; display:flex; flex-direction:column; gap:12px;">
+            <button id="pdf-btn" class="btn-main" style="background:var(--champagne); color:#000; display:none;" onclick="exportPDF()">EXPORTER LE RAPPORT PDF</button>
+            <button class="btn-main btn-sub" onclick="location.reload()">NOUVELLE SESSION</button>
         </div>
     </div>
 
-    <div id="history-layer" class="overlay">
-        <h2 class="overlay-title">CHRONOS</h2>
-        <div style="height:250px;"><canvas id="histChart"></canvas></div>
-        <button class="btn btn-alt" style="margin-top:20px;" onclick="closeOverlay('history-layer')">RETOUR</button>
+    <div id="history-layer" class="full-overlay">
+        <h2 class="report-title">SUIVI CHRONOS</h2>
+        <div style="height:300px; width:100%;"><canvas id="historyChartCanvas"></canvas></div>
+        <button class="btn-main btn-sub" style="margin-top:auto;" onclick="closeOverlay('history-layer')">RETOUR</button>
     </div>
 
     <div id="toast"></div>
 
-    <script>
-        "use strict";
+<script>
+"use strict";
 
-        const v = document.getElementById('video');
-        const cvs = document.getElementById('face-canvas');
-        const ctx = cvs.getContext('2d');
-        let stream, faceMesh, cvReady = false, isAnalyzing = false;
-        let metrics = null, captureBase64 = null;
+// ── ÉTAT GLOBAL ──────────────────────────────────────────────────────────
+const v = document.getElementById('video');
+const cvs = document.getElementById('overlay-canvas');
+const ctx = cvs.getContext('2d');
+let stream, faceMesh, cvReady = false, isBusy = false;
+let lastMetrics = null, lastImg = null, lastAIText = "";
+let chronosChart = null;
 
-        // DÉMARRAGE
-        async function init() {
-            const saved = localStorage.getItem('derma_key');
-            if (saved) document.getElementById('api-key').value = saved;
+// ── INITIALISATION ────────────────────────────────────────────────────────
+async function startSystem() {
+    const saved = localStorage.getItem('derma_key_v14');
+    if (saved) document.getElementById('api-key').value = saved;
 
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user', width: 1280, height: 720 } 
-                });
-                v.srcObject = stream;
-                v.onloadedmetadata = () => {
-                    cvs.width = v.videoWidth;
-                    cvs.height = v.videoHeight;
-                    startLuxMeter();
-                    startFaceMesh();
-                };
-            } catch(e) { notify("Caméra bloquée : " + e.message); }
-        }
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } 
+        });
+        v.srcObject = stream;
+        v.onloadedmetadata = () => {
+            cvs.width = v.videoWidth;
+            cvs.height = v.videoHeight;
+            initPhotometry();
+            initFaceMesh();
+        };
+    } catch(e) {
+        showToast("ERREUR CAMÉRA : " + e.message, 'error');
+    }
+}
 
-        function onOpenCvReady() { cvReady = true; }
+function onOpenCvReady() {
+    cvReady = true;
+    showToast("MOTEUR BIOMÉTRIQUE PRÊT", 'success');
+    refreshCtaState();
+}
 
-        // PHOTOMÉTRIE
-        function startLuxMeter() {
-            const c = document.createElement('canvas');
-            const x = c.getContext('2d');
-            c.width = c.height = 64;
-            setInterval(() => {
-                if (isAnalyzing) return;
-                x.drawImage(v, 0, 0, 64, 64);
-                const d = x.getImageData(0,0,64,64).data;
-                let b = 0;
-                for(let i=0; i<d.length; i+=4) b += (d[i]+d[i+1]+d[i+2])/3;
-                const avg = b / (64*64);
-                updateLuxUI(avg);
-            }, 500);
-        }
+// ── PHOTOMÉTRIE ───────────────────────────────────────────────────────────
+function initPhotometry() {
+    const c = document.createElement('canvas');
+    const x = c.getContext('2d');
+    c.width = c.height = 64;
 
-        function updateLuxUI(avg) {
-            const fill = document.getElementById('lux-fill');
-            const txt = document.getElementById('lux-text');
-            const btn = document.getElementById('main-btn');
-            fill.style.width = Math.min(100, (avg/200)*100) + '%';
-            
-            if (avg < 40) {
-                txt.textContent = "TROP SOMBRE";
-                fill.style.background = "var(--danger)";
-                btn.disabled = true;
-            } else {
-                txt.textContent = "OPTIMAL";
-                fill.style.background = "var(--champagne)";
-                if(!isAnalyzing) {
-                    btn.disabled = false;
-                    btn.textContent = "INITIER LE SCAN";
-                }
-            }
-        }
+    setInterval(() => {
+        if (isBusy || v.videoWidth === 0) return;
+        
+        x.drawImage(v, 0, 0, 64, 64);
+        const d = x.getImageData(0, 0, 64, 64).data;
+        let bright = 0;
+        for(let i = 0; i < d.length; i += 4) bright += (d[i] + d[i+1] + d[i+2]) / 3;
+        
+        updateLuxUI(bright / (64*64));
+    }, 500);
+}
 
-        // FACE MESH
-        function startFaceMesh() {
-            faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-            faceMesh.setOptions({maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5});
-            faceMesh.onResults(res => {
-                ctx.clearRect(0,0,cvs.width, cvs.height);
-                if (res.multiFaceLandmarks?.[0]) {
-                    ctx.strokeStyle = "rgba(212,175,55,0.2)";
-                    res.multiFaceLandmarks[0].forEach(p => {
-                        ctx.beginPath();
-                        ctx.arc(p.x*cvs.width, p.y*cvs.height, 1, 0, 2*Math.PI);
-                        ctx.stroke();
-                    });
-                }
+let lastAvg = 0;
+
+function updateLuxUI(avg) {
+    lastAvg = avg;
+    const fill = document.getElementById('lux-fill');
+    const status = document.getElementById('lux-status');
+
+    fill.style.width = Math.min(100, (avg / 200) * 100) + '%';
+
+    if (avg < 45) {
+        status.textContent = "TROP SOMBRE";
+        fill.style.background = "var(--danger)";
+    } else {
+        status.textContent = "OPTIMAL";
+        fill.style.background = "var(--champagne)";
+    }
+    refreshCtaState();
+}
+
+function refreshCtaState() {
+    const btn = document.getElementById('cta-btn');
+    if (isBusy) return;
+
+    if (lastAvg < 45) {
+        btn.disabled = true;
+        btn.textContent = "LUMINOSITÉ REQUISE";
+    } else if (!cvReady) {
+        btn.disabled = true;
+        btn.textContent = "CHARGEMENT IA...";
+    } else {
+        btn.disabled = false;
+        btn.textContent = "INITIER LE SCAN";
+    }
+}
+
+// ── FACE MESH ────────────────────────────────────────────────────────────
+function initFaceMesh() {
+    faceMesh = new FaceMesh({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+    faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6 });
+    faceMesh.onResults(res => {
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        if (res.multiFaceLandmarks?.[0]) {
+            ctx.fillStyle = "rgba(212,175,55,0.4)";
+            res.multiFaceLandmarks[0].forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x * cvs.width, p.y * cvs.height, 0.8, 0, 2*Math.PI);
+                ctx.fill();
             });
-            const loop = async () => {
-                if(!isAnalyzing && v.readyState >= 2) await faceMesh.send({image: v});
-                requestAnimationFrame(loop);
-            };
-            loop();
+        }
+    });
+
+    const loop = async () => {
+        if (!isBusy && v.readyState >= 2) await faceMesh.send({ image: v });
+        requestAnimationFrame(loop);
+    };
+    loop();
+}
+
+// ── ANALYSE BIOMÉTRIQUE OPENCV ────────────────────────────────────────────
+function computeBio(canvas) {
+    if (!cvReady) return { ita: 45, glow: 60, tex: 75, uni: 80 };
+
+    let src = null, lab = null, gray = null;
+    let labMean = null, labStd = null, grayMean = null, grayStd = null;
+
+    try {
+        src = cv.imread(canvas);
+        cv.cvtColor(src, src, cv.COLOR_RGBA2RGB);
+
+        lab = new cv.Mat();
+        labMean = new cv.Mat();
+        labStd = new cv.Mat();
+        cv.cvtColor(src, lab, cv.COLOR_RGB2Lab);
+        cv.meanStdDev(lab, labMean, labStd);
+
+        const L = labMean.data64F[0] * 100 / 255;
+        const b_v = labMean.data64F[2] - 128;
+        const ita = Math.atan2(L - 50, b_v) * (180 / Math.PI);
+        const uni = Math.max(0, Math.min(100, Math.round(100 - labStd.data64F[0] * 1.5)));
+
+        gray = new cv.Mat();
+        grayMean = new cv.Mat();
+        grayStd = new cv.Mat();
+        cv.cvtColor(src, gray, cv.COLOR_RGB2GRAY);
+        cv.meanStdDev(gray, grayMean, grayStd);
+
+        const tex = Math.max(0, Math.min(100, Math.round(100 - grayStd.data64F[0] * 0.6)));
+
+        return { ita: Math.round(ita), glow: Math.round(L), tex, uni };
+
+    } catch(e) {
+        console.error("computeBio error:", e);
+        return { ita: 45, glow: 60, tex: 75, uni: 80 };
+    } finally {
+        if (src) src.delete();
+        if (lab) lab.delete();
+        if (gray) gray.delete();
+        if (labMean) labMean.delete();
+        if (labStd) labStd.delete();
+        if (grayMean) grayMean.delete();
+        if (grayStd) grayStd.delete();
+    }
+}
+
+// ── ANALYSE PROFONDE ──────────────────────────────────────────────────────
+async function initDeepAnalysis() {
+    const key = document.getElementById('api-key').value.trim();
+    if (!key) return showToast("CLÉ API REQUISE", 'error');
+
+    isBusy = true;
+    localStorage.setItem('derma_key_v14', key);
+
+    const btn = document.getElementById('cta-btn');
+    btn.disabled = true;
+    btn.textContent = "CAPTURE BIOMÉTRIQUE...";
+
+    const cap = document.createElement('canvas');
+    cap.width = v.videoWidth;
+    cap.height = v.videoHeight;
+    cap.getContext('2d').drawImage(v, 0, 0);
+    
+    lastImg = cap.toDataURL('image/jpeg', 0.7);
+    lastMetrics = computeBio(cap);
+    updateDashboard(lastMetrics);
+
+    document.getElementById('results-layer').classList.add('active');
+    
+    await callMistral(key);
+}
+
+function updateDashboard(m) {
+    document.getElementById('d-ita').textContent = m.ita + '°';
+    document.getElementById('d-glow').textContent = m.glow + '%';
+    document.getElementById('d-tex').textContent = m.tex + '/100';
+    document.getElementById('d-uni').textContent = m.uni + '%';
+}
+
+// ── APPEL MISTRAL STREAMING ───────────────────────────────────────────────
+async function callMistral(key) {
+    const body = document.getElementById('ai-report-body');
+    const progress = document.getElementById('stream-progress');
+    
+    body.innerHTML = `<div style="text-align:center; padding:50px 0;">
+        <p class="analyzing" style="font-family:'Orbitron'; color:var(--champagne);">
+            ANALYSE NEURONALE EN COURS...
+        </p></div>`;
+    progress.textContent = "";
+    lastAIText = "";
+
+    const abortCtrl = new AbortController();
+    const timeoutId = setTimeout(() => abortCtrl.abort(), 45000);
+
+    try {
+        const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+            method: 'POST',
+            signal: abortCtrl.signal,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key}`
+            },
+            body: JSON.stringify({
+                model: "pixtral-12b-2409",
+                max_tokens: 1024,
+                messages: [{
+                    role: "user",
+                    content: [
+                        { type: "text", text: `Tu es DERMA-AI. Scores : ITA ${lastMetrics.ita}°, Radiance ${lastMetrics.glow}%, Texture ${lastMetrics.tex}/100, Homogénéité ${lastMetrics.uni}%. Rédige un bilan clinique luxueux et une routine courte en HTML pur (sans markdown, sans balises \`\`\`).` },
+                        { type: "image_url", image_url: { url: lastImg } }
+                    ]
+                }],
+                stream: true
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(`Erreur ${response.status}: ${err.message || 'Clé invalide'}`);
         }
 
-        // ANALYSE OPENCV
-        function getBioMetrics(canvas) {
-            if (!cvReady) return {ita: 40, glow: 65, tex: 70, uni: 75};
-            let src = cv.imread(canvas);
-            let lab = new cv.Mat();
-            cv.cvtColor(src, lab, cv.COLOR_RGBA2RGB);
-            cv.cvtColor(lab, lab, cv.COLOR_RGB2Lab);
-            let m = cv.mean(lab);
-            let L = m[0] * 100 / 255;
-            let b = m[2] - 128;
-            let ita = Math.atan2(L - 50, b) * (180 / Math.PI);
-            
-            src.delete(); lab.delete();
-            return {
-                ita: Math.round(ita),
-                glow: Math.round(L),
-                tex: 75, uni: 80 // Valeurs simulées si pas de masque complet
-            };
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let tokenCount = 0;
+        let rafPending = false;
+        let streamDone = false; 
+
+        body.innerHTML = "";
+
+        function scheduleRender() {
+            if (rafPending) return;
+            rafPending = true;
+            requestAnimationFrame(() => {
+                rafPending = false;
+                body.innerHTML = fullText.replace(/```html|```/g, "");
+                progress.textContent = `~${tokenCount} tokens`;
+            });
         }
 
-        // RUN
-        async function runAnalysis() {
-            const key = document.getElementById('api-key').value;
-            if (!key) return notify("Clé API Mistral manquante");
-            
-            isAnalyzing = true;
-            localStorage.setItem('derma_key', key);
-            const btn = document.getElementById('main-btn');
-            btn.disabled = true;
-            btn.textContent = "ANALYSE EN COURS...";
+        while (!streamDone) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-            const cap = document.createElement('canvas');
-            cap.width = v.videoWidth; cap.height = v.videoHeight;
-            cap.getContext('2d').drawImage(v, 0, 0);
-            captureBase64 = cap.toDataURL('image/jpeg', 0.7);
-            
-            metrics = getBioMetrics(cap);
-            document.getElementById('v-ita').textContent = metrics.ita + '°';
-            document.getElementById('v-glow').textContent = metrics.glow + '%';
-            document.getElementById('v-tex').textContent = metrics.tex + '/100';
-            document.getElementById('v-uni').textContent = metrics.uni + '%';
-
-            document.getElementById('results-layer').classList.add('active');
-            await streamAI(key);
-        }
-
-        async function streamAI(key) {
-            const report = document.getElementById('ai-report');
-            report.innerHTML = `<div style="text-align:center; padding:20px;"><div style="width:25px; height:25px; border:2px solid #333; border-top-color:var(--champagne); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div></div>`;
-            
-            try {
-                const res = await fetch('[https://api.mistral.ai/v1/chat/completions](https://api.mistral.ai/v1/chat/completions)', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${key}`},
-                    body: JSON.stringify({
-                        model: "pixtral-12b-2409",
-                        messages: [{
-                            role: "user",
-                            content: [
-                                {type: "text", text: `Tu es DERMA-AI. Analyse ces scores: ITA ${metrics.ita}°, Radiance ${metrics.glow}%. Rédige un diagnostic clinique et une routine courte en HTML pur.`},
-                                {type: "image_url", image_url: {url: captureBase64}}
-                            ]
-                        }],
-                        stream: true
-                    })
-                });
-
-                if (!res.ok) throw new Error("Clé invalide ou erreur serveur");
-
-                let full = "";
-                const reader = res.body.getReader();
-                const decoder = new TextDecoder();
-
-                while(true) {
-                    const {done, value} = await reader.read();
-                    if (done) break;
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-                    for(const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const str = line.slice(6).trim();
-                            if (str === "[DONE]") break;
-                            try {
-                                const json = JSON.parse(str);
-                                full += json.choices[0].delta.content || "";
-                                report.innerHTML = full.replace(/```html|```/g, "");
-                            } catch(e) {}
-                        }
+            for (const line of decoder.decode(value).split('\n')) {
+                if (!line.startsWith('data: ')) continue;
+                const dataStr = line.slice(6).trim();
+                
+                if (dataStr === "[DONE]") {
+                    streamDone = true;
+                    break;
+                }
+                
+                try {
+                    const json = JSON.parse(dataStr);
+                    const content = json.choices?.[0]?.delta?.content || "";
+                    if (content) {
+                        fullText += content;
+                        tokenCount++;
+                        scheduleRender();
                     }
-                }
-                saveHistory(metrics);
-            } catch(e) {
-                report.innerHTML = `<p style="color:var(--danger); text-align:center;">Erreur : ${e.message}</p>`;
-            } finally {
-                isAnalyzing = false;
+                } catch(_) {}
             }
         }
 
-        // HISTORIQUE & PDF
-        function saveHistory(m) {
-            let h = JSON.parse(localStorage.getItem('derma_h') || '[]');
-            h.push({d: new Date().toLocaleDateString(), g: m.glow});
-            localStorage.setItem('derma_h', JSON.stringify(h.slice(-10)));
-        }
+        lastAIText = fullText.replace(/```html|```/g, "");
+        body.innerHTML = lastAIText;
+        progress.textContent = "";
+        document.getElementById('pdf-btn').style.display = 'block';
+        
+        saveSession(lastMetrics);
 
-        function showHistory() {
-            const h = JSON.parse(localStorage.getItem('derma_h') || '[]');
-            if(!h.length) return notify("Aucune donnée");
-            document.getElementById('history-layer').classList.add('active');
-            new Chart(document.getElementById('histChart'), {
-                type: 'line',
-                data: {
-                    labels: h.map(x => x.d),
-                    datasets: [{ label: 'Radiance', data: h.map(x => x.g), borderColor: '#D4AF37', tension: 0.3 }]
+    } catch(e) {
+        const msg = e.name === 'AbortError' ? "TIMEOUT 45s — vérifiez votre connexion." : e.message;
+        body.innerHTML = `
+            <div style="border:1px solid var(--danger); padding:20px; color:var(--danger); text-align:center;">
+                <h3 style="margin-bottom:10px;">ERREUR SYSTÈME</h3>
+                <p>${msg}</p>
+            </div>`;
+    } finally {
+        clearTimeout(timeoutId);
+        isBusy = false;
+        refreshCtaState();
+    }
+}
+
+// ── HISTORIQUE ────────────────────────────────────────────────────────────
+function saveSession(m) {
+    let history = JSON.parse(localStorage.getItem('derma_history_v14') || '[]');
+    history.push({
+        date: new Date().toLocaleDateString('fr-FR'),
+        glow: m.glow,
+        ita: m.ita,
+        tex: m.tex, 
+        uni: m.uni 
+    });
+    localStorage.setItem('derma_history_v14', JSON.stringify(history.slice(-15)));
+}
+
+function openHistory() {
+    const history = JSON.parse(localStorage.getItem('derma_history_v14') || '[]');
+    if (history.length === 0) return showToast("AUCUNE DONNÉE", 'error');
+
+    document.getElementById('history-layer').classList.add('active');
+
+    if (chronosChart) {
+        chronosChart.destroy();
+        chronosChart = null;
+    }
+
+    const darkScales = {
+        x: { ticks: { color: '#555', font: { family: 'Rajdhani' } }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.08)' } },
+        y: { ticks: { color: '#555', font: { family: 'Rajdhani' } }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.08)' } }
+    };
+
+    chronosChart = new Chart(document.getElementById('historyChartCanvas'), {
+        type: 'line',
+        data: {
+            labels: history.map(h => h.date),
+            datasets: [
+                {
+                    label: 'Radiance',
+                    data: history.map(h => h.glow),
+                    borderColor: '#D4AF37',
+                    backgroundColor: 'rgba(212,175,55,0.1)',
+                    fill: true, tension: 0.4, pointRadius: 4
                 },
-                options: { maintainAspectRatio: false, color: '#666' }
-            });
+                {
+                    label: 'Texture',
+                    data: history.map(h => h.tex ?? null),
+                    borderColor: '#4DA6FF',
+                    backgroundColor: 'rgba(77,166,255,0.05)',
+                    fill: true, tension: 0.4, pointRadius: 3
+                },
+                {
+                    label: 'Homogénéité',
+                    data: history.map(h => h.uni ?? null),
+                    borderColor: '#7FD9A0',
+                    backgroundColor: 'rgba(127,217,160,0.05)',
+                    fill: true, tension: 0.4, pointRadius: 3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#777', font: { family: 'Rajdhani' } } } },
+            scales: darkScales
         }
+    });
+}
 
-        function downloadPDF() {
-            const doc = new jspdf.jsPDF();
-            doc.setFontSize(20); doc.text("DERMA X-PRO - RAPPORT", 20, 20);
-            doc.setFontSize(12); doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
-            doc.text(`ITA Index: ${metrics.ita}`, 20, 40);
-            doc.text(`Radiance: ${metrics.glow}%`, 20, 50);
-            doc.save("Derma_Report.pdf");
-        }
+// ── EXPORT PDF ────────────────────────────────────────────────────────────
+function exportPDF() {
+    if (!lastMetrics) return showToast("AUCUNE ANALYSE À EXPORTER", 'error');
 
-        function notify(m) {
-            const t = document.getElementById('toast');
-            t.textContent = m; t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
-        }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = doc.internal.pageSize.getWidth();
 
-        function closeOverlay(id) { document.getElementById(id).classList.remove('active'); }
+    // Header
+    doc.setFillColor(10, 10, 12);
+    doc.rect(0, 0, W, 40, 'F');
+    doc.setTextColor(212, 175, 55);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text("DERMA X-PRO REPORT", 20, 22);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(130, 110, 60);
+    doc.text("APEX V14.6 — Nicolas Julienne", 20, 30);
+    doc.setTextColor(90, 90, 90);
+    doc.text(new Date().toLocaleString('fr-FR'), W - 15, 30, { align: 'right' });
 
-        init();
-    </script>
+    let y = 50;
+
+    // Image capturée
+    if (lastImg) {
+        try { doc.addImage(lastImg, 'JPEG', 140, y, 50, 38); } 
+        catch(e) { console.warn("addImage:", e); }
+    }
+
+    // Métriques
+    const metrics = [
+        ["ITA INDEX", `${lastMetrics.ita}°`],
+        ["RADIANCE", `${lastMetrics.glow}%`],
+        ["TEXTURE", `${lastMetrics.tex}/100`],
+        ["HOMOGÉNÉITÉ", `${lastMetrics.uni}%`]
+    ];
+
+    metrics.forEach(([lbl, val], i) => {
+        const my = y + i * 10;
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(lbl, 20, my);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(212, 175, 55);
+        doc.text(val, 20, my + 5.5);
+    });
+    
+    y += 48;
+
+    // Séparateur
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(0.25);
+    doc.line(15, y, W - 15, y);
+    y += 8;
+
+    // Rapport IA
+    if (lastAIText) {
+        const tmpDiv = document.createElement('div');
+        tmpDiv.innerHTML = lastAIText;
+        const plainText = tmpDiv.innerText.trim();
+        
+        const pageH = doc.internal.pageSize.getHeight();
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(60, 60, 60);
+        
+        doc.splitTextToSize(plainText, W - 30).forEach(line => {
+            if (y > pageH - 18) {
+                doc.addPage();
+                doc.setFillColor(10, 10, 12);
+                doc.rect(0, 0, W, 10, 'F');
+                y = 18;
+            }
+            doc.text(line, 15, y);
+            y += 4.5;
+        });
+    }
+
+    // Footer
+    const pages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= pages; p++) {
+        doc.setPage(p);
+        doc.setFontSize(6);
+        doc.setTextColor(80, 80, 80);
+        doc.text(`DERMA X-PRO — usage diagnostique en développement — ${p}/${pages}`, W / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
+    }
+
+    doc.save(`DermaXPro_${Date.now()}.pdf`);
+}
+
+// ── UTILITAIRES ───────────────────────────────────────────────────────────
+function showToast(msg, type = 'error') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = type === 'success' ? 'toast-success' : 'toast-error';
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 4000);
+}
+
+function closeOverlay(id) { 
+    document.getElementById(id).classList.remove('active'); 
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────
+startSystem();
+</script>
 </body>
 </html>
